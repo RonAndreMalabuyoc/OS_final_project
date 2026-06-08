@@ -7,7 +7,7 @@ function simulateFCFS(processes) {
       return first.arrivalTime - second.arrivalTime;
     }
 
-    return first.id.localeCompare(second.id);
+    return first.inputOrder - second.inputOrder;
   });
 
   let currentTime = 0;
@@ -80,7 +80,7 @@ function simulateSJF(processes) {
       return first.arrivalTime - second.arrivalTime;
     }
 
-    return first.id.localeCompare(second.id);
+    return first.inputOrder - second.inputOrder;
   });
 
   let currentTime = 0;
@@ -112,11 +112,11 @@ function simulateSJF(processes) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     });
 
     const selectedProcess = availableProcesses[0];
-    const selectedIndex = waitingProcesses.findIndex((process) => process.id === selectedProcess.id);
+    const selectedIndex = waitingProcesses.findIndex((process) => process.inputOrder === selectedProcess.inputOrder);
     waitingProcesses.splice(selectedIndex, 1);
 
     const startTime = currentTime;
@@ -204,7 +204,7 @@ function simulatePreemptiveSJF(processes) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     });
 
     const selectedProcess = availableProcesses[0];
@@ -271,7 +271,7 @@ function simulateNonPreemptivePriority(processes) {
       return first.arrivalTime - second.arrivalTime;
     }
 
-    return first.id.localeCompare(second.id);
+    return first.inputOrder - second.inputOrder;
   });
 
   let currentTime = 0;
@@ -303,11 +303,11 @@ function simulateNonPreemptivePriority(processes) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     });
 
     const selectedProcess = availableProcesses[0];
-    const selectedIndex = waitingProcesses.findIndex((process) => process.id === selectedProcess.id);
+    const selectedIndex = waitingProcesses.findIndex((process) => process.inputOrder === selectedProcess.inputOrder);
     waitingProcesses.splice(selectedIndex, 1);
 
     const startTime = currentTime;
@@ -395,7 +395,7 @@ function simulatePreemptivePriority(processes) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     });
 
     const selectedProcess = availableProcesses[0];
@@ -463,7 +463,7 @@ function simulateRoundRobin(processes, timeQuantum) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     })
     .map((process) => ({
       ...process,
@@ -563,7 +563,7 @@ function simulateHRRN(processes) {
       return first.arrivalTime - second.arrivalTime;
     }
 
-    return first.id.localeCompare(second.id);
+    return first.inputOrder - second.inputOrder;
   });
 
   let currentTime = 0;
@@ -600,11 +600,11 @@ function simulateHRRN(processes) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     });
 
     const selectedProcess = availableProcesses[0];
-    const selectedIndex = waitingProcesses.findIndex((process) => process.id === selectedProcess.id);
+    const selectedIndex = waitingProcesses.findIndex((process) => process.inputOrder === selectedProcess.inputOrder);
     waitingProcesses.splice(selectedIndex, 1);
 
     const startTime = currentTime;
@@ -664,7 +664,7 @@ function simulateMultilevelQueue(processes) {
       return first.arrivalTime - second.arrivalTime;
     }
 
-    return first.id.localeCompare(second.id);
+    return first.inputOrder - second.inputOrder;
   });
 
   let currentTime = 0;
@@ -696,11 +696,11 @@ function simulateMultilevelQueue(processes) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     });
 
     const selectedProcess = availableProcesses[0];
-    const selectedIndex = waitingProcesses.findIndex((process) => process.id === selectedProcess.id);
+    const selectedIndex = waitingProcesses.findIndex((process) => process.inputOrder === selectedProcess.inputOrder);
     waitingProcesses.splice(selectedIndex, 1);
 
     const startTime = currentTime;
@@ -760,7 +760,7 @@ function simulateMultilevelFeedbackQueue(processes, timeQuantum, queueCount) {
         return first.arrivalTime - second.arrivalTime;
       }
 
-      return first.id.localeCompare(second.id);
+      return first.inputOrder - second.inputOrder;
     })
     .map((process) => ({
       ...process,
@@ -963,6 +963,7 @@ async function askForProcesses() {
       burstTime,
       priority,
       queueLevel,
+      inputOrder: index,
     });
   }
 
