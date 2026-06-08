@@ -41,6 +41,7 @@ function simulateFCFS(processes) {
       id: process.id,
       arrivalTime: process.arrivalTime,
       burstTime: process.burstTime,
+      priority: process.priority,
       startTime,
       completionTime,
       turnaroundTime,
@@ -150,11 +151,13 @@ async function askForProcesses() {
 
     const arrivalTime = await askForPositiveInteger("Arrival time: ", input, true);
     const burstTime = await askForPositiveInteger("Burst time: ", input, false);
+    const priority = await askForPositiveInteger("Priority: ", input, false);
 
     processes.push({
       id,
       arrivalTime,
       burstTime,
+      priority,
     });
   }
 
