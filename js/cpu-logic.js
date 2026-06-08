@@ -658,6 +658,101 @@ function simulateHRRN(processes) {
   };
 }
 
+function simulateMultilevelQueue(processes) {
+  const waitingProcesses = [...processes].sort((first, second) => {
+    if (first.arrivalTime !== second.arrivalTime) {
+      return first.arrivalTime - second.arrivalTime;
+    }
+
+    return first.id.localeCompare(second.id);
+  });
+
+  let currentTime = 0;
+  const ganttChart = [];
+  const results = [];
+
+  while (waitingProcesses.length > 0) {
+    const availableProcesses = waitingProcesses.filter((process) => process.arrivalTime <= currentTime);
+
+    if (availableProcesses.length === 0) {
+      const nextArrivalTime = waitingProcesses[0].arrivalTime;
+
+      ganttChart.push({
+        id: "Idle",
+        startTime: currentTime,
+        endTime: nextArrivalTime,
+      });
+
+      currentTime = nextArrivalTime;
+      continue;
+    }
+
+    availableProcesses.sort((first, second) => {
+      if (first.queueLevel !== second.queueLevel) {
+        return first.queueLevel - second.queueLevel;
+      }
+
+      if (first.arrivalTime !== second.arrivalTime) {
+        return first.arrivalTime - second.arrivalTime;
+      }
+
+      return first.id.localeCompare(second.id);
+    });
+
+    const selectedProcess = availableProcesses[0];
+    const selectedIndex = waitingProcesses.findIndex((process) => process.id === selectedProcess.id);
+    waitingProcesses.splice(selectedIndex, 1);
+
+    const startTime = currentTime;
+    const completionTime = startTime + selectedProcess.burstTime;
+    const turnaroundTime = completionTime - selectedProcess.arrivalTime;
+    const waitingTime = turnaroundTime - selectedProcess.burstTime;
+    const responseTime = startTime - selectedProcess.arrivalTime;
+
+    ganttChart.push({
+      id: `${selectedProcess.id} (Q${selectedProcess.queueLevel})`,
+      startTime,
+      endTime: completionTime,
+    });
+
+    results.push({
+      id: selectedProcess.id,
+      arrivalTime: selectedProcess.arrivalTime,
+      burstTime: selectedProcess.burstTime,
+      priority: selectedProcess.priority,
+      queueLevel: selectedProcess.queueLevel,
+      startTime,
+      completionTime,
+      turnaroundTime,
+      waitingTime,
+      responseTime,
+    });
+
+    currentTime = completionTime;
+  }
+
+  const totalWaitingTime = results.reduce((sum, process) => sum + process.waitingTime, 0);
+  const totalTurnaroundTime = results.reduce((sum, process) => sum + process.turnaroundTime, 0);
+  const totalResponseTime = results.reduce((sum, process) => sum + process.responseTime, 0);
+  const totalBurstTime = results.reduce((sum, process) => sum + process.burstTime, 0);
+  const firstStartTime = ganttChart.length > 0 ? ganttChart[0].startTime : 0;
+  const finalCompletionTime = results.length > 0 ? results[results.length - 1].completionTime : 0;
+  const totalTime = finalCompletionTime - firstStartTime;
+
+  return {
+    algorithm: "Multilevel Queue Scheduling",
+    ganttChart,
+    results,
+    metrics: {
+      averageWaitingTime: results.length > 0 ? totalWaitingTime / results.length : 0,
+      averageTurnaroundTime: results.length > 0 ? totalTurnaroundTime / results.length : 0,
+      averageResponseTime: results.length > 0 ? totalResponseTime / results.length : 0,
+      cpuUtilization: totalTime > 0 ? (totalBurstTime / totalTime) * 100 : 0,
+      throughput: totalTime > 0 ? results.length / totalTime : 0,
+    },
+  };
+}
+
 function addGanttBlock(ganttChart, id, startTime, endTime) {
   const lastBlock = ganttChart[ganttChart.length - 1];
 
@@ -751,12 +846,14 @@ async function askForProcesses() {
     const arrivalTime = await askForPositiveInteger("Arrival time: ", input, true);
     const burstTime = await askForPositiveInteger("Burst time: ", input, false);
     const priority = await askForPositiveInteger("Priority: ", input, false);
+    const queueLevel = await askForPositiveInteger("Queue level for Multilevel Queue (1 is highest): ", input, false);
 
     processes.push({
       id,
       arrivalTime,
       burstTime,
       priority,
+      queueLevel,
     });
   }
 
@@ -774,6 +871,7 @@ async function askForAlgorithm(input) {
   console.log("3. Priority Scheduling");
   console.log("4. Round Robin");
   console.log("5. HRRN - Highest Response Ratio Next");
+  console.log("6. Multilevel Queue Scheduling");
 
   while (true) {
     const choice = await ask("Enter algorithm choice: ", input);
@@ -799,7 +897,11 @@ async function askForAlgorithm(input) {
       return "HRRN";
     }
 
-    console.log("Enter 1 or FCFS, 2 or SJF, 3 or Priority, 4 or Round Robin, or 5 or HRRN.");
+    if (normalizedChoice === "6" || normalizedChoice === "mlq" || normalizedChoice === "multilevel queue") {
+      return "MULTILEVEL_QUEUE";
+    }
+
+    console.log("Enter 1 or FCFS, 2 or SJF, 3 or Priority, 4 or Round Robin, 5 or HRRN, or 6 or MLQ.");
   }
 }
 
@@ -898,6 +1000,8 @@ async function main() {
     simulation = simulateRoundRobin(session.processes, timeQuantum);
   } else if (algorithm === "HRRN") {
     simulation = simulateHRRN(session.processes);
+  } else if (algorithm === "MULTILEVEL_QUEUE") {
+    simulation = simulateMultilevelQueue(session.processes);
   } else if (algorithm === "PRIORITY" && priorityMode === "PREEMPTIVE") {
     simulation = simulatePreemptivePriority(session.processes);
   } else if (algorithm === "PRIORITY") {
