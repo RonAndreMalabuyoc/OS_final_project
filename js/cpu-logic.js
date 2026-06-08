@@ -359,6 +359,103 @@ function simulateNonPreemptivePriority(processes) {
   };
 }
 
+function simulatePreemptivePriority(processes) {
+  const processStates = processes.map((process) => ({
+    ...process,
+    remainingTime: process.burstTime,
+    startTime: null,
+    completionTime: null,
+  }));
+
+  let currentTime = 0;
+  let completedCount = 0;
+  const ganttChart = [];
+
+  while (completedCount < processStates.length) {
+    const availableProcesses = processStates.filter((process) => process.arrivalTime <= currentTime && process.remainingTime > 0);
+
+    if (availableProcesses.length === 0) {
+      const nextArrivalTime = Math.min(
+        ...processStates
+          .filter((process) => process.remainingTime > 0)
+          .map((process) => process.arrivalTime),
+      );
+
+      addGanttBlock(ganttChart, "Idle", currentTime, nextArrivalTime);
+      currentTime = nextArrivalTime;
+      continue;
+    }
+
+    availableProcesses.sort((first, second) => {
+      if (first.priority !== second.priority) {
+        return first.priority - second.priority;
+      }
+
+      if (first.arrivalTime !== second.arrivalTime) {
+        return first.arrivalTime - second.arrivalTime;
+      }
+
+      return first.id.localeCompare(second.id);
+    });
+
+    const selectedProcess = availableProcesses[0];
+
+    if (selectedProcess.startTime === null) {
+      selectedProcess.startTime = currentTime;
+    }
+
+    addGanttBlock(ganttChart, selectedProcess.id, currentTime, currentTime + 1);
+    selectedProcess.remainingTime -= 1;
+    currentTime += 1;
+
+    if (selectedProcess.remainingTime === 0) {
+      selectedProcess.completionTime = currentTime;
+      completedCount += 1;
+    }
+  }
+
+  const results = processStates
+    .map((process) => {
+      const turnaroundTime = process.completionTime - process.arrivalTime;
+      const waitingTime = turnaroundTime - process.burstTime;
+      const responseTime = process.startTime - process.arrivalTime;
+
+      return {
+        id: process.id,
+        arrivalTime: process.arrivalTime,
+        burstTime: process.burstTime,
+        priority: process.priority,
+        startTime: process.startTime,
+        completionTime: process.completionTime,
+        turnaroundTime,
+        waitingTime,
+        responseTime,
+      };
+    })
+    .sort((first, second) => first.completionTime - second.completionTime);
+
+  const totalWaitingTime = results.reduce((sum, process) => sum + process.waitingTime, 0);
+  const totalTurnaroundTime = results.reduce((sum, process) => sum + process.turnaroundTime, 0);
+  const totalResponseTime = results.reduce((sum, process) => sum + process.responseTime, 0);
+  const totalBurstTime = results.reduce((sum, process) => sum + process.burstTime, 0);
+  const firstStartTime = ganttChart.length > 0 ? ganttChart[0].startTime : 0;
+  const finalCompletionTime = results.length > 0 ? Math.max(...results.map((process) => process.completionTime)) : 0;
+  const totalTime = finalCompletionTime - firstStartTime;
+
+  return {
+    algorithm: "Priority Scheduling - Preemptive",
+    ganttChart,
+    results,
+    metrics: {
+      averageWaitingTime: results.length > 0 ? totalWaitingTime / results.length : 0,
+      averageTurnaroundTime: results.length > 0 ? totalTurnaroundTime / results.length : 0,
+      averageResponseTime: results.length > 0 ? totalResponseTime / results.length : 0,
+      cpuUtilization: totalTime > 0 ? (totalBurstTime / totalTime) * 100 : 0,
+      throughput: totalTime > 0 ? results.length / totalTime : 0,
+    },
+  };
+}
+
 function addGanttBlock(ganttChart, id, startTime, endTime) {
   const lastBlock = ganttChart[ganttChart.length - 1];
 
@@ -472,7 +569,7 @@ async function askForAlgorithm(input) {
   console.log("Choose a CPU scheduling algorithm:");
   console.log("1. FCFS - First-Come, First-Served");
   console.log("2. SJF - Shortest Job First");
-  console.log("3. Priority Scheduling - Non-preemptive");
+  console.log("3. Priority Scheduling");
 
   while (true) {
     const choice = await ask("Enter algorithm choice: ", input);
@@ -516,6 +613,28 @@ async function askForSJFMode(input) {
   }
 }
 
+async function askForPriorityMode(input) {
+  console.log("");
+  console.log("Choose Priority Scheduling mode:");
+  console.log("1. Non-preemptive Priority Scheduling");
+  console.log("2. Preemptive Priority Scheduling");
+
+  while (true) {
+    const choice = await ask("Enter Priority Scheduling mode: ", input);
+    const normalizedChoice = choice.trim().toLowerCase();
+
+    if (normalizedChoice === "1" || normalizedChoice === "non-preemptive" || normalizedChoice === "nonpreemptive") {
+      return "NON_PREEMPTIVE";
+    }
+
+    if (normalizedChoice === "2" || normalizedChoice === "preemptive") {
+      return "PREEMPTIVE";
+    }
+
+    console.log("Enter 1 for non-preemptive priority scheduling, or 2 for preemptive priority scheduling.");
+  }
+}
+
 function printSimulation(simulation) {
   console.log("");
   console.log(`Algorithm Used: ${simulation.algorithm}`);
@@ -537,9 +656,14 @@ async function main() {
   const session = await askForProcesses();
   const algorithm = await askForAlgorithm(session.input);
   let sjfMode = null;
+  let priorityMode = null;
 
   if (algorithm === "SJF") {
     sjfMode = await askForSJFMode(session.input);
+  }
+
+  if (algorithm === "PRIORITY") {
+    priorityMode = await askForPriorityMode(session.input);
   }
 
   session.input.close();
@@ -548,6 +672,8 @@ async function main() {
 
   if (algorithm === "FCFS") {
     simulation = simulateFCFS(session.processes);
+  } else if (algorithm === "PRIORITY" && priorityMode === "PREEMPTIVE") {
+    simulation = simulatePreemptivePriority(session.processes);
   } else if (algorithm === "PRIORITY") {
     simulation = simulateNonPreemptivePriority(session.processes);
   } else if (sjfMode === "PREEMPTIVE") {
