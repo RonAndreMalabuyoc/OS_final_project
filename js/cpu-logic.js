@@ -130,7 +130,7 @@ async function askForProcesses() {
   const input = createInputReader();
   const processes = [];
 
-  console.log("FCFS CPU Scheduling Simulation");
+  console.log("CPU Scheduling Simulation");
   console.log("");
 
   const processCount = await askForPositiveInteger("How many processes do you want to enter? ", input, false);
@@ -161,11 +161,32 @@ async function askForProcesses() {
     });
   }
 
-  input.close();
-  return processes;
+  return {
+    input,
+    processes,
+  };
+}
+
+async function askForAlgorithm(input) {
+  console.log("");
+  console.log("Choose a CPU scheduling algorithm:");
+  console.log("1. FCFS - First-Come, First-Served");
+
+  while (true) {
+    const choice = await ask("Enter algorithm choice: ", input);
+    const normalizedChoice = choice.trim().toLowerCase();
+
+    if (normalizedChoice === "1" || normalizedChoice === "fcfs") {
+      return "FCFS";
+    }
+
+    console.log("Only FCFS is available right now. Enter 1 or FCFS.");
+  }
 }
 
 function printSimulation(simulation) {
+  console.log("");
+  console.log(`Algorithm Used: ${simulation.algorithm}`);
   console.log("");
   console.log("Gantt Chart:");
   for (const block of simulation.ganttChart) {
@@ -181,8 +202,11 @@ function printSimulation(simulation) {
 }
 
 async function main() {
-  const processes = await askForProcesses();
-  const simulation = simulateFCFS(processes);
+  const session = await askForProcesses();
+  const algorithm = await askForAlgorithm(session.input);
+  session.input.close();
+
+  const simulation = algorithm === "FCFS" ? simulateFCFS(session.processes) : null;
   printSimulation(simulation);
 }
 
