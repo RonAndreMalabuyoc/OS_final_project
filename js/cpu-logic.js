@@ -1090,10 +1090,58 @@ function printSimulation(simulation) {
 
   console.log("");
   console.log("Process Results:");
-  console.table(simulation.results);
+  console.table(formatProcessResultsForOutput(simulation.results));
 
   console.log("Metrics:");
-  console.table(simulation.metrics);
+  console.table(formatMetricsForOutput(simulation.metrics));
+}
+
+function formatProcessResultsForOutput(results) {
+  return results.map((process) => {
+    const formattedProcess = {
+      ID: process.id,
+      "Arrival Time": process.arrivalTime,
+      "Burst Time": process.burstTime,
+    };
+
+    if (process.priority !== undefined) {
+      formattedProcess.Priority = process.priority;
+    }
+
+    if (process.queueLevel !== undefined) {
+      formattedProcess["Queue Level"] = process.queueLevel;
+    }
+
+    if (process.startingQueueLevel !== undefined) {
+      formattedProcess["Starting Queue Level"] = process.startingQueueLevel;
+    }
+
+    if (process.finalQueueLevel !== undefined) {
+      formattedProcess["Final Queue Level"] = process.finalQueueLevel;
+    }
+
+    if (process.responseRatio !== undefined) {
+      formattedProcess["Response Ratio"] = process.responseRatio;
+    }
+
+    formattedProcess["Start Time"] = process.startTime;
+    formattedProcess["Completion Time"] = process.completionTime;
+    formattedProcess["Turnaround Time"] = process.turnaroundTime;
+    formattedProcess["Waiting Time"] = process.waitingTime;
+    formattedProcess["Response Time"] = process.responseTime;
+
+    return formattedProcess;
+  });
+}
+
+function formatMetricsForOutput(metrics) {
+  return {
+    "Average Waiting Time": metrics.averageWaitingTime,
+    "Average Turnaround Time": metrics.averageTurnaroundTime,
+    "Average Response Time": metrics.averageResponseTime,
+    "CPU Utilization": metrics.cpuUtilization,
+    Throughput: metrics.throughput,
+  };
 }
 
 async function main() {
