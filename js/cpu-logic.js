@@ -456,6 +456,107 @@ function simulatePreemptivePriority(processes) {
   };
 }
 
+function simulateRoundRobin(processes, timeQuantum) {
+  const processStates = [...processes]
+    .sort((first, second) => {
+      if (first.arrivalTime !== second.arrivalTime) {
+        return first.arrivalTime - second.arrivalTime;
+      }
+
+      return first.id.localeCompare(second.id);
+    })
+    .map((process) => ({
+      ...process,
+      remainingTime: process.burstTime,
+      startTime: null,
+      completionTime: null,
+    }));
+
+  let currentTime = 0;
+  let nextProcessIndex = 0;
+  const readyQueue = [];
+  const ganttChart = [];
+
+  while (readyQueue.length > 0 || nextProcessIndex < processStates.length) {
+    while (nextProcessIndex < processStates.length && processStates[nextProcessIndex].arrivalTime <= currentTime) {
+      readyQueue.push(processStates[nextProcessIndex]);
+      nextProcessIndex += 1;
+    }
+
+    if (readyQueue.length === 0) {
+      const nextArrivalTime = processStates[nextProcessIndex].arrivalTime;
+      addGanttBlock(ganttChart, "Idle", currentTime, nextArrivalTime);
+      currentTime = nextArrivalTime;
+      continue;
+    }
+
+    const selectedProcess = readyQueue.shift();
+
+    if (selectedProcess.startTime === null) {
+      selectedProcess.startTime = currentTime;
+    }
+
+    const runTime = Math.min(timeQuantum, selectedProcess.remainingTime);
+    const endTime = currentTime + runTime;
+
+    addGanttBlock(ganttChart, selectedProcess.id, currentTime, endTime);
+    selectedProcess.remainingTime -= runTime;
+    currentTime = endTime;
+
+    while (nextProcessIndex < processStates.length && processStates[nextProcessIndex].arrivalTime <= currentTime) {
+      readyQueue.push(processStates[nextProcessIndex]);
+      nextProcessIndex += 1;
+    }
+
+    if (selectedProcess.remainingTime > 0) {
+      readyQueue.push(selectedProcess);
+    } else {
+      selectedProcess.completionTime = currentTime;
+    }
+  }
+
+  const results = processStates
+    .map((process) => {
+      const turnaroundTime = process.completionTime - process.arrivalTime;
+      const waitingTime = turnaroundTime - process.burstTime;
+      const responseTime = process.startTime - process.arrivalTime;
+
+      return {
+        id: process.id,
+        arrivalTime: process.arrivalTime,
+        burstTime: process.burstTime,
+        priority: process.priority,
+        startTime: process.startTime,
+        completionTime: process.completionTime,
+        turnaroundTime,
+        waitingTime,
+        responseTime,
+      };
+    })
+    .sort((first, second) => first.completionTime - second.completionTime);
+
+  const totalWaitingTime = results.reduce((sum, process) => sum + process.waitingTime, 0);
+  const totalTurnaroundTime = results.reduce((sum, process) => sum + process.turnaroundTime, 0);
+  const totalResponseTime = results.reduce((sum, process) => sum + process.responseTime, 0);
+  const totalBurstTime = results.reduce((sum, process) => sum + process.burstTime, 0);
+  const firstStartTime = ganttChart.length > 0 ? ganttChart[0].startTime : 0;
+  const finalCompletionTime = results.length > 0 ? Math.max(...results.map((process) => process.completionTime)) : 0;
+  const totalTime = finalCompletionTime - firstStartTime;
+
+  return {
+    algorithm: `Round Robin (Time Quantum = ${timeQuantum})`,
+    ganttChart,
+    results,
+    metrics: {
+      averageWaitingTime: results.length > 0 ? totalWaitingTime / results.length : 0,
+      averageTurnaroundTime: results.length > 0 ? totalTurnaroundTime / results.length : 0,
+      averageResponseTime: results.length > 0 ? totalResponseTime / results.length : 0,
+      cpuUtilization: totalTime > 0 ? (totalBurstTime / totalTime) * 100 : 0,
+      throughput: totalTime > 0 ? results.length / totalTime : 0,
+    },
+  };
+}
+
 function addGanttBlock(ganttChart, id, startTime, endTime) {
   const lastBlock = ganttChart[ganttChart.length - 1];
 
@@ -570,6 +671,7 @@ async function askForAlgorithm(input) {
   console.log("1. FCFS - First-Come, First-Served");
   console.log("2. SJF - Shortest Job First");
   console.log("3. Priority Scheduling");
+  console.log("4. Round Robin");
 
   while (true) {
     const choice = await ask("Enter algorithm choice: ", input);
@@ -587,7 +689,11 @@ async function askForAlgorithm(input) {
       return "PRIORITY";
     }
 
-    console.log("Enter 1 or FCFS, 2 or SJF, or 3 or Priority.");
+    if (normalizedChoice === "4" || normalizedChoice === "rr" || normalizedChoice === "round robin") {
+      return "ROUND_ROBIN";
+    }
+
+    console.log("Enter 1 or FCFS, 2 or SJF, 3 or Priority, or 4 or Round Robin.");
   }
 }
 
@@ -635,6 +741,11 @@ async function askForPriorityMode(input) {
   }
 }
 
+async function askForTimeQuantum(input) {
+  console.log("");
+  return askForPositiveInteger("Enter time quantum for Round Robin: ", input, false);
+}
+
 function printSimulation(simulation) {
   console.log("");
   console.log(`Algorithm Used: ${simulation.algorithm}`);
@@ -657,6 +768,7 @@ async function main() {
   const algorithm = await askForAlgorithm(session.input);
   let sjfMode = null;
   let priorityMode = null;
+  let timeQuantum = null;
 
   if (algorithm === "SJF") {
     sjfMode = await askForSJFMode(session.input);
@@ -666,12 +778,18 @@ async function main() {
     priorityMode = await askForPriorityMode(session.input);
   }
 
+  if (algorithm === "ROUND_ROBIN") {
+    timeQuantum = await askForTimeQuantum(session.input);
+  }
+
   session.input.close();
 
   let simulation = null;
 
   if (algorithm === "FCFS") {
     simulation = simulateFCFS(session.processes);
+  } else if (algorithm === "ROUND_ROBIN") {
+    simulation = simulateRoundRobin(session.processes, timeQuantum);
   } else if (algorithm === "PRIORITY" && priorityMode === "PREEMPTIVE") {
     simulation = simulatePreemptivePriority(session.processes);
   } else if (algorithm === "PRIORITY") {
