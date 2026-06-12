@@ -97,81 +97,111 @@
     </div>
 
     <!-- Modules -->
-    <main class="section" id="modules">
-        <div class="section-label">Modules</div>
-        <div class="modules-grid">
+    <!-- Modules Showcase -->
+    <section class="modules-showcase" id="modules">
 
-            <a href="pages/cpu.html" class="module-card" style="--card-accent:#6c63ff;--card-accent-dim:#6c63ff18;">
-                <div class="card-meta">
-                    <span class="card-num">Module 04</span>
-                    <span class="card-status status-ready">Ready</span>
+        <div class="module-panel" data-module="cpu"
+            style="--panel-accent:#6c63ff; --panel-bg-image:url('assets/gif/cpu.gif');">
+            <div class="panel-bg"></div>
+            <div class="panel-overlay"></div>
+            <div class="panel-content">
+                <div class="panel-meta">
+                    <span class="panel-num">Module 04</span>
+                    <span class="panel-status status-ready">Ready</span>
                 </div>
-                <div class="card-icon">⚙️</div>
-                <div class="card-title">CPU Scheduling</div>
-                <div class="card-desc">Simulate process scheduling with animated Gantt charts and real-time waiting
-                    &amp; turnaround time stats.</div>
-                <div class="card-algorithms">
+                <div class="panel-icon">⚙️</div>
+                <h2 class="panel-title">CPU Scheduling</h2>
+                <p class="panel-desc">
+                    Simulate process scheduling with animated Gantt charts and
+                    real-time waiting &amp; turnaround time stats.
+                </p>
+                <div class="panel-algorithms">
                     <span class="algo-tag">FCFS</span>
                     <span class="algo-tag">SJF</span>
                     <span class="algo-tag">SRTF</span>
                     <span class="algo-tag">Round Robin</span>
                     <span class="algo-tag">Priority</span>
                 </div>
-            </a>
+                <a href="pages/cpu.html" class="btn btn-primary panel-btn">Open Module →</a>
+            </div>
+        </div>
 
-            <div class="module-card locked" style="--card-accent:#00c8e0;--card-accent-dim:#00c8e015;">
-                <div class="card-meta">
-                    <span class="card-num">Module 05</span>
-                    <span class="card-status status-soon">Coming Soon</span>
+        <div class="module-panel locked" data-module="memory"
+            style="--panel-accent:#00c8e0; --panel-bg-image:url('assets/gif/memory.gif');">
+            <div class="panel-bg"></div>
+            <div class="panel-overlay"></div>
+            <div class="panel-content">
+                <div class="panel-meta">
+                    <span class="panel-num">Module 05</span>
+                    <span class="panel-status status-soon">Coming Soon</span>
                 </div>
-                <div class="card-icon">🧠</div>
-                <div class="card-title">Memory Management</div>
-                <div class="card-desc">Explore contiguous allocation, paging, and segmentation with visual memory maps.
-                </div>
-                <div class="card-algorithms">
+                <div class="panel-icon">🧠</div>
+                <h2 class="panel-title">Memory Management</h2>
+                <p class="panel-desc">
+                    Explore contiguous allocation, paging, and segmentation with
+                    visual memory maps.
+                </p>
+                <div class="panel-algorithms">
                     <span class="algo-tag">First Fit</span>
                     <span class="algo-tag">Best Fit</span>
                     <span class="algo-tag">Worst Fit</span>
                     <span class="algo-tag">Paging</span>
                 </div>
+                <span class="btn btn-ghost panel-btn panel-btn-disabled">Coming Soon</span>
             </div>
+        </div>
 
-            <div class="module-card locked" style="--card-accent:#f0a500;--card-accent-dim:#f0a50015;">
-                <div class="card-meta">
-                    <span class="card-num">Module 06</span>
-                    <span class="card-status status-soon">Coming Soon</span>
+        <div class="module-panel locked" data-module="virtual"
+            style="--panel-accent:#f0a500; --panel-bg-image:url('assets/gif/virtual.gif');">
+            <div class="panel-bg"></div>
+            <div class="panel-overlay"></div>
+            <div class="panel-content">
+                <div class="panel-meta">
+                    <span class="panel-num">Module 06</span>
+                    <span class="panel-status status-soon">Coming Soon</span>
                 </div>
-                <div class="card-icon">📄</div>
-                <div class="card-title">Virtual Memory</div>
-                <div class="card-desc">Visualize page tables, page faults, and replacement policies like FIFO, LRU, and
-                    Optimal.</div>
-                <div class="card-algorithms">
+                <div class="panel-icon">📄</div>
+                <h2 class="panel-title">Virtual Memory</h2>
+                <p class="panel-desc">
+                    Visualize page tables, page faults, and replacement policies
+                    like FIFO, LRU, and Optimal.
+                </p>
+                <div class="panel-algorithms">
                     <span class="algo-tag">FIFO</span>
                     <span class="algo-tag">LRU</span>
                     <span class="algo-tag">Optimal</span>
                     <span class="algo-tag">Clock</span>
                 </div>
+                <span class="btn btn-ghost panel-btn panel-btn-disabled">Coming Soon</span>
             </div>
+        </div>
 
-            <div class="module-card locked" style="--card-accent:#34c77b;--card-accent-dim:#34c77b15;">
-                <div class="card-meta">
-                    <span class="card-num">Module 07</span>
-                    <span class="card-status status-soon">Coming Soon</span>
+        <div class="module-panel locked" data-module="storage"
+            style="--panel-accent:#34c77b; --panel-bg-image:url('assets/gif/storage.gif');">
+            <div class="panel-bg"></div>
+            <div class="panel-overlay"></div>
+            <div class="panel-content">
+                <div class="panel-meta">
+                    <span class="panel-num">Module 07</span>
+                    <span class="panel-status status-soon">Coming Soon</span>
                 </div>
-                <div class="card-icon">💾</div>
-                <div class="card-title">Mass Storage</div>
-                <div class="card-desc">Simulate disk scheduling with seek time visualization across SSTF, SCAN, and
-                    C-SCAN algorithms.</div>
-                <div class="card-algorithms">
+                <div class="panel-icon">💾</div>
+                <h2 class="panel-title">Mass Storage</h2>
+                <p class="panel-desc">
+                    Simulate disk scheduling with seek time visualization across
+                    SSTF, SCAN, and C-SCAN algorithms.
+                </p>
+                <div class="panel-algorithms">
                     <span class="algo-tag">FCFS</span>
                     <span class="algo-tag">SSTF</span>
                     <span class="algo-tag">SCAN</span>
                     <span class="algo-tag">C-SCAN</span>
                 </div>
+                <span class="btn btn-ghost panel-btn panel-btn-disabled">Coming Soon</span>
             </div>
-
         </div>
-    </main>
+
+    </section>
 
     <footer class="footer">
         OS_final_project &nbsp;·&nbsp; Module 04–07 Simulations
@@ -206,29 +236,18 @@
         });
 
         /* ── Scroll animations ── */
-        const cards = document.querySelectorAll('.module-card');
+        const panels = document.querySelectorAll('.module-panel');
 
-        const observer = new IntersectionObserver((entries) => {
+        const panelObserver = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                const card = entry.target;
-                if (entry.isIntersecting) {
-                    card.classList.remove('animate-out');
-                    card.classList.add('animate-in');
-                } else {
-                    card.classList.remove('animate-in');
-                    card.classList.add('animate-out');
-                }
+                // toggle so the animation replays on every enter/exit, both directions
+                entry.target.classList.toggle('in-view', entry.isIntersecting);
             });
         }, {
-            threshold: 0.15,      /* card must be 15% visible to trigger */
-            rootMargin: '0px 0px -40px 0px'
+            threshold: 0.35
         });
 
-        /* stagger the in-animation per card index */
-        cards.forEach((card, i) => {
-            card.style.animationDelay = `${i * 120}ms`;
-            observer.observe(card);
-        });
+        panels.forEach(panel => panelObserver.observe(panel));
 
         /* ── Typewriter ── */
         const typeTarget = document.getElementById('typeTarget');

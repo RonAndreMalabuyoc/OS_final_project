@@ -1348,6 +1348,17 @@ body.light .icon-sun {
 
 /* ── Responsive ──────────────────────────────────── */
 @media (max-width: 768px) {
+    .module-panel:nth-child(even) {
+        justify-content: flex-start;
+    }
+
+    .module-panel:nth-child(even) .panel-overlay {
+        background: linear-gradient(180deg,
+                rgba(8, 8, 10, 0.35) 0%,
+                rgba(8, 8, 10, 0.85) 60%,
+                rgba(8, 8, 10, 0.95) 100%);
+    }
+
     .navbar {
         padding: 0 1rem;
     }
@@ -1403,5 +1414,218 @@ body.light .icon-sun {
 @media (max-width: 480px) {
     .metrics-grid {
         grid-template-columns: 1fr;
+    }
+}
+
+/* ── Modules Showcase ─────────────────────────────── */
+.modules-showcase {
+    position: relative;
+}
+
+.module-panel {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    scroll-margin-top: 56px;
+    border-bottom: 1px solid var(--border);
+}
+
+.module-panel:nth-child(even) {
+    justify-content: flex-end;
+}
+
+.module-panel:nth-child(even) .panel-overlay {
+    background: linear-gradient(260deg,
+            rgba(8, 8, 10, 0.92) 0%,
+            rgba(8, 8, 10, 0.72) 40%,
+            rgba(8, 8, 10, 0.35) 75%,
+            rgba(8, 8, 10, 0.55) 100%);
+}
+
+.module-panel:nth-child(even) .panel-bg {
+    background-image:
+        var(--panel-bg-image),
+        radial-gradient(circle at 75% 35%, var(--panel-accent) 0%, transparent 65%);
+}
+
+.panel-bg {
+    position: absolute;
+    inset: 0;
+    background-image:
+        var(--panel-bg-image),
+        radial-gradient(circle at 25% 35%, var(--panel-accent) 0%, transparent 65%);
+    background-size: cover, cover;
+    background-position: center, center;
+    background-color: var(--bg-surface);
+    background-blend-mode: normal, soft-light;
+    transform: scale(1.15);
+    opacity: 0;
+    transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease;
+    will-change: transform, opacity;
+}
+
+.panel-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg,
+            rgba(8, 8, 10, 0.92) 0%,
+            rgba(8, 8, 10, 0.72) 40%,
+            rgba(8, 8, 10, 0.35) 75%,
+            rgba(8, 8, 10, 0.55) 100%);
+    z-index: 1;
+}
+
+.panel-content {
+    position: relative;
+    z-index: 2;
+    max-width: 620px;
+    width: 100%;
+    padding: 0 4rem;
+    opacity: 0;
+    transform: translateY(48px);
+    transition: opacity 0.9s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.module-panel.in-view .panel-bg {
+    transform: scale(1);
+    opacity: 1;
+}
+
+.module-panel.in-view .panel-content {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.panel-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.panel-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.panel-status {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+}
+
+.panel-status.status-ready {
+    background: rgba(52, 199, 123, 0.18);
+    color: #4ee08a;
+    border: 1px solid rgba(52, 199, 123, 0.3);
+}
+
+.panel-status.status-soon {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.panel-icon {
+    font-size: 32px;
+    margin-bottom: 0.75rem;
+}
+
+.panel-title {
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1.1rem;
+    color: #fff;
+}
+
+.panel-desc {
+    font-size: 16px;
+    line-height: 1.75;
+    color: rgba(255, 255, 255, 0.75);
+    margin-bottom: 1.75rem;
+    max-width: 480px;
+}
+
+.panel-algorithms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 2rem;
+}
+
+.panel-algorithms .algo-tag {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(6px);
+}
+
+.panel-btn {
+    box-shadow: 0 0 24px -6px var(--panel-accent, var(--accent));
+}
+
+.panel-btn-disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* Accent line that lights up while the panel is in view */
+.module-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--panel-accent, var(--accent));
+    z-index: 3;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+.module-panel.in-view::before {
+    opacity: 0.7;
+}
+
+/* Locked panels read as slightly muted */
+.module-panel.locked .panel-bg {
+    filter: grayscale(0.4) brightness(0.85);
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .module-panel:nth-child(even) {
+        justify-content: flex-start;
+    }
+
+    .module-panel:nth-child(even) .panel-overlay {
+        background: linear-gradient(180deg,
+                rgba(8, 8, 10, 0.35) 0%,
+                rgba(8, 8, 10, 0.85) 60%,
+                rgba(8, 8, 10, 0.95) 100%);
+    }
+
+    .panel-content {
+        padding: 0 1.5rem;
+        max-width: 100%;
+    }
+
+    .panel-overlay {
+        background: linear-gradient(180deg,
+                rgba(8, 8, 10, 0.35) 0%,
+                rgba(8, 8, 10, 0.85) 60%,
+                rgba(8, 8, 10, 0.95) 100%);
     }
 }
