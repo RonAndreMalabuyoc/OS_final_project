@@ -1071,7 +1071,7 @@ body.light .icon-sun {
 .gantt-block {
     position: relative;
     min-width: 36px;
-    height: 56px;
+    height: 60px;
     border-radius: var(--radius-sm);
     display: flex;
     flex-direction: column;
@@ -1084,9 +1084,41 @@ body.light .icon-sun {
     transform: scaleX(0);
     transform-origin: left center;
 
-    /* Dynamic color via CSS custom property */
-    background: var(--block-color, var(--accent));
-    box-shadow: 0 2px 8px -2px var(--block-color, var(--accent));
+    /* Glass tank, not solid fill — the canvas draws the liquid */
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 4px 14px -6px var(--block-color, var(--accent));
+}
+
+/* Glass shine overlay */
+.gantt-block::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+            rgba(255, 255, 255, 0.16) 0%,
+            rgba(255, 255, 255, 0) 40%,
+            rgba(0, 0, 0, 0.10) 100%);
+    pointer-events: none;
+    z-index: 2;
+    border-radius: inherit;
+}
+
+.gantt-idle::after {
+    display: none;
+}
+
+/* ── Aquarium water canvas inside each block ── */
+.gantt-water-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    z-index: 0;
+    pointer-events: none;
 }
 
 @keyframes ganttSlideIn {
@@ -1112,6 +1144,10 @@ body.light .icon-sun {
     box-shadow: none !important;
 }
 
+.gantt-idle .gantt-water-canvas {
+    display: none;
+}
+
 .gantt-idle .gantt-label {
     color: var(--text-muted);
 }
@@ -1121,15 +1157,19 @@ body.light .icon-sun {
 }
 
 .gantt-label {
+    position: relative;
+    z-index: 1;
     font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 600;
     color: #fff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
     line-height: 1;
 }
 
 .gantt-time {
+    position: relative;
+    z-index: 1;
     font-family: var(--font-mono);
     font-size: 9px;
     color: rgba(255, 255, 255, 0.75);
