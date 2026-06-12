@@ -50,19 +50,19 @@
 
 /* ── Light mode ─────────────────────────────────── */
 body.light {
-    --bg-base: #f5f5f7;
-    --bg-surface: #ebebee;
-    --bg-card: #ffffff;
-    --bg-card-hover: #f0f0f4;
-    --bg-input: #e8e8ec;
-    --bg-navbar: rgba(245, 245, 247, 0.88);
+    --bg-base: #F7F3EC;
+    --bg-surface: #EFE9DC;
+    --bg-card: #FDF9F3;
+    --bg-card-hover: #F5EFE6;
+    --bg-input: #EAE2D4;
+    --bg-navbar: rgba(247, 243, 236, 0.88);
 
-    --border: #d4d4da;
-    --border-light: #c2c2ca;
+    --border: #DDD4C0;
+    --border-light: #CFC5AE;
 
-    --text-primary: #111114;
-    --text-secondary: #4a4a56;
-    --text-muted: #888896;
+    --text-primary: #1E1608;
+    --text-secondary: #5C4E38;
+    --text-muted: #9A8A72;
 
     --accent: #5a52e8;
     --accent-dim: #5a52e815;
@@ -289,6 +289,10 @@ body.light .icon-sun {
     max-width: 520px;
     margin: 0 auto 2.5rem;
     line-height: 1.75;
+}
+
+body.light .hero p {
+    color: #5C4E38;
 }
 
 .hero-actions {
@@ -1348,17 +1352,6 @@ body.light .icon-sun {
 
 /* ── Responsive ──────────────────────────────────── */
 @media (max-width: 768px) {
-    .module-panel:nth-child(even) {
-        justify-content: flex-start;
-    }
-
-    .module-panel:nth-child(even) .panel-overlay {
-        background: linear-gradient(180deg,
-                rgba(8, 8, 10, 0.35) 0%,
-                rgba(8, 8, 10, 0.85) 60%,
-                rgba(8, 8, 10, 0.95) 100%);
-    }
-
     .navbar {
         padding: 0 1rem;
     }
@@ -1445,25 +1438,31 @@ body.light .icon-sun {
 }
 
 .module-panel:nth-child(even) .panel-bg {
-    background-image:
-        var(--panel-bg-image),
-        radial-gradient(circle at 75% 35%, var(--panel-accent) 0%, transparent 65%);
+    background:
+        radial-gradient(circle at 75% 35%, var(--panel-accent) 0%, transparent 65%),
+        var(--bg-surface);
+    background-blend-mode: soft-light, normal;
 }
 
 .panel-bg {
     position: absolute;
     inset: 0;
-    background-image:
-        var(--panel-bg-image),
-        radial-gradient(circle at 25% 35%, var(--panel-accent) 0%, transparent 65%);
-    background-size: cover, cover;
-    background-position: center, center;
-    background-color: var(--bg-surface);
-    background-blend-mode: normal, soft-light;
+    background:
+        radial-gradient(circle at 25% 35%, var(--panel-accent) 0%, transparent 65%),
+        var(--bg-surface);
+    background-blend-mode: soft-light, normal;
     transform: scale(1.15);
     opacity: 0;
     transition: transform 1.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.2s ease;
     will-change: transform, opacity;
+}
+
+.panel-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
 .panel-overlay {
@@ -1628,4 +1627,118 @@ body.light .icon-sun {
                 rgba(8, 8, 10, 0.85) 60%,
                 rgba(8, 8, 10, 0.95) 100%);
     }
+}
+
+body.light .panel-overlay {
+    background: linear-gradient(100deg,
+            rgba(247, 243, 236, 0.92) 0%,
+            rgba(247, 243, 236, 0.72) 40%,
+            rgba(247, 243, 236, 0.35) 75%,
+            rgba(247, 243, 236, 0.55) 100%);
+}
+
+body.light .module-panel:nth-child(even) .panel-overlay {
+    background: linear-gradient(260deg,
+            rgba(247, 243, 236, 0.92) 0%,
+            rgba(247, 243, 236, 0.72) 40%,
+            rgba(247, 243, 236, 0.35) 75%,
+            rgba(247, 243, 236, 0.55) 100%);
+}
+
+body.light .panel-title {
+    color: var(--text-primary);
+}
+
+body.light .panel-desc {
+    color: var(--text-secondary);
+}
+
+body.light .panel-num {
+    color: var(--text-muted);
+}
+
+body.light .panel-algorithms .algo-tag {
+    background: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.12);
+    color: var(--text-secondary);
+}
+
+body.light .panel-btn-disabled {
+    border-color: rgba(0, 0, 0, 0.18);
+    color: var(--text-muted);
+}
+
+/* Light mode hero text + button fixes */
+body.light .hero h1 {
+    color: #2C1F0F;
+}
+
+body.light span#typeTarget span {
+    color: #2C1F0F !important;
+}
+
+body.light .btn-ghost {
+    background: transparent;
+    color: #6B4F2E;
+    border-color: #C0A880;
+}
+
+body.light .btn-ghost:hover {
+    background: #EDE3D0;
+    color: #4A3420;
+    border-color: #A8906A;
+}
+
+body.light .hero-badge {
+    background: #EDE3D0;
+    color: #7A5C38;
+    border-color: #CCBCA0;
+}
+
+body.light .nav-logo {
+    color: #2C1F0F;
+}
+
+body.light .nav-links a {
+    color: #7A6A55;
+}
+
+body.light .nav-links a:hover,
+body.light .nav-links a.active {
+    color: #2C1F0F;
+    background: #EDE3D0;
+}
+
+body.light .stat-num {
+    color: #2C1F0F;
+}
+
+body.light .stat-label {
+    color: #9A8A72;
+}
+
+/* Typewriter accent span — warm brown in light, accent in dark */
+.typewriter-accent {
+    color: var(--accent);
+}
+
+body.light .typewriter-accent {
+    color: #7C5C38 !important;
+}
+
+/* Also override span1 (first line) in light mode */
+body.light .hero h1 span {
+    color: #2C1F0F !important;
+}
+
+/* Start Simulating button — warm brown in light mode */
+body.light .btn-primary {
+    background: #7C5C38;
+    border-color: #7C5C38;
+    color: #fff;
+}
+
+body.light .btn-primary:hover {
+    background: #6B4F2E;
+    border-color: #6B4F2E;
 }
