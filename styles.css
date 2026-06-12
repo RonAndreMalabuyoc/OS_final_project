@@ -391,8 +391,10 @@ body.light .icon-sun {
 
 .module-card:hover {
     background: var(--bg-card-hover);
-    border-color: var(--border-light);
+    border-color: var(--card-accent, var(--accent));
     transform: translateY(-2px);
+    box-shadow: 0 0 24px -4px var(--card-accent, var(--accent)),
+        0 0 48px -12px var(--card-accent, var(--accent));
 }
 
 .module-card:hover::before {
@@ -523,6 +525,102 @@ body.light .icon-sun {
     font-size: 12px;
     color: var(--text-muted);
     font-family: var(--font-mono);
+}
+
+/* ── Scroll progress bar ────────────────────────── */
+#scrollProgress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--cyan));
+    z-index: 200;
+    transition: width 0.1s linear;
+    border-radius: 0 2px 2px 0;
+}
+
+/* ── Back to top button ─────────────────────────── */
+#backToTop {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 150;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease,
+        background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+#backToTop.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+#backToTop:hover {
+    background: var(--bg-card-hover);
+    color: var(--text-primary);
+    border-color: var(--accent);
+}
+
+#backToTop svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ── Typewriter ──────────────────────────────────── */
+.typewriter {
+    display: inline;
+}
+
+.typewriter-cursor {
+    display: inline-block;
+    width: 3px;
+    height: 0.85em;
+    background: var(--accent);
+    margin-left: 3px;
+    vertical-align: middle;
+    border-radius: 1px;
+    animation: cursorBlink 0.75s step-end infinite;
+}
+
+.typewriter-cursor.done {
+    animation: cursorFadeOut 0.6s ease forwards;
+    animation-delay: 1.2s;
+}
+
+@keyframes cursorBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+@keyframes cursorFadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }
 
 /* ── Scroll animations ──────────────────────────── */

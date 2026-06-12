@@ -10,6 +10,17 @@
 
 <body>
 
+    <!-- Scroll progress bar -->
+    <div id="scrollProgress"></div>
+
+    <!-- Back to top -->
+    <button id="backToTop" aria-label="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15" />
+        </svg>
+    </button>
+
     <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-left">
@@ -53,7 +64,7 @@
             <div class="hero-badge">
                 <span>●</span> Interactive Simulations
             </div>
-            <h1>Operating Systems<br /><span>Visualized</span></h1>
+            <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
             <p>
                 Step-by-step simulations for CPU scheduling, memory management,
                 virtual memory, and mass storage — built to make OS concepts click.
@@ -167,6 +178,21 @@
     </footer>
 
     <script>
+        /* ── Scroll progress bar + back to top ── */
+        const progressBar = document.getElementById('scrollProgress');
+        const backToTop = document.getElementById('backToTop');
+
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            progressBar.style.width = (scrolled / maxScroll * 100) + '%';
+            backToTop.classList.toggle('visible', scrolled > 300);
+        }, { passive: true });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
         /* ── Theme toggle ── */
         const btn = document.getElementById('themeToggle');
         const body = document.body;
@@ -200,6 +226,46 @@
             card.style.animationDelay = `${i * 120}ms`;
             observer.observe(card);
         });
+
+        /* ── Typewriter ── */
+        const typeTarget = document.getElementById('typeTarget');
+        const cursor = document.getElementById('cursor');
+
+        // Split into two lines; second line gets accent color
+        const line1 = 'Operating Systems';
+        const line2 = 'Visualized';
+        const full = line1 + '|' + line2; // '|' = line break marker
+        let charIndex = 0;
+        let passedBreak = false;
+
+        // Build h1 structure: span for line1, br, span.accent for line2, cursor
+        const span1 = document.createElement('span');
+        const br = document.createElement('br');
+        const span2 = document.createElement('span');
+        span2.style.color = 'var(--accent)';
+        typeTarget.appendChild(span1);
+        typeTarget.appendChild(cursor);
+
+        function type() {
+            if (charIndex < full.length) {
+                const ch = full[charIndex];
+                if (ch === '|') {
+                    // insert line break and swap cursor into span2
+                    typeTarget.insertBefore(br, cursor);
+                    typeTarget.insertBefore(span2, cursor);
+                    passedBreak = true;
+                } else {
+                    if (passedBreak) span2.textContent += ch;
+                    else span1.textContent += ch;
+                }
+                charIndex++;
+                setTimeout(type, 75 + Math.random() * 35);
+            } else {
+                cursor.classList.add('done');
+            }
+        }
+
+        setTimeout(type, 500);
 
         /* ── Aurora canvas ── */
         const canvas = document.getElementById('auroraCanvas');
