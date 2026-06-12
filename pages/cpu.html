@@ -295,17 +295,29 @@
                 const needsPriority = currentAlgo === 'priority-np' || currentAlgo === 'priority-p';
 
                 row.innerHTML = `
-                <td class="td-num">${processCount}</td>
-                <td><input type="text" class="cpu-input input-pid" value="${id || 'P' + processCount}" /></td>
-                <td><input type="number" class="cpu-input input-at" value="${at ?? 0}" min="0" /></td>
-                <td><input type="number" class="cpu-input input-bt" value="${bt ?? 1}" min="1" /></td>
-                <td class="td-priority" style="display:${needsPriority ? '' : 'none'}"><input type="number" class="cpu-input input-pr" value="${pr ?? 1}" min="1" /></td>
-                <td class="td-remove">
-                    <button class="btn-icon btn-remove" aria-label="Remove process">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                    </button>
-                </td>
-            `;
+                    <td class="td-num">${processCount}</td>
+                    <td>
+                        <div class="cell-label">Process ID</div>
+                        <input type="text" class="cpu-input input-pid" value="${id || 'P' + processCount}" />
+                    </td>
+                    <td>
+                        <div class="cell-label">Arrival Time</div>
+                        <input type="number" class="cpu-input input-at" value="${at ?? 0}" min="0" />
+                    </td>
+                    <td>
+                        <div class="cell-label">Burst Time</div>
+                        <input type="number" class="cpu-input input-bt" value="${bt ?? 1}" min="1" />
+                    </td>
+                    <td class="td-priority" style="display:${needsPriority ? '' : 'none'}">
+                        <div class="cell-label">Priority</div>
+                        <input type="number" class="cpu-input input-pr" value="${pr ?? 1}" min="1" />
+                    </td>
+                    <td class="td-remove">
+                        <button class="btn-icon btn-remove" aria-label="Remove process">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </td>
+                `;
 
                 row.querySelector('.btn-remove').addEventListener('click', () => {
                     row.classList.add('row-removing');
