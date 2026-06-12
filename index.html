@@ -1,7 +1,332 @@
-print(hello world")
+<!DOCTYPE html>
+<html lang="en">
 
-sure
-sure
-sure
-sure
-testing
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OS Simulator</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+    <!-- Scroll progress bar -->
+    <div id="scrollProgress"></div>
+
+    <!-- Back to top -->
+    <button id="backToTop" aria-label="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15" />
+        </svg>
+    </button>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-logo">
+                <span class="dot"></span>
+                OS Simulator
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="pages/cpu.html">CPU Scheduling</a></li>
+                <li><a href="pages/memory.html">Memory</a></li>
+                <li><a href="pages/virtual.html">Virtual Memory</a></li>
+                <li><a href="pages/storage.html">Storage</a></li>
+            </ul>
+        </div>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Hero with aurora canvas -->
+    <div class="hero-wrapper">
+        <canvas id="auroraCanvas"></canvas>
+        <section class="hero">
+            <div class="hero-badge">
+                <span>●</span> Interactive Simulations
+            </div>
+            <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
+            <p>
+                Step-by-step simulations for CPU scheduling, memory management,
+                virtual memory, and mass storage — built to make OS concepts click.
+            </p>
+            <div class="hero-actions">
+                <a href="pages/cpu.html" class="btn btn-primary">Start Simulating →</a>
+                <a href="#modules" class="btn btn-ghost">Browse Modules</a>
+            </div>
+        </section>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-num">4</div>
+            <div class="stat-label">Modules</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">13+</div>
+            <div class="stat-label">Algorithms</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">5</div>
+            <div class="stat-label">CPU Schedulers</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">Live</div>
+            <div class="stat-label">Gantt Animation</div>
+        </div>
+    </div>
+
+    <!-- Modules -->
+    <main class="section" id="modules">
+        <div class="section-label">Modules</div>
+        <div class="modules-grid">
+
+            <a href="pages/cpu.html" class="module-card" style="--card-accent:#6c63ff;--card-accent-dim:#6c63ff18;">
+                <div class="card-meta">
+                    <span class="card-num">Module 04</span>
+                    <span class="card-status status-ready">Ready</span>
+                </div>
+                <div class="card-icon">⚙️</div>
+                <div class="card-title">CPU Scheduling</div>
+                <div class="card-desc">Simulate process scheduling with animated Gantt charts and real-time waiting
+                    &amp; turnaround time stats.</div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">FCFS</span>
+                    <span class="algo-tag">SJF</span>
+                    <span class="algo-tag">SRTF</span>
+                    <span class="algo-tag">Round Robin</span>
+                    <span class="algo-tag">Priority</span>
+                </div>
+            </a>
+
+            <div class="module-card locked" style="--card-accent:#00c8e0;--card-accent-dim:#00c8e015;">
+                <div class="card-meta">
+                    <span class="card-num">Module 05</span>
+                    <span class="card-status status-soon">Coming Soon</span>
+                </div>
+                <div class="card-icon">🧠</div>
+                <div class="card-title">Memory Management</div>
+                <div class="card-desc">Explore contiguous allocation, paging, and segmentation with visual memory maps.
+                </div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">First Fit</span>
+                    <span class="algo-tag">Best Fit</span>
+                    <span class="algo-tag">Worst Fit</span>
+                    <span class="algo-tag">Paging</span>
+                </div>
+            </div>
+
+            <div class="module-card locked" style="--card-accent:#f0a500;--card-accent-dim:#f0a50015;">
+                <div class="card-meta">
+                    <span class="card-num">Module 06</span>
+                    <span class="card-status status-soon">Coming Soon</span>
+                </div>
+                <div class="card-icon">📄</div>
+                <div class="card-title">Virtual Memory</div>
+                <div class="card-desc">Visualize page tables, page faults, and replacement policies like FIFO, LRU, and
+                    Optimal.</div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">FIFO</span>
+                    <span class="algo-tag">LRU</span>
+                    <span class="algo-tag">Optimal</span>
+                    <span class="algo-tag">Clock</span>
+                </div>
+            </div>
+
+            <div class="module-card locked" style="--card-accent:#34c77b;--card-accent-dim:#34c77b15;">
+                <div class="card-meta">
+                    <span class="card-num">Module 07</span>
+                    <span class="card-status status-soon">Coming Soon</span>
+                </div>
+                <div class="card-icon">💾</div>
+                <div class="card-title">Mass Storage</div>
+                <div class="card-desc">Simulate disk scheduling with seek time visualization across SSTF, SCAN, and
+                    C-SCAN algorithms.</div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">FCFS</span>
+                    <span class="algo-tag">SSTF</span>
+                    <span class="algo-tag">SCAN</span>
+                    <span class="algo-tag">C-SCAN</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        OS_final_project &nbsp;·&nbsp; Module 04–07 Simulations
+    </footer>
+
+    <script>
+        /* ── Scroll progress bar + back to top ── */
+        const progressBar = document.getElementById('scrollProgress');
+        const backToTop = document.getElementById('backToTop');
+
+        window.addEventListener('scroll', () => {
+            const scrolled = window.scrollY;
+            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+            progressBar.style.width = (scrolled / maxScroll * 100) + '%';
+            backToTop.classList.toggle('visible', scrolled > 300);
+
+            // Parallax: aurora drifts at 30% of scroll speed
+            canvas.style.transform = `translateY(${scrolled * 0.3}px)`;
+        }, { passive: true });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        /* ── Theme toggle ── */
+        const btn = document.getElementById('themeToggle');
+        const body = document.body;
+        if (localStorage.getItem('theme') === 'light') body.classList.add('light');
+        btn.addEventListener('click', () => {
+            body.classList.toggle('light');
+            localStorage.setItem('theme', body.classList.contains('light') ? 'light' : 'dark');
+        });
+
+        /* ── Scroll animations ── */
+        const cards = document.querySelectorAll('.module-card');
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                const card = entry.target;
+                if (entry.isIntersecting) {
+                    card.classList.remove('animate-out');
+                    card.classList.add('animate-in');
+                } else {
+                    card.classList.remove('animate-in');
+                    card.classList.add('animate-out');
+                }
+            });
+        }, {
+            threshold: 0.15,      /* card must be 15% visible to trigger */
+            rootMargin: '0px 0px -40px 0px'
+        });
+
+        /* stagger the in-animation per card index */
+        cards.forEach((card, i) => {
+            card.style.animationDelay = `${i * 120}ms`;
+            observer.observe(card);
+        });
+
+        /* ── Typewriter ── */
+        const typeTarget = document.getElementById('typeTarget');
+        const cursor = document.getElementById('cursor');
+
+        // Split into two lines; second line gets accent color
+        const line1 = 'Operating Systems';
+        const line2 = 'Visualized';
+        const full = line1 + '|' + line2; // '|' = line break marker
+        let charIndex = 0;
+        let passedBreak = false;
+
+        // Build h1 structure: span for line1, br, span.accent for line2, cursor
+        const span1 = document.createElement('span');
+        const br = document.createElement('br');
+        const span2 = document.createElement('span');
+        span2.style.color = 'var(--accent)';
+        typeTarget.appendChild(span1);
+        typeTarget.appendChild(cursor);
+
+        function type() {
+            if (charIndex < full.length) {
+                const ch = full[charIndex];
+                if (ch === '|') {
+                    // insert line break and swap cursor into span2
+                    typeTarget.insertBefore(br, cursor);
+                    typeTarget.insertBefore(span2, cursor);
+                    passedBreak = true;
+                } else {
+                    if (passedBreak) span2.textContent += ch;
+                    else span1.textContent += ch;
+                }
+                charIndex++;
+                setTimeout(type, 75 + Math.random() * 35);
+            } else {
+                cursor.classList.add('done');
+            }
+        }
+
+        setTimeout(type, 500);
+
+        /* ── Aurora canvas ── */
+        const canvas = document.getElementById('auroraCanvas');
+        const ctx = canvas.getContext('2d');
+        let W, H, t = 0;
+
+        function resize() {
+            W = canvas.width = canvas.offsetWidth;
+            H = canvas.height = canvas.offsetHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        /* Each orb defines a slow-moving plasma blob */
+        const orbs = [
+            { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 260 }, // purple
+            { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 }, // cyan
+            { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 230 }, // blue-violet
+            { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 280 }, // violet
+            { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 185 }, // teal
+        ];
+
+        function isLight() { return body.classList.contains('light'); }
+
+        function draw() {
+            t++;
+            ctx.clearRect(0, 0, W, H);
+
+            const light = isLight();
+            /* base fill — transparent so hero-wrapper bg shows through */
+            ctx.fillStyle = 'transparent';
+
+            orbs.forEach(o => {
+                const angle = o.phase + t * o.spd * Math.PI * 2;
+                /* orbs drift gently in elliptical paths */
+                const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
+                const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
+                const radius = o.r * Math.min(W, H);
+
+                const alpha = light ? 0.13 : 0.22;
+                const alpha2 = light ? 0.00 : 0.00;
+
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                grad.addColorStop(0, `hsla(${o.hue}, 90%, ${light ? 55 : 65}%, ${alpha})`);
+                grad.addColorStop(0.5, `hsla(${o.hue + 20}, 80%, ${light ? 50 : 60}%, ${alpha * 0.5})`);
+                grad.addColorStop(1, `hsla(${o.hue + 40}, 70%, 50%, ${alpha2})`);
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(draw);
+        }
+        draw();
+    </script>
+
+</body>
+
+</html>

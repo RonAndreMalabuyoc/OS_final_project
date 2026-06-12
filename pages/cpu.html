@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CPU Scheduling Simulator — OS Simulator</title>
+    <meta name="description"
+        content="Interactive CPU scheduling simulator with animated Gantt charts. Supports FCFS, SJF, SRTF, Priority, and Round Robin algorithms." />
+    <link rel="stylesheet" href="../styles.css" />
+</head>
+
+<body>
+
+    <!-- Scroll progress bar -->
+    <div id="scrollProgress"></div>
+
+    <!-- Back to top -->
+    <button id="backToTop" aria-label="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15" />
+        </svg>
+    </button>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-logo">
+                <span class="dot"></span>
+                OS Simulator
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="cpu.html" class="active">CPU Scheduling</a></li>
+                <li><a href="memory.html">Memory</a></li>
+                <li><a href="virtual.html">Virtual Memory</a></li>
+                <li><a href="storage.html">Storage</a></li>
+            </ul>
+        </div>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Page Header with Aurora -->
+    <div class="cpu-hero-wrapper">
+        <canvas id="auroraCanvas"></canvas>
+        <header class="cpu-page-header">
+            <div class="cpu-page-header-inner">
+                <div class="cpu-breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    <span>CPU Scheduling</span>
+                </div>
+                <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
+                <p>Configure processes, pick an algorithm, and watch the Gantt chart come alive.</p>
+            </div>
+        </header>
+    </div>
+
+    <main class="cpu-main">
+
+        <!-- ─── Algorithm Selector ─────────────────────────────────── -->
+        <section class="cpu-section" id="algorithmSection">
+            <div class="section-label">Algorithm</div>
+            <div class="algo-selector" id="algoSelector">
+                <button class="algo-pill active" data-algo="fcfs">FCFS</button>
+                <button class="algo-pill" data-algo="sjf">SJF</button>
+                <button class="algo-pill" data-algo="srtf">SRTF</button>
+                <button class="algo-pill" data-algo="priority-np">Priority (NP)</button>
+                <button class="algo-pill" data-algo="priority-p">Priority (P)</button>
+                <button class="algo-pill" data-algo="rr">Round Robin</button>
+            </div>
+
+            <!-- Conditional: Round Robin time quantum -->
+            <div class="algo-options" id="rrOptions" style="display:none;">
+                <label class="cpu-label" for="timeQuantum">Time Quantum</label>
+                <input type="number" id="timeQuantum" class="cpu-input" value="2" min="1" />
+            </div>
+
+            <!-- Algorithm description -->
+            <div class="algo-description" id="algoDescription">
+                <div class="algo-desc-icon">💡</div>
+                <p id="algoDescText">Processes are executed in the order they arrive. Simple and non-preemptive.</p>
+            </div>
+        </section>
+
+        <!-- ─── Process Input ──────────────────────────────────────── -->
+        <section class="cpu-section" id="processSection">
+            <div class="section-label">Processes</div>
+
+            <div class="process-toolbar">
+                <button class="btn btn-primary" id="btnAddProcess">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19" />
+                        <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    Add Process
+                </button>
+                <button class="btn btn-ghost" id="btnLoadExample">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    Load Example
+                </button>
+                <button class="btn btn-ghost btn-danger" id="btnClearAll">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    Clear All
+                </button>
+            </div>
+
+            <div class="process-table-wrap">
+                <table class="process-table" id="processTable">
+                    <thead>
+                        <tr>
+                            <th class="th-narrow">#</th>
+                            <th>Process ID</th>
+                            <th>Arrival Time</th>
+                            <th>Burst Time</th>
+                            <th class="th-priority">Priority</th>
+                            <th class="th-narrow"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="processTableBody">
+                        <!-- Rows inserted by JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="process-actions">
+                <button class="btn btn-primary btn-run" id="btnRun">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill="currentColor" stroke="none">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Run Simulation
+                </button>
+            </div>
+        </section>
+
+        <!-- ─── Output: Gantt Chart ────────────────────────────────── -->
+        <section class="cpu-section cpu-output-section" id="outputSection" style="display:none;">
+
+            <div class="section-label">Gantt Chart</div>
+            <div class="gantt-wrapper" id="ganttWrapper">
+                <div class="gantt-chart" id="ganttChart">
+                    <!-- Gantt blocks rendered by JS -->
+                </div>
+                <div class="gantt-timeline" id="ganttTimeline">
+                    <!-- Timeline ticks rendered by JS -->
+                </div>
+            </div>
+
+            <!-- ─── Results Table ──────────────────────────────────── -->
+            <div class="section-label" style="margin-top:2.5rem;">Results</div>
+            <div class="results-table-wrap">
+                <table class="results-table" id="resultsTable">
+                    <thead>
+                        <tr id="resultsHead">
+                            <!-- Dynamic headers -->
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        <!-- Dynamic rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ─── Metrics Dashboard ──────────────────────────────── -->
+            <div class="section-label" style="margin-top:2.5rem;">Performance Metrics</div>
+            <div class="metrics-grid" id="metricsGrid">
+                <!-- Metric cards rendered by JS -->
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        OS_final_project &nbsp;·&nbsp; Module 04 — CPU Scheduling
+    </footer>
+
+    <!-- Scheduling Engine -->
+    <script src="../js/cpu.js"></script>
+
+    <!-- Page Logic -->
+    <script>
+        (function () {
+            'use strict';
+
+            /* ── Theme toggle ────────────────────────────── */
+            const themeBtn = document.getElementById('themeToggle');
+            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+            themeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('light');
+                localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+            });
+
+            /* ── Scroll progress + back-to-top ────────────── */
+            const progressBar = document.getElementById('scrollProgress');
+            const backToTop = document.getElementById('backToTop');
+            window.addEventListener('scroll', () => {
+                const s = window.scrollY;
+                const max = document.documentElement.scrollHeight - window.innerHeight;
+                progressBar.style.width = (s / max * 100) + '%';
+                backToTop.classList.toggle('visible', s > 300);
+            }, { passive: true });
+            backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+            /* ── Algorithm descriptions ───────────────────── */
+            const ALGO_DESC = {
+                'fcfs': 'Processes are executed in the order they arrive. Simple, non-preemptive, and easy to understand — but can cause long waiting times (convoy effect).',
+                'sjf': 'Selects the process with the shortest burst time from the ready queue. Non-preemptive — once a process starts, it runs to completion. Optimal for minimizing average waiting time.',
+                'srtf': 'Preemptive version of SJF. If a new process arrives with a shorter remaining time than the currently running process, the CPU switches to the new process.',
+                'priority-np': 'Each process is assigned a priority (lower number = higher priority). Non-preemptive — the running process finishes before a higher-priority process can take over.',
+                'priority-p': 'Preemptive priority scheduling. If a newly arrived process has higher priority than the currently running one, the CPU is immediately reassigned.',
+                'rr': 'Each process gets a fixed time slice (quantum). If it doesn\'t finish in that slice, it goes to the back of the ready queue. Fair and responsive.',
+            };
+
+            /* ── Algorithm Selector ───────────────────────── */
+            let currentAlgo = 'fcfs';
+            const pills = document.querySelectorAll('.algo-pill');
+            const rrOptions = document.getElementById('rrOptions');
+            const algoDescText = document.getElementById('algoDescText');
+
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    pills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentAlgo = pill.dataset.algo;
+
+                    // Show/hide time quantum
+                    rrOptions.style.display = currentAlgo === 'rr' ? 'flex' : 'none';
+
+                    // Show/hide priority column
+                    const needsPriority = currentAlgo === 'priority-np' || currentAlgo === 'priority-p';
+                    document.querySelectorAll('.th-priority, .td-priority').forEach(el => {
+                        el.style.display = needsPriority ? '' : 'none';
+                    });
+
+                    // Update description
+                    algoDescText.textContent = ALGO_DESC[currentAlgo] || '';
+                });
+            });
+
+            /* ── Process Table ────────────────────────────── */
+            const tableBody = document.getElementById('processTableBody');
+            let processCount = 0;
+
+            // Color palette for processes
+            const PROCESS_COLORS = [
+                '#6c63ff', '#00c8e0', '#f0a500', '#34c77b', '#e05555',
+                '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6',
+                '#06b6d4', '#84cc16', '#ef4444', '#3b82f6', '#eab308',
+            ];
+
+            function getProcessColor(index) {
+                return PROCESS_COLORS[index % PROCESS_COLORS.length];
+            }
+
+            function addProcessRow(id, at, bt, pr) {
+                processCount++;
+                const row = document.createElement('tr');
+                row.dataset.index = processCount;
+                const needsPriority = currentAlgo === 'priority-np' || currentAlgo === 'priority-p';
+
+                row.innerHTML = `
+                <td class="td-num">${processCount}</td>
+                <td><input type="text" class="cpu-input input-pid" value="${id || 'P' + processCount}" /></td>
+                <td><input type="number" class="cpu-input input-at" value="${at ?? 0}" min="0" /></td>
+                <td><input type="number" class="cpu-input input-bt" value="${bt ?? 1}" min="1" /></td>
+                <td class="td-priority" style="display:${needsPriority ? '' : 'none'}"><input type="number" class="cpu-input input-pr" value="${pr ?? 1}" min="1" /></td>
+                <td class="td-remove">
+                    <button class="btn-icon btn-remove" aria-label="Remove process">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                </td>
+            `;
+
+                row.querySelector('.btn-remove').addEventListener('click', () => {
+                    row.classList.add('row-removing');
+                    setTimeout(() => {
+                        row.remove();
+                        renumberRows();
+                    }, 250);
+                });
+
+                tableBody.appendChild(row);
+                // Animate in
+                requestAnimationFrame(() => row.classList.add('row-visible'));
+            }
+
+            function renumberRows() {
+                const rows = tableBody.querySelectorAll('tr');
+                processCount = rows.length;
+                rows.forEach((row, i) => {
+                    row.querySelector('.td-num').textContent = i + 1;
+                    row.dataset.index = i + 1;
+                });
+            }
+
+            function getProcesses() {
+                const rows = tableBody.querySelectorAll('tr');
+                const processes = [];
+
+                rows.forEach((row, i) => {
+                    const id = row.querySelector('.input-pid').value.trim() || `P${i + 1}`;
+                    const at = parseInt(row.querySelector('.input-at').value) || 0;
+                    const bt = parseInt(row.querySelector('.input-bt').value) || 1;
+                    const pr = parseInt(row.querySelector('.input-pr').value) || 1;
+
+                    processes.push({ id, arrivalTime: at, burstTime: bt, priority: pr, inputOrder: i });
+                });
+
+                return processes;
+            }
+
+            // Add process button
+            document.getElementById('btnAddProcess').addEventListener('click', () => addProcessRow());
+
+            // Load example
+            document.getElementById('btnLoadExample').addEventListener('click', () => {
+                tableBody.innerHTML = '';
+                processCount = 0;
+                const examples = [
+                    { id: 'P1', at: 0, bt: 6, pr: 3 },
+                    { id: 'P2', at: 1, bt: 4, pr: 1 },
+                    { id: 'P3', at: 2, bt: 2, pr: 4 },
+                    { id: 'P4', at: 3, bt: 3, pr: 2 },
+                    { id: 'P5', at: 5, bt: 1, pr: 5 },
+                ];
+                examples.forEach(e => addProcessRow(e.id, e.at, e.bt, e.pr));
+            });
+
+            // Clear all
+            document.getElementById('btnClearAll').addEventListener('click', () => {
+                tableBody.innerHTML = '';
+                processCount = 0;
+                document.getElementById('outputSection').style.display = 'none';
+            });
+
+            // Start with 3 example rows
+            addProcessRow('P1', 0, 5, 2);
+            addProcessRow('P2', 1, 3, 1);
+            addProcessRow('P3', 2, 8, 3);
+
+            /* ── Run Simulation ──────────────────────────── */
+            document.getElementById('btnRun').addEventListener('click', runSimulation);
+
+            function runSimulation() {
+                const processes = getProcesses();
+                if (processes.length === 0) return;
+
+                let simulation;
+                const tq = parseInt(document.getElementById('timeQuantum').value) || 2;
+
+                switch (currentAlgo) {
+                    case 'fcfs': simulation = simulateFCFS(processes); break;
+                    case 'sjf': simulation = simulateSJF(processes); break;
+                    case 'srtf': simulation = simulateSRTF(processes); break;
+                    case 'priority-np': simulation = simulatePriorityNP(processes); break;
+                    case 'priority-p': simulation = simulatePriorityP(processes); break;
+                    case 'rr': simulation = simulateRoundRobin(processes, tq); break;
+                }
+
+                if (simulation) {
+                    renderOutput(simulation, processes);
+                }
+            }
+
+            /* ── Render Output ────────────────────────────── */
+            function renderOutput(sim, originalProcesses) {
+                const outputSection = document.getElementById('outputSection');
+                outputSection.style.display = '';
+
+                // Build process color map
+                const colorMap = {};
+                originalProcesses.forEach((p, i) => {
+                    colorMap[p.id] = getProcessColor(i);
+                });
+
+                renderGanttChart(sim.ganttChart, colorMap);
+                renderResultsTable(sim.results);
+                renderMetrics(sim.metrics);
+
+                // Smooth scroll to output
+                setTimeout(() => {
+                    outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+
+            /* ── Gantt Chart ──────────────────────────────── */
+            function renderGanttChart(ganttChart, colorMap) {
+                const container = document.getElementById('ganttChart');
+                const timeline = document.getElementById('ganttTimeline');
+                container.innerHTML = '';
+                timeline.innerHTML = '';
+
+                if (ganttChart.length === 0) return;
+
+                const totalTime = ganttChart[ganttChart.length - 1].endTime;
+                const startTime = ganttChart[0].startTime;
+                const duration = totalTime - startTime;
+
+                // Render blocks
+                ganttChart.forEach((block, i) => {
+                    const el = document.createElement('div');
+                    const widthPercent = ((block.endTime - block.startTime) / duration) * 100;
+
+                    el.className = 'gantt-block' + (block.id === 'Idle' ? ' gantt-idle' : '');
+                    el.style.width = widthPercent + '%';
+                    el.style.animationDelay = (i * 80) + 'ms';
+
+                    if (block.id !== 'Idle') {
+                        el.style.setProperty('--block-color', colorMap[block.id] || '#6c63ff');
+                    }
+
+                    el.innerHTML = `
+                    <span class="gantt-label">${block.id}</span>
+                    <span class="gantt-time">${block.startTime}–${block.endTime}</span>
+                `;
+
+                    // Tooltip
+                    el.title = `${block.id}\nStart: ${block.startTime}\nEnd: ${block.endTime}\nDuration: ${block.endTime - block.startTime}`;
+
+                    container.appendChild(el);
+                });
+
+                // Render timeline ticks
+                const tickCount = Math.min(duration + 1, 30);
+                const tickStep = duration <= 30 ? 1 : Math.ceil(duration / 20);
+
+                for (let t = startTime; t <= totalTime; t += tickStep) {
+                    const tick = document.createElement('div');
+                    tick.className = 'gantt-tick';
+                    tick.style.left = ((t - startTime) / duration * 100) + '%';
+                    tick.textContent = t;
+                    timeline.appendChild(tick);
+                }
+
+                // Always show the final tick
+                if ((totalTime - startTime) % tickStep !== 0) {
+                    const tick = document.createElement('div');
+                    tick.className = 'gantt-tick';
+                    tick.style.left = '100%';
+                    tick.textContent = totalTime;
+                    timeline.appendChild(tick);
+                }
+            }
+
+            /* ── Results Table ────────────────────────────── */
+            function renderResultsTable(results) {
+                const head = document.getElementById('resultsHead');
+                const body = document.getElementById('resultsBody');
+                head.innerHTML = '';
+                body.innerHTML = '';
+
+                const showPriority = currentAlgo === 'priority-np' || currentAlgo === 'priority-p';
+
+                const columns = [
+                    { key: 'id', label: 'Process' },
+                    { key: 'arrivalTime', label: 'AT' },
+                    { key: 'burstTime', label: 'BT' },
+                ];
+                if (showPriority) columns.push({ key: 'priority', label: 'Priority' });
+                columns.push(
+                    { key: 'startTime', label: 'Start' },
+                    { key: 'completionTime', label: 'CT' },
+                    { key: 'turnaroundTime', label: 'TAT' },
+                    { key: 'waitingTime', label: 'WT' },
+                    { key: 'responseTime', label: 'RT' },
+                );
+
+                // Header
+                columns.forEach(col => {
+                    const th = document.createElement('th');
+                    th.textContent = col.label;
+                    head.appendChild(th);
+                });
+
+                // Rows
+                results.forEach((r, i) => {
+                    const tr = document.createElement('tr');
+                    tr.style.animationDelay = (i * 50) + 'ms';
+
+                    columns.forEach(col => {
+                        const td = document.createElement('td');
+                        td.textContent = r[col.key];
+                        if (col.key === 'id') td.classList.add('td-process-name');
+                        tr.appendChild(td);
+                    });
+
+                    body.appendChild(tr);
+                });
+            }
+
+            /* ── Metrics Cards ────────────────────────────── */
+            function renderMetrics(metrics) {
+                const grid = document.getElementById('metricsGrid');
+                grid.innerHTML = '';
+
+                const items = [
+                    { label: 'Avg Waiting Time', value: metrics.averageWaitingTime.toFixed(2), unit: 'units', icon: '⏳', accent: '--accent' },
+                    { label: 'Avg Turnaround Time', value: metrics.averageTurnaroundTime.toFixed(2), unit: 'units', icon: '🔄', accent: '--cyan' },
+                    { label: 'Avg Response Time', value: metrics.averageResponseTime.toFixed(2), unit: 'units', icon: '⚡', accent: '--amber' },
+                    { label: 'CPU Utilization', value: metrics.cpuUtilization.toFixed(1), unit: '%', icon: '📊', accent: '--green' },
+                    { label: 'Throughput', value: metrics.throughput.toFixed(4), unit: 'proc/unit', icon: '🚀', accent: '--accent' },
+                ];
+
+                items.forEach((item, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'metric-card';
+                    card.style.animationDelay = (i * 100) + 'ms';
+                    card.innerHTML = `
+                    <div class="metric-icon">${item.icon}</div>
+                    <div class="metric-value">${item.value}<span class="metric-unit">${item.unit}</span></div>
+                    <div class="metric-label">${item.label}</div>
+                `;
+                    grid.appendChild(card);
+                });
+            }
+
+        /* ── Typewriter Effect ──────────────────────────── */
+        const typeTarget = document.getElementById('typeTarget');
+        const cursor = document.getElementById('cursor');
+
+        const line1 = 'CPU Scheduling';
+        const line2 = 'Simulator';
+        const full = line1 + '|' + line2;
+        let charIndex = 0;
+        let passedBreak = false;
+
+        const span1 = document.createElement('span');
+        const br = document.createElement('br');
+        const span2 = document.createElement('span');
+        span2.style.color = 'var(--accent)';
+        typeTarget.insertBefore(span1, cursor);
+
+        function typeChar() {
+            if (charIndex < full.length) {
+                const ch = full[charIndex];
+                if (ch === '|') {
+                    typeTarget.insertBefore(br, cursor);
+                    typeTarget.insertBefore(span2, cursor);
+                    passedBreak = true;
+                } else {
+                    if (passedBreak) span2.textContent += ch;
+                    else span1.textContent += ch;
+                }
+                charIndex++;
+                setTimeout(typeChar, 75 + Math.random() * 35);
+            } else {
+                cursor.classList.add('done');
+            }
+        }
+        setTimeout(typeChar, 400);
+
+        /* ── Aurora Canvas ─────────────────────────────── */
+        const canvas = document.getElementById('auroraCanvas');
+        const ctx = canvas.getContext('2d');
+        let W, H, t = 0;
+
+        function resizeCanvas() {
+            W = canvas.width = canvas.offsetWidth;
+            H = canvas.height = canvas.offsetHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const orbs = [
+            { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 260 },
+            { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 },
+            { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 230 },
+            { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 280 },
+            { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 185 },
+        ];
+
+        function isLight() { return document.body.classList.contains('light'); }
+
+        function drawAurora() {
+            t++;
+            ctx.clearRect(0, 0, W, H);
+            const light = isLight();
+
+            orbs.forEach(o => {
+                const angle = o.phase + t * o.spd * Math.PI * 2;
+                const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
+                const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
+                const radius = o.r * Math.min(W, H);
+                const alpha = light ? 0.13 : 0.22;
+
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                grad.addColorStop(0, `hsla(${o.hue}, 90%, ${light ? 55 : 65}%, ${alpha})`);
+                grad.addColorStop(0.5, `hsla(${o.hue + 20}, 80%, ${light ? 50 : 60}%, ${alpha * 0.5})`);
+                grad.addColorStop(1, `hsla(${o.hue + 40}, 70%, 50%, 0)`);
+
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+            });
+
+            requestAnimationFrame(drawAurora);
+        }
+        drawAurora();
+
+        })();
+    </script>
+
+</body>
+
+</html>
