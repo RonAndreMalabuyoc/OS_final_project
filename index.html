@@ -99,6 +99,7 @@
     <!-- Modules Showcase -->
     <section class="modules-showcase" id="modules">
 
+        <!-- Module 04: CPU -->
         <div class="module-panel" data-module="cpu" style="--panel-accent:#6c63ff;">
             <div class="panel-bg">
                 <canvas class="panel-canvas" data-anim="cpu"></canvas>
@@ -116,21 +117,6 @@
                     real-time waiting &amp; turnaround time stats.
                 </p>
                 <div class="panel-algorithms">
-    <!-- Modules -->
-    <main class="section" id="modules">
-        <div class="section-label">Modules</div>
-        <div class="modules-grid">
-
-            <a href="pages/cpu.html" class="module-card" style="--card-accent:#6c63ff;--card-accent-dim:#6c63ff18;">
-                <div class="card-meta">
-                    <span class="card-num">Module 04</span>
-                    <span class="card-status status-ready">Ready</span>
-                </div>
-                <div class="card-icon">⚙️</div>
-                <div class="card-title">CPU Scheduling</div>
-                <div class="card-desc">Simulate process scheduling with animated Gantt charts and real-time waiting
-                    &amp; turnaround time stats.</div>
-                <div class="card-algorithms">
                     <span class="algo-tag">FCFS</span>
                     <span class="algo-tag">SJF</span>
                     <span class="algo-tag">SRTF</span>
@@ -141,6 +127,7 @@
             </div>
         </div>
 
+        <!-- Module 05: Memory -->
         <div class="module-panel locked" data-module="memory" style="--panel-accent:#00c8e0;">
             <div class="panel-bg">
                 <canvas class="panel-canvas" data-anim="memory"></canvas>
@@ -158,18 +145,6 @@
                     visual memory maps.
                 </p>
                 <div class="panel-algorithms">
-            </a>
-
-            <div class="module-card locked" style="--card-accent:#00c8e0;--card-accent-dim:#00c8e015;">
-                <div class="card-meta">
-                    <span class="card-num">Module 05</span>
-                    <span class="card-status status-soon">Coming Soon</span>
-                </div>
-                <div class="card-icon">🧠</div>
-                <div class="card-title">Memory Management</div>
-                <div class="card-desc">Explore contiguous allocation, paging, and segmentation with visual memory maps.
-                </div>
-                <div class="card-algorithms">
                     <span class="algo-tag">First Fit</span>
                     <span class="algo-tag">Best Fit</span>
                     <span class="algo-tag">Worst Fit</span>
@@ -179,6 +154,7 @@
             </div>
         </div>
 
+        <!-- Module 06: Virtual -->
         <div class="module-panel locked" data-module="virtual" style="--panel-accent:#f0a500;">
             <div class="panel-bg">
                 <canvas class="panel-canvas" data-anim="virtual"></canvas>
@@ -196,18 +172,6 @@
                     like FIFO, LRU, and Optimal.
                 </p>
                 <div class="panel-algorithms">
-            </div>
-
-            <div class="module-card locked" style="--card-accent:#f0a500;--card-accent-dim:#f0a50015;">
-                <div class="card-meta">
-                    <span class="card-num">Module 06</span>
-                    <span class="card-status status-soon">Coming Soon</span>
-                </div>
-                <div class="card-icon">📄</div>
-                <div class="card-title">Virtual Memory</div>
-                <div class="card-desc">Visualize page tables, page faults, and replacement policies like FIFO, LRU, and
-                    Optimal.</div>
-                <div class="card-algorithms">
                     <span class="algo-tag">FIFO</span>
                     <span class="algo-tag">LRU</span>
                     <span class="algo-tag">Optimal</span>
@@ -217,6 +181,7 @@
             </div>
         </div>
 
+        <!-- Module 07: Storage -->
         <div class="module-panel locked" data-module="storage" style="--panel-accent:#34c77b;">
             <div class="panel-bg">
                 <canvas class="panel-canvas" data-anim="storage"></canvas>
@@ -234,18 +199,6 @@
                     SSTF, SCAN, and C-SCAN algorithms.
                 </p>
                 <div class="panel-algorithms">
-            </div>
-
-            <div class="module-card locked" style="--card-accent:#34c77b;--card-accent-dim:#34c77b15;">
-                <div class="card-meta">
-                    <span class="card-num">Module 07</span>
-                    <span class="card-status status-soon">Coming Soon</span>
-                </div>
-                <div class="card-icon">💾</div>
-                <div class="card-title">Mass Storage</div>
-                <div class="card-desc">Simulate disk scheduling with seek time visualization across SSTF, SCAN, and
-                    C-SCAN algorithms.</div>
-                <div class="card-algorithms">
                     <span class="algo-tag">FCFS</span>
                     <span class="algo-tag">SSTF</span>
                     <span class="algo-tag">SCAN</span>
@@ -256,10 +209,6 @@
         </div>
 
     </section>
-            </div>
-
-        </div>
-    </main>
 
     <footer class="footer">
         OS_final_project &nbsp;·&nbsp; Module 04–07 Simulations
@@ -599,14 +548,6 @@
             { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 185 },
         ];
 
-
-            { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 260 }, // purple
-            { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 }, // cyan
-            { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 230 }, // blue-violet
-            { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 280 }, // violet
-            { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 185 }, // teal
-        ];
-
         function isLight() { return body.classList.contains('light'); }
 
         function draw() {
@@ -632,15 +573,8 @@
                 grad.addColorStop(0, `hsla(${hue}, ${light ? 45 : 90}%, ${light ? 72 : 65}%, ${alpha})`);
                 grad.addColorStop(0.5, `hsla(${hue + 10}, ${light ? 35 : 80}%, ${light ? 68 : 60}%, ${alpha * 0.4})`);
                 grad.addColorStop(1, `hsla(${hue + 20}, 30%, 65%, ${alpha2})`);
-                const alpha = light ? 0.13 : 0.22;
-                const alpha2 = light ? 0.00 : 0.00;
 
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                grad.addColorStop(0, `hsla(${o.hue}, 90%, ${light ? 55 : 65}%, ${alpha})`);
-                grad.addColorStop(0.5, `hsla(${o.hue + 20}, 80%, ${light ? 50 : 60}%, ${alpha * 0.5})`);
-                grad.addColorStop(1, `hsla(${o.hue + 40}, 70%, 50%, ${alpha2})`);
-
-                ctx.beginPath();
+                ctx.beginPath()
                 ctx.arc(cx, cy, radius, 0, Math.PI * 2);
                 ctx.fillStyle = grad;
                 ctx.fill();
