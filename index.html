@@ -1,7 +1,165 @@
-print(hello world")
+<!DOCTYPE html>
+<html lang="en">
 
-sure
-sure
-sure
-sure
-testing
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OS Simulator</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-logo">
+            <span class="dot"></span>
+            OS Simulator
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="pages/cpu.html">CPU Scheduling</a></li>
+            <li><a href="pages/memory.html">Memory</a></li>
+            <li><a href="pages/virtual.html">Virtual Memory</a></li>
+            <li><a href="pages/storage.html">Storage</a></li>
+        </ul>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span>●</span> Interactive Simulations
+        </div>
+        <h1>Operating Systems<br /><span>Visualized</span></h1>
+        <p>
+            Step-by-step simulations for CPU scheduling, memory management,
+            virtual memory, and mass storage — built to make OS concepts click.
+        </p>
+        <div class="hero-actions">
+            <a href="pages/cpu.html" class="btn btn-primary">
+                Start Simulating →
+            </a>
+            <a href="#modules" class="btn btn-ghost">
+                Browse Modules
+            </a>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-num">4</div>
+            <div class="stat-label">Modules</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">13+</div>
+            <div class="stat-label">Algorithms</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">5</div>
+            <div class="stat-label">CPU Schedulers</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num">Live</div>
+            <div class="stat-label">Gantt Animation</div>
+        </div>
+    </div>
+
+    <!-- Modules -->
+    <main class="section" id="modules">
+        <div class="section-label">Modules</div>
+
+        <div class="modules-grid">
+
+            <!-- Module 4: CPU Scheduling -->
+            <a href="pages/cpu.html" class="module-card" style="--card-accent: #6c63ff; --card-accent-dim: #6c63ff18;">
+                <div class="card-meta">
+                    <span class="card-num">Module 04</span>
+                    <span class="card-status status-ready">Ready</span>
+                </div>
+                <div class="card-icon">⚙️</div>
+                <div class="card-title">CPU Scheduling</div>
+                <div class="card-desc">
+                    Simulate process scheduling with animated Gantt charts and
+                    real-time waiting &amp; turnaround time stats.
+                </div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">FCFS</span>
+                    <span class="algo-tag">SJF</span>
+                    <span class="algo-tag">SRTF</span>
+                    <span class="algo-tag">Round Robin</span>
+                    <span class="algo-tag">Priority</span>
+                </div>
+            </a>
+
+            <!-- Module 5: Memory Management -->
+            <div class="module-card locked" style="--card-accent: #00c8e0; --card-accent-dim: #00c8e015;">
+                <div class="card-meta">
+                    <span class="card-num">Module 05</span>
+                    <span class="card-status status-soon">Coming Soon</span>
+                </div>
+                <div class="card-icon">🧠</div>
+                <div class="card-title">Memory Management</div>
+                <div class="card-desc">
+                    Explore contiguous allocation, paging, and segmentation with
+                    visual memory maps.
+                </div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">First Fit</span>
+                    <span class="algo-tag">Best Fit</span>
+                    <span class="algo-tag">Worst Fit</span>
+                    <span class="algo-tag">Paging</span>
+                </div>
+            </div>
+
+            <!-- Module 6: Virtual Memory -->
+            <div class="module-card locked" style="--card-accent: #f0a500; --card-accent-dim: #f0a50015;">
+                <div class="card-meta">
+                    <span class="card-num">Module 06</span>
+                    <span class="card-status status-soon">Coming Soon</span>
+                </div>
+                <div class="card-icon">📄</div>
+                <div class="card-title">Virtual Memory</div>
+                <div class="card-desc">
+                    Visualize page tables, page faults, and replacement policies
+                    like FIFO, LRU, and Optimal.
+                </div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">FIFO</span>
+                    <span class="algo-tag">LRU</span>
+                    <span class="algo-tag">Optimal</span>
+                    <span class="algo-tag">Clock</span>
+                </div>
+            </div>
+
+            <!-- Module 7: Mass Storage -->
+            <div class="module-card locked" style="--card-accent: #34c77b; --card-accent-dim: #34c77b15;">
+                <div class="card-meta">
+                    <span class="card-num">Module 07</span>
+                    <span class="card-status status-soon">Coming Soon</span>
+                </div>
+                <div class="card-icon">💾</div>
+                <div class="card-title">Mass Storage</div>
+                <div class="card-desc">
+                    Simulate disk scheduling with seek time visualization across
+                    SSTF, SCAN, and C-SCAN algorithms.
+                </div>
+                <div class="card-algorithms">
+                    <span class="algo-tag">FCFS</span>
+                    <span class="algo-tag">SSTF</span>
+                    <span class="algo-tag">SCAN</span>
+                    <span class="algo-tag">C-SCAN</span>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        OS_final_project &nbsp;·&nbsp; Module 04–07 Simulations
+    </footer>
+
+</body>
+
+</html>
