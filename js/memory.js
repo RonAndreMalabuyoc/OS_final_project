@@ -1,6 +1,6 @@
 /* ==========================================================================
  * Memory Management Demo
- * MFT: Fixed Partition Allocation
+ * MVT: Variable Partition Allocation
  * Allocation algorithms: First Fit, Next Fit, Best Fit, Worst Fit
  *
  * Run in the VS Code terminal:
@@ -13,13 +13,8 @@ const readline = require('node:readline/promises');
 const fs = require('node:fs');
 const { stdin: input, stdout: output } = require('node:process');
 
-const MIN_PARTITION_KB = 4;
-const MAX_PARTITION_KB = 64;
-
 const DEFAULT_TOTAL_MEMORY_KB = 384;
-const DEFAULT_OS_MEMORY_KB = 128;
-const DEFAULT_PARTITION_SIZES = [64, 64, 64, 64];
-const DEFAULT_PARTITION_COUNT = DEFAULT_PARTITION_SIZES.length;
+const DEFAULT_OS_MEMORY_KB = 64;
 const ALGORITHMS = {
     first: 'First Fit',
     next: 'Next Fit',
@@ -27,11 +22,11 @@ const ALGORITHMS = {
     worst: 'Worst Fit',
 };
 const DEFAULT_JOBS = [
-    { id: 'J1', sizeKb: 32, arrivalOrder: 1 },
-    { id: 'J2', sizeKb: 48, arrivalOrder: 2 },
-    { id: 'J3', sizeKb: 20, arrivalOrder: 3 },
-    { id: 'J4', sizeKb: 60, arrivalOrder: 4 },
-    { id: 'J5', sizeKb: 28, arrivalOrder: 5 },
+    { id: 'J1', sizeKb: 80, arrivalOrder: 1, duration: 2 },
+    { id: 'J2', sizeKb: 60, arrivalOrder: 2, duration: 3 },
+    { id: 'J3', sizeKb: 100, arrivalOrder: 3, duration: 2 },
+    { id: 'J4', sizeKb: 70, arrivalOrder: 4, duration: 2 },
+    { id: 'J5', sizeKb: 120, arrivalOrder: 5, duration: 2 },
 ];
 
 function printLine() {
@@ -97,51 +92,34 @@ async function askAlgorithm(ask) {
     }
 }
 
-async function askPartitionSize(ask, partitionNumber, defaultValue) {
+async function askYesNo(ask, question, defaultValue) {
+    const defaultLabel = defaultValue ? 'Y' : 'N';
+
     while (true) {
-        const sizeKb = await askPositiveInteger(ask, `Partition ${partitionNumber} Size in KB (${MIN_PARTITION_KB}-${MAX_PARTITION_KB})`, defaultValue);
-        if (sizeKb >= MIN_PARTITION_KB && sizeKb <= MAX_PARTITION_KB) return sizeKb;
+        const answer = (await ask(`${question} [${defaultLabel}]: `)).trim().toLowerCase();
+        if (answer === '') return defaultValue;
+        if (answer === 'y' || answer === 'yes') return true;
+        if (answer === 'n' || answer === 'no') return false;
 
-        console.log(`Partition size must be between ${MIN_PARTITION_KB} KB and ${MAX_PARTITION_KB} KB.`);
-    }
-}
-
-async function askPartitionSizes(ask, userMemoryKb) {
-    while (true) {
-        const partitionCount = await askPositiveInteger(ask, 'Number of Partitions', DEFAULT_PARTITION_COUNT);
-        const sizes = [];
-
-        for (let index = 0; index < partitionCount; index += 1) {
-            const defaultValue = DEFAULT_PARTITION_SIZES[index] || MAX_PARTITION_KB;
-            sizes.push(await askPartitionSize(ask, index + 1, defaultValue));
-        }
-
-        const total = sizes.reduce((sum, size) => sum + size, 0);
-        if (total <= userMemoryKb) return sizes;
-
-        console.log(`Partition total is ${total} KB, but user memory is only ${userMemoryKb} KB.`);
-        console.log('Please enter the partition count and sizes again.\n');
+        console.log('Please enter yes or no.');
     }
 }
 
 async function askJob(ask, index) {
     const defaultJob = DEFAULT_JOBS[index] || {
         id: `J${index + 1}`,
-        sizeKb: 100 + (index * 25),
+        sizeKb: 64,
         arrivalOrder: index + 1,
+        duration: 2,
     };
 
     const idAnswer = (await ask(`Job ID [${defaultJob.id}]: `)).trim();
     const id = idAnswer || defaultJob.id;
     const sizeKb = await askPositiveInteger(ask, `Job Size for ${id} in KB`, defaultJob.sizeKb);
     const arrivalOrder = await askPositiveInteger(ask, `Arrival Order for ${id}`, defaultJob.arrivalOrder);
+    const duration = await askPositiveInteger(ask, `Job Duration for ${id}`, defaultJob.duration);
 
-    return {
-        id,
-        sizeKb,
-        arrivalOrder,
-        runTime: Math.max(1, Math.ceil(sizeKb / 60)),
-    };
+    return { id, sizeKb, arrivalOrder, duration };
 }
 
 async function getUserInput() {
@@ -152,6 +130,7 @@ async function getUserInput() {
         console.log('\nEnter memory configuration. Press Enter to use the default in brackets.\n');
 
         const algorithm = await askAlgorithm(ask);
+        const compactionEnabled = await askYesNo(ask, 'Enable compaction when total free memory can fit a waiting job?', true);
         const totalMemoryKb = await askPositiveInteger(ask, 'Total Memory Size in KB', DEFAULT_TOTAL_MEMORY_KB);
         let osMemoryKb;
 
@@ -162,11 +141,10 @@ async function getUserInput() {
         }
 
         const userMemoryKb = totalMemoryKb - osMemoryKb;
-        const partitionSizes = await askPartitionSizes(ask, userMemoryKb);
         const jobCount = await askPositiveInteger(ask, 'Number of Jobs', DEFAULT_JOBS.length);
         const jobs = [];
 
-        console.log('\nEnter job details. Runtime is calculated automatically from job size.\n');
+        console.log('\nEnter job details.\n');
         for (let index = 0; index < jobCount; index += 1) {
             console.log(`Job ${index + 1}`);
             jobs.push(await askJob(ask, index));
@@ -174,11 +152,11 @@ async function getUserInput() {
         }
 
         return {
+            algorithm,
+            compactionEnabled,
             totalMemoryKb,
             osMemoryKb,
             userMemoryKb,
-            partitionSizes,
-            algorithm,
             jobs: jobs.sort((a, b) => {
                 if (a.arrivalOrder !== b.arrivalOrder) return a.arrivalOrder - b.arrivalOrder;
                 return a.id.localeCompare(b.id);
@@ -192,49 +170,29 @@ async function getUserInput() {
 function createTaskStates(jobs) {
     return jobs.map(job => ({
         ...job,
-        remainingTime: job.runTime,
+        remainingTime: job.duration,
         status: 'Waiting',
         startAddress: null,
-        partitionId: null,
         startTime: null,
         finishTime: null,
     }));
 }
 
-function createFixedPartitions(config) {
-    const blocks = [
+function createMemoryBlocks(config) {
+    return [
         { type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null },
+        { type: 'hole', start: config.osMemoryKb, sizeKb: config.userMemoryKb, task: null },
     ];
-
-    let nextStart = config.osMemoryKb;
-    config.partitionSizes.forEach((sizeKb, index) => {
-        blocks.push({
-            type: 'partition',
-            id: index + 1,
-            start: nextStart,
-            sizeKb,
-            task: null,
-        });
-        nextStart += sizeKb;
-    });
-
-    const unpartitionedKb = config.totalMemoryKb - nextStart;
-    if (unpartitionedKb > 0) {
-        blocks.push({ type: 'unpartitioned', start: nextStart, sizeKb: unpartitionedKb, task: null });
-    }
-
-    return blocks;
 }
 
 function printHeader(config) {
-    console.log('\nMFT: FIXED PARTITION ALLOCATION');
+    console.log('\nMVT: VARIABLE PARTITION ALLOCATION');
     printLine();
     console.log(`Total memory:        ${config.totalMemoryKb} KB`);
     console.log(`OS memory:           ${config.osMemoryKb} KB`);
     console.log(`User memory:         ${config.userMemoryKb} KB`);
-    console.log(`Fixed partitions:    ${config.partitionSizes.join(', ')} KB`);
-    console.log(`Job count:           ${config.jobs.length}`);
     console.log(`Allocation method:   ${ALGORITHMS[config.algorithm]}`);
+    console.log(`Compaction:          ${config.compactionEnabled ? 'Enabled' : 'Disabled'}`);
     printLine();
 }
 
@@ -242,38 +200,34 @@ function printJobList(jobs) {
     console.log('Job list by arrival order:');
     jobs.forEach(job => {
         console.log(
-            `  ${job.id}: size=${job.sizeKb} KB, arrival order=${job.arrivalOrder}, runtime=${job.runTime}`
+            `  ${job.id}: size=${job.sizeKb} KB, arrival=${job.arrivalOrder}, duration=${job.duration}`
         );
     });
     printLine();
 }
 
-function findFirstFit(blocks, task) {
-    return blocks.findIndex(block =>
-        block.type === 'partition' &&
-        block.task === null &&
-        block.sizeKb >= task.sizeKb
-    );
-}
-
-function getPartitionIndexes(blocks) {
+function getHoleIndexes(blocks) {
     return blocks
         .map((block, index) => ({ block, index }))
-        .filter(item => item.block.type === 'partition')
+        .filter(item => item.block.type === 'hole')
         .map(item => item.index);
 }
 
-function findNextFit(blocks, task, allocator) {
-    const partitionIndexes = getPartitionIndexes(blocks);
-    if (partitionIndexes.length === 0) return -1;
+function findFirstFit(blocks, task) {
+    return blocks.findIndex(block => block.type === 'hole' && block.sizeKb >= task.sizeKb);
+}
 
-    for (let offset = 0; offset < partitionIndexes.length; offset += 1) {
-        const pointer = (allocator.nextPointer + offset) % partitionIndexes.length;
-        const blockIndex = partitionIndexes[pointer];
+function findNextFit(blocks, task, allocator) {
+    const holeIndexes = getHoleIndexes(blocks);
+    if (holeIndexes.length === 0) return -1;
+
+    for (let offset = 0; offset < holeIndexes.length; offset += 1) {
+        const pointer = (allocator.nextPointer + offset) % holeIndexes.length;
+        const blockIndex = holeIndexes[pointer];
         const block = blocks[blockIndex];
 
-        if (block.task === null && block.sizeKb >= task.sizeKb) {
-            allocator.nextPointer = (pointer + 1) % partitionIndexes.length;
+        if (block.sizeKb >= task.sizeKb) {
+            allocator.nextPointer = (pointer + 1) % holeIndexes.length;
             return blockIndex;
         }
     }
@@ -283,17 +237,15 @@ function findNextFit(blocks, task, allocator) {
 
 function findBestFit(blocks, task) {
     let bestIndex = -1;
-    let smallestWaste = Infinity;
+    let smallestRemainder = Infinity;
 
     blocks.forEach((block, index) => {
-        if (block.type !== 'partition' || block.task !== null || block.sizeKb < task.sizeKb) {
-            return;
-        }
+        if (block.type !== 'hole' || block.sizeKb < task.sizeKb) return;
 
-        const waste = block.sizeKb - task.sizeKb;
-        if (waste < smallestWaste) {
+        const remainder = block.sizeKb - task.sizeKb;
+        if (remainder < smallestRemainder) {
             bestIndex = index;
-            smallestWaste = waste;
+            smallestRemainder = remainder;
         }
     });
 
@@ -302,71 +254,116 @@ function findBestFit(blocks, task) {
 
 function findWorstFit(blocks, task) {
     let worstIndex = -1;
-    let largestWaste = -1;
+    let largestRemainder = -1;
 
     blocks.forEach((block, index) => {
-        if (block.type !== 'partition' || block.task !== null || block.sizeKb < task.sizeKb) {
-            return;
-        }
+        if (block.type !== 'hole' || block.sizeKb < task.sizeKb) return;
 
-        const waste = block.sizeKb - task.sizeKb;
-        if (waste > largestWaste) {
+        const remainder = block.sizeKb - task.sizeKb;
+        if (remainder > largestRemainder) {
             worstIndex = index;
-            largestWaste = waste;
+            largestRemainder = remainder;
         }
     });
 
     return worstIndex;
 }
 
-function findPartition(blocks, task, allocator) {
-    if (allocator.algorithm === 'next') {
-        return findNextFit(blocks, task, allocator);
-    }
-
-    if (allocator.algorithm === 'best') {
-        return findBestFit(blocks, task);
-    }
-
-    if (allocator.algorithm === 'worst') {
-        return findWorstFit(blocks, task);
-    }
-
+function findHole(blocks, task, allocator) {
+    if (allocator.algorithm === 'next') return findNextFit(blocks, task, allocator);
+    if (allocator.algorithm === 'best') return findBestFit(blocks, task);
+    if (allocator.algorithm === 'worst') return findWorstFit(blocks, task);
     return findFirstFit(blocks, task);
 }
 
 function allocateTask(blocks, task, clock, allocator) {
-    const partitionIndex = findPartition(blocks, task, allocator);
-    if (partitionIndex === -1) return false;
+    const holeIndex = findHole(blocks, task, allocator);
+    if (holeIndex === -1) return false;
 
-    const partition = blocks[partitionIndex];
+    const hole = blocks[holeIndex];
+    const taskBlock = {
+        type: 'job',
+        start: hole.start,
+        sizeKb: task.sizeKb,
+        task,
+    };
+
     task.status = 'Running';
-    task.startAddress = partition.start;
-    task.partitionId = partition.id;
-    if (task.startTime === null) {
-        task.startTime = clock;
+    task.startAddress = hole.start;
+    if (task.startTime === null) task.startTime = clock;
+
+    if (hole.sizeKb === task.sizeKb) {
+        blocks.splice(holeIndex, 1, taskBlock);
+    } else {
+        hole.start += task.sizeKb;
+        hole.sizeKb -= task.sizeKb;
+        blocks.splice(holeIndex, 0, taskBlock);
+        console.log(`t=${clock}: hole split, ${task.id} used ${task.sizeKb} KB and left ${hole.sizeKb} KB free.`);
     }
 
-    partition.task = task;
-
-    console.log(`t=${clock}: ${task.id} loaded into partition ${partition.id} by ${ALGORITHMS[allocator.algorithm]}.`);
+    console.log(`t=${clock}: ${task.id} loaded at address ${task.startAddress} KB by ${ALGORITHMS[allocator.algorithm]}.`);
     return true;
+}
+
+function mergeAdjacentHoles(blocks) {
+    for (let index = 0; index < blocks.length - 1; index += 1) {
+        const current = blocks[index];
+        const next = blocks[index + 1];
+
+        if (current.type === 'hole' && next.type === 'hole') {
+            current.sizeKb += next.sizeKb;
+            blocks.splice(index + 1, 1);
+            index -= 1;
+        }
+    }
+}
+
+function compactMemory(blocks, config, clock) {
+    const jobBlocks = blocks.filter(block => block.type === 'job');
+    let nextStart = config.osMemoryKb;
+
+    jobBlocks.forEach(block => {
+        block.start = nextStart;
+        block.task.startAddress = nextStart;
+        nextStart += block.sizeKb;
+    });
+
+    blocks.length = 0;
+    blocks.push({ type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null });
+    blocks.push(...jobBlocks);
+
+    const freeKb = config.totalMemoryKb - nextStart;
+    if (freeKb > 0) {
+        blocks.push({ type: 'hole', start: nextStart, sizeKb: freeKb, task: null });
+    }
+
+    console.log(`t=${clock}: compaction performed, all holes combined into one free block.`);
+}
+
+function getTotalFreeMemory(blocks) {
+    return blocks.reduce((total, block) => block.type === 'hole' ? total + block.sizeKb : total, 0);
+}
+
+function getLargestHole(blocks) {
+    return blocks.reduce((largest, block) => block.type === 'hole' ? Math.max(largest, block.sizeKb) : largest, 0);
 }
 
 function allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator) {
     const stillWaiting = [];
-    const largestPartition = Math.max(...config.partitionSizes);
 
     for (const task of waitingQueue) {
-        if (task.sizeKb > largestPartition) {
+        if (task.sizeKb > config.userMemoryKb) {
             task.status = 'Rejected';
             rejected.push(task);
-            console.log(`t=${clock}: ${task.id} rejected because ${task.sizeKb} KB is larger than every fixed partition.`);
+            console.log(`t=${clock}: ${task.id} rejected because it is larger than user memory.`);
             continue;
         }
 
-        if (allocateTask(blocks, task, clock, allocator)) {
-            continue;
+        if (allocateTask(blocks, task, clock, allocator)) continue;
+
+        if (config.compactionEnabled && getTotalFreeMemory(blocks) >= task.sizeKb && getLargestHole(blocks) < task.sizeKb) {
+            compactMemory(blocks, config, clock);
+            if (allocateTask(blocks, task, clock, allocator)) continue;
         }
 
         stillWaiting.push(task);
@@ -377,7 +374,7 @@ function allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, all
 
 function tick(blocks, completed, clock) {
     for (const block of [...blocks]) {
-        if (block.type !== 'partition' || block.task === null) continue;
+        if (block.type !== 'job') continue;
 
         block.task.remainingTime -= 1;
 
@@ -385,32 +382,22 @@ function tick(blocks, completed, clock) {
             block.task.status = 'Completed';
             block.task.finishTime = clock + 1;
             completed.push(block.task);
-            console.log(`t=${clock + 1}: ${block.task.id} completed and released partition ${block.id}.`);
+            console.log(`t=${clock + 1}: ${block.task.id} completed and released ${block.sizeKb} KB.`);
 
+            block.type = 'hole';
             block.task = null;
         }
     }
-}
 
-function getTotalFreeMemory(blocks) {
-    return blocks.reduce((total, block) => {
-        if (block.type !== 'partition' || block.task !== null) return total;
-        return total + block.sizeKb;
-    }, 0);
+    mergeAdjacentHoles(blocks);
 }
 
 function getUsedUserMemory(blocks) {
-    return blocks.reduce((total, block) => {
-        if (block.type !== 'partition' || block.task === null) return total;
-        return total + block.task.sizeKb;
-    }, 0);
+    return blocks.reduce((total, block) => block.type === 'job' ? total + block.sizeKb : total, 0);
 }
 
-function getInternalFragmentation(blocks) {
-    return blocks.reduce((total, block) => {
-        if (block.type !== 'partition' || block.task === null) return total;
-        return total + (block.sizeKb - block.task.sizeKb);
-    }, 0);
+function getExternalFragmentation(blocks) {
+    return getTotalFreeMemory(blocks) - getLargestHole(blocks);
 }
 
 function formatBlock(block) {
@@ -420,23 +407,17 @@ function formatBlock(block) {
         return `OS       ${block.start}-${end} KB (${block.sizeKb} KB reserved)`;
     }
 
-    if (block.type === 'unpartitioned') {
-        return `UNUSED   ${block.start}-${end} KB (${block.sizeKb} KB not partitioned)`;
+    if (block.type === 'hole') {
+        return `HOLE     ${block.start}-${end} KB (${block.sizeKb} KB free)`;
     }
 
-    if (block.task === null) {
-        return `P${String(block.id).padEnd(7)} ${block.start}-${end} KB (${block.sizeKb} KB free)`;
-    }
-
-    const waste = block.sizeKb - block.task.sizeKb;
-    return `P${String(block.id).padEnd(7)} ${block.start}-${end} KB: ${block.task.id} (${block.task.sizeKb}/${block.sizeKb} KB, ${block.task.remainingTime}/${block.task.runTime} time left, waste=${waste} KB)`;
+    return `${block.task.id.padEnd(8)} ${block.start}-${end} KB (${block.sizeKb} KB, ${block.task.remainingTime}/${block.task.duration} time left)`;
 }
 
 function getChartLabel(block) {
     if (block.type === 'os') return 'OS';
-    if (block.type === 'unpartitioned') return 'UNUSED';
-    if (block.task === null) return `P${block.id}`;
-    return `P${block.id}:${block.task.id}`;
+    if (block.type === 'hole') return 'HOLE';
+    return block.task.id;
 }
 
 function centerLabel(label, width) {
@@ -459,28 +440,39 @@ function printMemoryChart(blocks) {
         const usedWidth = parts.reduce((sum, part) => sum + part.width, 0);
         const width = isLast ? chartWidth - usedWidth : Math.max(3, proportionalWidth);
 
-        parts.push({
-            label: getChartLabel(block),
-            width,
-        });
+        parts.push({ label: getChartLabel(block), width });
     });
 
-    const bar = parts.map(part => centerLabel(part.label, part.width)).join('|');
-    const scale = parts.map(part => '-'.repeat(part.width)).join('+');
-
     console.log('\nMemory allocation chart:');
-    console.log(`  |${bar}|`);
-    console.log(`  0${scale}${totalMemory} KB`);
+    console.log(`  |${parts.map(part => centerLabel(part.label, part.width)).join('|')}|`);
+    console.log(`  0${parts.map(part => '-'.repeat(part.width)).join('+')}${totalMemory} KB`);
+}
+
+function printFreeSpaceList(blocks) {
+    const holes = blocks.filter(block => block.type === 'hole');
+
+    console.log('\nFree space list:');
+    if (holes.length === 0) {
+        console.log('  none');
+        return;
+    }
+
+    holes.forEach((hole, index) => {
+        console.log(`  Hole ${index + 1}: start=${hole.start} KB, size=${hole.sizeKb} KB`);
+    });
 }
 
 function printMemoryMap(blocks, clock) {
     console.log(`\nMemory map at t=${clock}:`);
     blocks.forEach(block => console.log(`  ${formatBlock(block)}`));
     printMemoryChart(blocks);
-    console.log(`  Jobs currently in memory: ${blocks.filter(block => block.type === 'partition' && block.task !== null).length}`);
+    printFreeSpaceList(blocks);
+    console.log(`  Jobs currently in memory: ${blocks.filter(block => block.type === 'job').length}`);
     console.log(`  Used user memory:         ${getUsedUserMemory(blocks)} KB`);
-    console.log(`  Free partition memory:    ${getTotalFreeMemory(blocks)} KB`);
-    console.log(`  Internal fragmentation:   ${getInternalFragmentation(blocks)} KB`);
+    console.log(`  Total free memory:        ${getTotalFreeMemory(blocks)} KB`);
+    console.log(`  Largest hole:             ${getLargestHole(blocks)} KB`);
+    console.log(`  External fragmentation:   ${getExternalFragmentation(blocks)} KB`);
+    console.log('  Internal fragmentation:   N/A for MVT');
 }
 
 function printQueues(waitingQueue, completed, rejected) {
@@ -494,7 +486,7 @@ function printQueues(waitingQueue, completed, rejected) {
 }
 
 function isFinished(blocks, waitingQueue) {
-    return waitingQueue.length === 0 && blocks.every(block => block.type !== 'partition' || block.task === null);
+    return waitingQueue.length === 0 && blocks.every(block => block.type !== 'job');
 }
 
 function printSummary(allTasks, completed, rejected, clock) {
@@ -516,13 +508,12 @@ function printSummary(allTasks, completed, rejected, clock) {
     allTasks.forEach(task => {
         const address = task.startAddress === null ? 'not loaded' : `${task.startAddress} KB`;
         const finish = task.finishTime === null ? 'n/a' : task.finishTime;
-        const partition = task.partitionId === null ? 'n/a' : `P${task.partitionId}`;
-        console.log(`  ${task.id}: ${task.status}, arrival=${task.arrivalOrder}, partition=${partition}, start address=${address}, finish=${finish}`);
+        console.log(`  ${task.id}: ${task.status}, arrival=${task.arrivalOrder}, start address=${address}, finish=${finish}`);
     });
 }
 
-function runMftDemo(config) {
-    const blocks = createFixedPartitions(config);
+function runMvtDemo(config) {
+    const blocks = createMemoryBlocks(config);
     const allTasks = createTaskStates(config.jobs);
     const completed = [];
     const rejected = [];
@@ -554,7 +545,7 @@ function runMftDemo(config) {
 
 async function main() {
     const config = await getUserInput();
-    runMftDemo(config);
+    runMvtDemo(config);
 }
 
 main().catch(error => {
