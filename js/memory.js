@@ -1,7 +1,7 @@
 /* ==========================================================================
  * Memory Management Demo
  * MFT: Fixed Partition Allocation
- * Allocation algorithms: First Fit, Next Fit, Best Fit
+ * Allocation algorithms: First Fit, Next Fit, Best Fit, Worst Fit
  *
  * Run in the VS Code terminal:
  *   node js/memory.js
@@ -24,6 +24,7 @@ const ALGORITHMS = {
     first: 'First Fit',
     next: 'Next Fit',
     best: 'Best Fit',
+    worst: 'Worst Fit',
 };
 const DEFAULT_JOBS = [
     { id: 'J1', sizeKb: 32, arrivalOrder: 1 },
@@ -84,13 +85,15 @@ async function askAlgorithm(ask) {
         console.log('  1. First Fit');
         console.log('  2. Next Fit');
         console.log('  3. Best Fit');
+        console.log('  4. Worst Fit');
 
         const answer = (await ask('Choose algorithm [2]: ')).trim();
         if (answer === '' || answer === '2') return 'next';
         if (answer === '1') return 'first';
         if (answer === '3') return 'best';
+        if (answer === '4') return 'worst';
 
-        console.log('Please enter 1 for First Fit, 2 for Next Fit, or 3 for Best Fit.');
+        console.log('Please enter 1 for First Fit, 2 for Next Fit, 3 for Best Fit, or 4 for Worst Fit.');
     }
 }
 
@@ -297,6 +300,25 @@ function findBestFit(blocks, task) {
     return bestIndex;
 }
 
+function findWorstFit(blocks, task) {
+    let worstIndex = -1;
+    let largestWaste = -1;
+
+    blocks.forEach((block, index) => {
+        if (block.type !== 'partition' || block.task !== null || block.sizeKb < task.sizeKb) {
+            return;
+        }
+
+        const waste = block.sizeKb - task.sizeKb;
+        if (waste > largestWaste) {
+            worstIndex = index;
+            largestWaste = waste;
+        }
+    });
+
+    return worstIndex;
+}
+
 function findPartition(blocks, task, allocator) {
     if (allocator.algorithm === 'next') {
         return findNextFit(blocks, task, allocator);
@@ -304,6 +326,10 @@ function findPartition(blocks, task, allocator) {
 
     if (allocator.algorithm === 'best') {
         return findBestFit(blocks, task);
+    }
+
+    if (allocator.algorithm === 'worst') {
+        return findWorstFit(blocks, task);
     }
 
     return findFirstFit(blocks, task);
