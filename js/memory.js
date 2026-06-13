@@ -1,7 +1,7 @@
 /* ==========================================================================
  * Memory Management Demo
  * MFT: Fixed Partition Allocation
- * Allocation algorithm: First Fit
+ * Allocation algorithms: First Fit, Next Fit, Best Fit
  *
  * Run in the VS Code terminal:
  *   node js/memory.js
@@ -20,6 +20,11 @@ const DEFAULT_TOTAL_MEMORY_KB = 384;
 const DEFAULT_OS_MEMORY_KB = 128;
 const DEFAULT_PARTITION_SIZES = [64, 64, 64, 64];
 const DEFAULT_PARTITION_COUNT = DEFAULT_PARTITION_SIZES.length;
+const ALGORITHMS = {
+    first: 'First Fit',
+    next: 'Next Fit',
+    best: 'Best Fit',
+};
 const DEFAULT_JOBS = [
     { id: 'J1', sizeKb: 32, arrivalOrder: 1 },
     { id: 'J2', sizeKb: 48, arrivalOrder: 2 },
@@ -70,6 +75,22 @@ async function askPositiveInteger(ask, question, defaultValue) {
         if (value !== null) return value;
 
         console.log('Please enter a positive whole number.');
+    }
+}
+
+async function askAlgorithm(ask) {
+    while (true) {
+        console.log('Allocation Algorithm');
+        console.log('  1. First Fit');
+        console.log('  2. Next Fit');
+        console.log('  3. Best Fit');
+
+        const answer = (await ask('Choose algorithm [2]: ')).trim();
+        if (answer === '' || answer === '2') return 'next';
+        if (answer === '1') return 'first';
+        if (answer === '3') return 'best';
+
+        console.log('Please enter 1 for First Fit, 2 for Next Fit, or 3 for Best Fit.');
     }
 }
 
@@ -127,6 +148,7 @@ async function getUserInput() {
     try {
         console.log('\nEnter memory configuration. Press Enter to use the default in brackets.\n');
 
+        const algorithm = await askAlgorithm(ask);
         const totalMemoryKb = await askPositiveInteger(ask, 'Total Memory Size in KB', DEFAULT_TOTAL_MEMORY_KB);
         let osMemoryKb;
 
@@ -153,6 +175,7 @@ async function getUserInput() {
             osMemoryKb,
             userMemoryKb,
             partitionSizes,
+            algorithm,
             jobs: jobs.sort((a, b) => {
                 if (a.arrivalOrder !== b.arrivalOrder) return a.arrivalOrder - b.arrivalOrder;
                 return a.id.localeCompare(b.id);
@@ -208,7 +231,7 @@ function printHeader(config) {
     console.log(`User memory:         ${config.userMemoryKb} KB`);
     console.log(`Fixed partitions:    ${config.partitionSizes.join(', ')} KB`);
     console.log(`Job count:           ${config.jobs.length}`);
-    console.log('Allocation method:   First Fit');
+    console.log(`Allocation method:   ${ALGORITHMS[config.algorithm]}`);
     printLine();
 }
 
@@ -230,8 +253,64 @@ function findFirstFit(blocks, task) {
     );
 }
 
-function allocateTask(blocks, task, clock) {
-    const partitionIndex = findFirstFit(blocks, task);
+function getPartitionIndexes(blocks) {
+    return blocks
+        .map((block, index) => ({ block, index }))
+        .filter(item => item.block.type === 'partition')
+        .map(item => item.index);
+}
+
+function findNextFit(blocks, task, allocator) {
+    const partitionIndexes = getPartitionIndexes(blocks);
+    if (partitionIndexes.length === 0) return -1;
+
+    for (let offset = 0; offset < partitionIndexes.length; offset += 1) {
+        const pointer = (allocator.nextPointer + offset) % partitionIndexes.length;
+        const blockIndex = partitionIndexes[pointer];
+        const block = blocks[blockIndex];
+
+        if (block.task === null && block.sizeKb >= task.sizeKb) {
+            allocator.nextPointer = (pointer + 1) % partitionIndexes.length;
+            return blockIndex;
+        }
+    }
+
+    return -1;
+}
+
+function findBestFit(blocks, task) {
+    let bestIndex = -1;
+    let smallestWaste = Infinity;
+
+    blocks.forEach((block, index) => {
+        if (block.type !== 'partition' || block.task !== null || block.sizeKb < task.sizeKb) {
+            return;
+        }
+
+        const waste = block.sizeKb - task.sizeKb;
+        if (waste < smallestWaste) {
+            bestIndex = index;
+            smallestWaste = waste;
+        }
+    });
+
+    return bestIndex;
+}
+
+function findPartition(blocks, task, allocator) {
+    if (allocator.algorithm === 'next') {
+        return findNextFit(blocks, task, allocator);
+    }
+
+    if (allocator.algorithm === 'best') {
+        return findBestFit(blocks, task);
+    }
+
+    return findFirstFit(blocks, task);
+}
+
+function allocateTask(blocks, task, clock, allocator) {
+    const partitionIndex = findPartition(blocks, task, allocator);
     if (partitionIndex === -1) return false;
 
     const partition = blocks[partitionIndex];
@@ -244,11 +323,11 @@ function allocateTask(blocks, task, clock) {
 
     partition.task = task;
 
-    console.log(`t=${clock}: ${task.id} loaded into partition ${partition.id} by First Fit.`);
+    console.log(`t=${clock}: ${task.id} loaded into partition ${partition.id} by ${ALGORITHMS[allocator.algorithm]}.`);
     return true;
 }
 
-function allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock) {
+function allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator) {
     const stillWaiting = [];
     const largestPartition = Math.max(...config.partitionSizes);
 
@@ -260,7 +339,7 @@ function allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock) {
             continue;
         }
 
-        if (allocateTask(blocks, task, clock)) {
+        if (allocateTask(blocks, task, clock, allocator)) {
             continue;
         }
 
@@ -416,18 +495,22 @@ function printSummary(allTasks, completed, rejected, clock) {
     });
 }
 
-function runMftFirstFitDemo(config) {
+function runMftDemo(config) {
     const blocks = createFixedPartitions(config);
     const allTasks = createTaskStates(config.jobs);
     const completed = [];
     const rejected = [];
+    const allocator = {
+        algorithm: config.algorithm,
+        nextPointer: 0,
+    };
     let waitingQueue = [...allTasks];
     let clock = 0;
 
     printHeader(config);
     printJobList(config.jobs);
 
-    waitingQueue = allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock);
+    waitingQueue = allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator);
     printMemoryMap(blocks, clock);
     printQueues(waitingQueue, completed, rejected);
 
@@ -435,7 +518,7 @@ function runMftFirstFitDemo(config) {
         printLine();
         tick(blocks, completed, clock);
         clock += 1;
-        waitingQueue = allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock);
+        waitingQueue = allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator);
         printMemoryMap(blocks, clock);
         printQueues(waitingQueue, completed, rejected);
     }
@@ -445,7 +528,7 @@ function runMftFirstFitDemo(config) {
 
 async function main() {
     const config = await getUserInput();
-    runMftFirstFitDemo(config);
+    runMftDemo(config);
 }
 
 main().catch(error => {
