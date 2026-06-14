@@ -462,6 +462,107 @@ function runFIFO(
     };
 }
 
+function selectOPT(
+    frames,
+    refs,
+    currentIndex
+) {
+    let victim = 0;
+    let farthest = -1;
+    for (
+        let i = 0;
+        i < frames.length;
+        i++
+    ) {
+        let nextUse = Infinity;
+        for (
+            let j = currentIndex + 1;
+            j < refs.length;
+            j++
+        ) {
+            if (
+                refs[j] ===
+                frames[i].page
+            ) {
+                nextUse = j;
+                break;
+            }
+        }
+        if (
+            nextUse > farthest
+        ) {
+            farthest =
+                nextUse;
+            victim = i;
+        }
+    }
+    return victim;
+}
+
+function runOPT(
+    page,
+    state,
+    refs,
+    currentIndex
+) {
+    const hit =
+        findPage(
+            state.frames,
+            page
+        );
+    if (hit !== -1) {
+        processHit(
+            state.frames[hit],
+            state
+        );
+        return {
+            status:
+                'PAGE HIT',
+            victim: null
+        };
+    }
+    state.pageFaults++;
+    const empty =
+        findEmptyFrame(
+            state.frames
+        );
+    if (empty !== -1) {
+        loadPage(
+            state.frames[empty],
+            page,
+            state.time
+        );
+        return {
+            status:
+                'PAGE FAULT',
+            victim: null
+        };
+    }
+    const victim =
+        selectOPT(
+            state.frames,
+            refs,
+            currentIndex
+        );
+    const victimPage =
+        state.frames[
+            victim
+        ].page;
+    loadPage(
+        state.frames[
+            victim
+        ],
+        page,
+        state.time
+    );
+    return {
+        status:
+            'PAGE FAULT',
+        victim:
+            victimPage
+    };
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
