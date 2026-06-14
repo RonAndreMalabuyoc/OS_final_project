@@ -1760,3 +1760,581 @@ body.light .btn-primary:hover {
     background: #6B4F2E;
     border-color: #6B4F2E;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  MEMORY MANAGEMENT PAGE STYLES
+ * ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Memory Config Grid ──────────────────────────── */
+.mem-config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.mem-config-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mem-config-card .cpu-input {
+    max-width: 100%;
+}
+
+.mem-computed-value {
+    font-family: var(--font-mono);
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--cyan);
+    line-height: 1.4;
+}
+
+/* ── Toggle Switch ───────────────────────────────── */
+.mem-toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+    height: 100%;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: all 0.25s ease;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.toggle-switch input:checked + .toggle-slider::after {
+    left: 23px;
+    background: #fff;
+}
+
+/* ── Memory Map Visualization ────────────────────── */
+.mem-snapshot-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.mem-step-indicator {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-secondary);
+    min-width: 160px;
+    text-align: center;
+}
+
+.mem-map-container {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+    overflow-x: auto;
+}
+
+.mem-map-bar {
+    display: flex;
+    height: 72px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.mem-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 28px;
+    position: relative;
+    animation: memBlockIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    cursor: default;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    transition: filter 0.18s ease;
+}
+
+.mem-block:last-child {
+    border-right: none;
+}
+
+.mem-block:hover {
+    filter: brightness(1.2);
+    z-index: 2;
+}
+
+@keyframes memBlockIn {
+    from {
+        opacity: 0;
+        transform: scaleX(0.7);
+    }
+    to {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+.mem-block-os {
+    background: linear-gradient(135deg, #2a2a3a, #1e1e2e);
+    border-right-color: rgba(255, 255, 255, 0.06);
+}
+
+body.light .mem-block-os {
+    background: linear-gradient(135deg, #c8c5be, #b5b0a6);
+}
+
+.mem-block-hole {
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(255, 255, 255, 0.03) 4px,
+        rgba(255, 255, 255, 0.03) 8px
+    ), var(--bg-surface);
+    border-right-color: rgba(255, 255, 255, 0.04);
+}
+
+body.light .mem-block-hole {
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(0, 0, 0, 0.04) 4px,
+        rgba(0, 0, 0, 0.04) 8px
+    ), var(--bg-surface);
+}
+
+.mem-block-job {
+    /* Glass tank — the canvas draws the liquid inside */
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        0 4px 14px -6px var(--job-color, var(--accent));
+    overflow: hidden;
+}
+
+/* Glass shine overlay */
+.mem-block-job::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0) 40%,
+        rgba(0, 0, 0, 0.10) 100%);
+    pointer-events: none;
+    z-index: 2;
+    border-radius: inherit;
+}
+
+/* Water canvas inside each job block */
+.mem-water-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.mem-block-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    position: relative;
+    z-index: 3;
+    line-height: 1;
+}
+
+.mem-block-os .mem-block-label {
+    color: var(--text-muted);
+    text-shadow: none;
+}
+
+body.light .mem-block-os .mem-block-label {
+    color: #555;
+}
+
+.mem-block-hole .mem-block-label {
+    color: var(--text-muted);
+    text-shadow: none;
+    font-weight: 400;
+    font-size: 10px;
+}
+
+.mem-block-size {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.75);
+    position: relative;
+    z-index: 3;
+    line-height: 1;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.mem-block-os .mem-block-size,
+.mem-block-hole .mem-block-size {
+    color: var(--text-muted);
+}
+
+/* Address labels */
+.mem-map-addresses {
+    position: relative;
+    height: 20px;
+    margin-top: 4px;
+}
+
+.mem-addr-label {
+    position: absolute;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    transform: translateX(-50%);
+    top: 2px;
+}
+
+/* ── Memory Stats Row ────────────────────────────── */
+.mem-stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.mem-stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    text-align: center;
+    animation: metricPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: border-color var(--transition), transform var(--transition);
+}
+
+.mem-stat-card:hover {
+    border-color: var(--cyan);
+    transform: translateY(-2px);
+}
+
+.mem-stat-icon {
+    font-size: 18px;
+    margin-bottom: 4px;
+}
+
+.mem-stat-value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.mem-stat-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+/* ── Free Space List ─────────────────────────────── */
+.mem-free-list {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.mem-free-item {
+    padding: 10px 16px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mem-free-item:last-child {
+    border-bottom: none;
+}
+
+.mem-free-none {
+    color: var(--text-muted);
+    font-style: italic;
+    justify-content: center;
+}
+
+.mem-free-num {
+    font-weight: 600;
+    color: var(--cyan);
+    min-width: 56px;
+}
+
+/* ── Queue Cards ─────────────────────────────────── */
+.mem-queues-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.mem-queue-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    animation: metricPop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+.mem-queue-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.mem-queue-icon {
+    font-size: 16px;
+}
+
+.mem-queue-title {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mem-queue-count {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 2px 8px;
+}
+
+.mem-queue-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.mem-queue-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid #6c63ff33;
+}
+
+.mem-queue-empty {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+/* ── Simulation Log ──────────────────────────────── */
+.mem-log-wrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    max-height: 280px;
+    overflow-y: auto;
+    margin-bottom: 0.5rem;
+}
+
+.mem-log {
+    padding: 0.75rem 0;
+}
+
+.mem-log-entry {
+    padding: 6px 16px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    animation: fadeInRow 0.3s ease forwards;
+    opacity: 0;
+    border-left: 3px solid transparent;
+}
+
+.mem-log-entry:hover {
+    background: var(--bg-surface);
+}
+
+.mem-log-time {
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-right: 8px;
+    min-width: 36px;
+    display: inline-block;
+}
+
+.mem-log-success {
+    border-left-color: var(--green);
+}
+
+.mem-log-success .mem-log-time {
+    color: var(--green);
+}
+
+.mem-log-info {
+    border-left-color: var(--cyan);
+}
+
+.mem-log-info .mem-log-time {
+    color: var(--cyan);
+}
+
+.mem-log-warning {
+    border-left-color: var(--amber);
+}
+
+.mem-log-warning .mem-log-time {
+    color: var(--amber);
+}
+
+.mem-log-error {
+    border-left-color: var(--red);
+}
+
+.mem-log-error .mem-log-time {
+    color: var(--red);
+}
+
+.mem-log-complete {
+    border-left-color: var(--accent);
+}
+
+.mem-log-complete .mem-log-time {
+    color: var(--accent);
+}
+
+/* ── Status badges in results table ──────────────── */
+.mem-status-completed {
+    color: var(--green) !important;
+    font-weight: 600;
+}
+
+.mem-status-rejected {
+    color: var(--red) !important;
+    font-weight: 600;
+}
+
+.mem-status-waiting {
+    color: var(--amber) !important;
+}
+
+.mem-status-running {
+    color: var(--cyan) !important;
+}
+
+/* ── Responsive ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .mem-config-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mem-stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .mem-queues-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mem-snapshot-controls {
+        flex-wrap: wrap;
+    }
+
+    .mem-map-bar {
+        height: 56px;
+    }
+
+    .mem-block-label {
+        font-size: 9px;
+    }
+
+    .mem-block-size {
+        font-size: 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mem-config-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mem-stats-row {
+        grid-template-columns: 1fr;
+    }
+
+    .cell-label {
+        display: block;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+}
