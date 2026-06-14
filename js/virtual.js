@@ -840,6 +840,84 @@ function runEnhancedClock(page, state) {
     };
 }
 
+function runLFU(
+    page,
+    state
+) {
+    const hit =
+        findPage(
+            state.frames,
+            page
+        );
+
+    if (hit !== -1) {
+        processHit(
+            state.frames[hit],
+            state
+        );
+
+        return {
+            status:
+                'PAGE HIT',
+            victim: null
+        };
+    }
+
+    state.pageFaults++;
+
+    const empty =
+        findEmptyFrame(
+            state.frames
+        );
+
+    if (empty !== -1) {
+        loadPage(
+            state.frames[empty],
+            page,
+            state.time
+        );
+
+        return {
+            status:
+                'PAGE FAULT',
+            victim: null
+        };
+    }
+
+    let victim = 0;
+
+    for (let i = 1; i < state.frames.length; i++) {
+       const current = state.frames[i];
+       const best = state.frames[victim];
+
+       if (
+           current.count < best.count ||
+        (
+              current.count === best.count &&
+              current.lastUsed < best.lastUsed
+        )
+    ) {
+        victim = i;
+    }
+}
+
+    const victimPage =
+        state.frames[victim].page;
+
+    loadPage(
+        state.frames[victim],
+        page,
+        state.time
+    );
+
+    return {
+        status:
+            'PAGE FAULT',
+        victim:
+            victimPage
+    };
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
