@@ -711,6 +711,80 @@ if (hit !== -1) {
     };
 }
 
+function runClock(
+    page,
+    state
+) {
+    const hit =
+        findPage(
+            state.frames,
+            page
+        );
+    if (hit !== -1) {
+        processHit(
+            state.frames[hit],
+            state
+        );
+        state.frames[hit].R = 1;
+        return {
+            status:
+                'PAGE HIT',
+            victim: null
+        };
+    }
+    state.pageFaults++;
+    while (true) {
+        const frame =
+            state.frames[
+                state.clockHand
+            ];
+        if (
+            frame.page === null
+        ) {
+            loadPage(
+                frame,
+                page,
+                state.time
+            );
+            state.clockHand =
+                (
+                    state.clockHand + 1
+                ) %
+                state.frames.length;
+            return {
+                status:
+                    'PAGE FAULT',
+                victim: null
+            };
+        }
+        if (frame.R === 0) {
+            const victim =
+                frame.page;
+            loadPage(
+                frame,
+                page,
+                state.time
+            );
+            state.clockHand =
+                (
+                    state.clockHand + 1
+                ) %
+                state.frames.length;
+            return {
+                status:
+                    'PAGE FAULT',
+                victim
+            };
+        }
+        frame.R = 0;
+        state.clockHand =
+            (
+                state.clockHand + 1
+            ) %
+            state.frames.length;
+    }
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
