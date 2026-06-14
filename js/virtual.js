@@ -245,6 +245,130 @@ function findEmptyFrame(frames) {
     );
 }
 
+function createState(config) {
+    return {
+        frames:
+            createFrames(
+                config.frames
+            ),
+        pageHits: 0,
+        pageFaults: 0,
+        clockHand: 0,
+        fifoQueue: [],
+        time: 0,
+    };
+}
+
+function printHeader(config) {
+    console.log(
+        '\nVIRTUAL MEMORY MANAGEMENT SIMULATOR'
+    );
+    printLine();
+    console.log(
+        `Algorithm: ${
+            ALGORITHMS[
+                config.algorithm
+            ]
+        }`
+    );
+    console.log(
+        `Frames: ${config.frames}`
+    );
+    console.log(
+        `Reference String: ${
+            config.referenceString
+                .join(' ')
+        }`
+    );
+    printLine();
+}
+
+main().catch(error => {
+    console.error(
+        'Program failed:',
+        error.message
+    );
+    process.exitCode = 1;
+});
+
+function printFrameTable(frames) {
+    console.log('\nFrame Table');
+    console.log(
+        '+-------+------+---+---+---------+-------+'
+    );
+    console.log(
+        '|Frame  |Page  |R  |M  |RefByte  |Count  |'
+    );
+    console.log(
+        '+-------+------+---+---+---------+-------+'
+    );
+    frames.forEach((frame, index) => {
+        const page =
+            frame.page === null
+                ? '-'
+                : frame.page;
+        const refByte =
+            frame.refByte
+                .toString(2)
+                .padStart(8, '0');
+        console.log(
+            `|F${index}`.padEnd(8) +
+            `|${String(page)}`.padEnd(6) +
+            `|${frame.R}`.padEnd(4) +
+            `|${frame.M}`.padEnd(4) +
+            `|${refByte}`.padEnd(10) +
+            `|${frame.count}`.padEnd(8) +
+            '|'
+        );
+    });
+    console.log(
+        '+-------+------+---+---+---------+-------+'
+    );
+}
+
+function printStep(
+    page,
+    status,
+    victim,
+    state
+) {
+    printLine();
+    console.log(
+        `Current Page Reference: ${page}`
+    );
+    console.log(
+        `Status: ${status}`
+    );
+    console.log(
+        `Victim Page: ${
+            victim === null
+                ? 'None'
+                : victim
+        }`
+    );
+    printFrameTable(
+        state.frames
+    );
+    const total =
+        state.pageHits +
+        state.pageFaults;
+    const rate =
+        getFaultRate(
+            state.pageFaults,
+            total
+        );
+    console.log(
+        `Clock Hand: F${state.clockHand}`
+    );
+    console.log(
+        `Page Fault Count: ${state.pageFaults}`
+    );
+    console.log(
+        `Page Fault Rate: ${(rate * 100)
+            .toFixed(2)}%`
+    );
+}
+
 function loadPage(
     frame,
     page,
@@ -268,6 +392,74 @@ function processHit(frame, state) {
 
 function simulateWriteAccess(frame) {
     frame.M = 1;
+}
+
+function selectFIFO(state) {
+    return state.fifoQueue.shift();
+}
+
+function runFIFO(
+    page,
+    state
+) {
+    const hitIndex =
+        findPage(
+            state.frames,
+            page
+        );
+    if (hitIndex !== -1) {
+        processHit(
+            state.frames[hitIndex],
+            state
+        );
+        return {
+            status:
+                'PAGE HIT',
+            victim: null
+        };
+    }
+    state.pageFaults++;
+    const empty =
+        findEmptyFrame(
+            state.frames
+        );
+    if (empty !== -1) {
+        loadPage(
+            state.frames[empty],
+            page,
+            state.time
+        );
+        state.fifoQueue.push(
+            empty
+        );
+        return {
+            status:
+                'PAGE FAULT',
+            victim: null
+        };
+    }
+    const victimFrame =
+        selectFIFO(state);
+    const victimPage =
+        state.frames[
+            victimFrame
+        ].page;
+    loadPage(
+        state.frames[
+            victimFrame
+        ],
+        page,
+        state.time
+    );
+    state.fifoQueue.push(
+        victimFrame
+    );
+    return {
+        status:
+            'PAGE FAULT',
+        victim:
+            victimPage
+    };
 }
 
 main().catch(error => {
