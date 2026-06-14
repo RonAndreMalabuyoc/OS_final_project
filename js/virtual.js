@@ -996,6 +996,72 @@ function runMFU(
     };
 }
 
+function simulateReference(
+    page,
+    state,
+    config,
+    index
+) {
+    switch (
+        config.algorithm
+    ) {
+        case 'fifo':
+            return runFIFO(
+                page,
+                state
+            );
+
+        case 'lru':
+            return runLRU(
+                page,
+                state
+            );
+
+	case 'arb':
+ 	   return runARB(
+		page, 
+		state
+	    );
+
+        case 'opt':
+            return runOPT(
+                page,
+                state,
+                config.referenceString,
+                index
+            );
+
+        case 'clock':
+            return runClock(
+                page,
+                state
+            );
+
+	case 'enhanced':
+ 	   return runEnhancedClock(
+		page, 
+		state
+	    );
+
+        case 'lfu':
+            return runLFU(
+                page,
+                state
+            );
+
+        case 'mfu':
+            return runMFU(
+                page,
+                state
+            );
+
+        default:
+            throw new Error(
+                'Algorithm not implemented yet.'
+            );
+    }
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
