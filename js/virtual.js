@@ -640,6 +640,77 @@ function runLRU(
     };
 }
 
+function ageFrames(frames) {
+    for (const frame of frames) {
+        // shift right by 1
+        frame.refByte = (frame.refByte >>> 1);
+
+        // insert R into MSB (bit 7)
+        if (frame.R === 1) {
+            frame.refByte = frame.refByte | 0b10000000;
+        }
+
+        // reset reference bit after aging
+        frame.R = 0;
+    }
+}
+
+function runARB(page, state) {
+    // AGE ALL FRAMES FIRST (core ARB behavior)
+
+const ARB_INTERVAL = 3;
+
+if (state.time % ARB_INTERVAL === 0) {
+    ageFrames(state.frames);
+}
+
+const hit = findPage(state.frames, page);
+
+if (hit !== -1) {
+    processHit(state.frames[hit], state);
+    state.frames[hit].R = 1;
+    return {
+        status: 'PAGE HIT',
+        victim: null
+    };
+}
+    state.pageFaults++;
+
+    const empty = findEmptyFrame(state.frames);
+
+    if (empty !== -1) {
+        loadPage(state.frames[empty], page, state.time);
+        state.frames[empty].R = 1;
+
+        return {
+            status: 'PAGE FAULT',
+            victim: null
+        };
+    }
+
+    // pick frame with LOWEST refByte (least recently used-ish)
+    let victim = 0;
+
+    for (let i = 1; i < state.frames.length; i++) {
+        if (
+            state.frames[i].refByte <
+            state.frames[victim].refByte
+        ) {
+            victim = i;
+        }
+    }
+
+    const victimPage = state.frames[victim].page;
+
+    loadPage(state.frames[victim], page, state.time);
+    state.frames[victim].R = 1;
+
+    return {
+        status: 'PAGE FAULT',
+        victim: victimPage
+    };
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
