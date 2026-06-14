@@ -785,6 +785,61 @@ function runClock(
     }
 }
 
+function getClass(r, m) {
+    if (r === 0 && m === 0) return 0;
+    if (r === 0 && m === 1) return 1;
+    if (r === 1 && m === 0) return 2;
+    return 3;
+}
+
+function runEnhancedClock(page, state) {
+    const hit = findPage(state.frames, page);
+
+    if (hit !== -1) {
+        processHit(state.frames[hit], state);
+        state.frames[hit].R = 1;
+        return { status: 'PAGE HIT', victim: null };
+    }
+
+    state.pageFaults++;
+
+    let start = state.clockHand;
+    let victim = -1;
+    let bestClass = Infinity;
+
+    for (let pass = 0; pass < state.frames.length; pass++) {
+        const i = (start + pass) % state.frames.length;
+        const frame = state.frames[i];
+
+        if (frame.page === null) {
+            victim = i;
+            break;
+        }
+
+        const cls = getClass(frame.R, frame.M);
+
+        if (cls < bestClass) {
+            bestClass = cls;
+            victim = i;
+
+            // class 0 is best possible
+            if (cls === 0) break;
+        }
+    }
+
+    const victimPage = state.frames[victim].page;
+
+    loadPage(state.frames[victim], page, state.time);
+    state.frames[victim].R = 1;
+
+    state.clockHand = (victim + 1) % state.frames.length;
+
+    return {
+        status: 'PAGE FAULT',
+        victim: victimPage
+    };
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
