@@ -1138,6 +1138,47 @@ function printSummary(
     printLine();
 }
 
+async function main() {
+    const config =
+        await getUserInput();
+
+    const state =
+        createState(config);
+
+    printHeader(config);
+
+    for (
+        let i = 0;
+        i < config.referenceString.length;
+        i++
+    ) {
+        state.time = i;
+
+        const page =
+            config.referenceString[i];
+
+        const result =
+            simulateReference(
+                page,
+                state,
+                config,
+                i
+            );
+
+        printStep(
+            page,
+            result.status,
+            result.victim,
+            state
+        );
+    }
+
+    printSummary(
+        config,
+        state
+    );
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
