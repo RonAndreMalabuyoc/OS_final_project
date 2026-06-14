@@ -259,6 +259,21 @@ function createState(config) {
     };
 }
 
+function getFaultRate(
+    pageFaults,
+    totalReferences
+) {
+    if (totalReferences === 0) {
+        return 0;
+    }
+    return pageFaults /
+        totalReferences;
+}
+
+function calculateEAT(mat, pfst, faultRate) {
+    return mat + (faultRate * pfst);
+}
+
 function printHeader(config) {
     console.log(
         '\nVIRTUAL MEMORY MANAGEMENT SIMULATOR'
