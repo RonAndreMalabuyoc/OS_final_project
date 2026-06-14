@@ -17,6 +17,10 @@
 
 'use strict';
 
+const readline = require('node:readline/promises');
+const fs = require('node:fs');
+const { stdin: input, stdout: output } = require('node:process');
+
 const DEFAULT_REFERENCE_STRING =
     '7 0 1 2 0 3 0 4 2 3 0 3 2';
 
@@ -42,3 +46,4 @@ module.exports = {
     DEFAULT_PAGE_FAULT_SERVICE_TIME,
     ALGORITHMS,
 };
+
