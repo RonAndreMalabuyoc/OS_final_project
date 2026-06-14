@@ -2,14 +2,14 @@
  * Virtual Memory Management Simulator
  *
  * Algorithms:
- *  1. FIFO
- *  2. OPTIMAL
- *  3. LRU
- *  4. LRU Approximation (Additional Reference Bits)
- *  5. Second Chance / Clock
- *  6. Enhanced Second Chance
- *  7. LFU
- *  8. MFU
+ *  1. FIFO                              (First-In, First-Out)
+ *  2. OPT                               (Optimal / Bélády's)
+ *  3. LRU                               (Least Recently Used)
+ *  4. ARB                               (LRU Approximation — Additional Reference Bits)
+ *  5. Clock                             (Second-Chance)
+ *  6. Enhanced Clock                    (Second-Chance with Dirty Bit)
+ *  7. LFU                               (Least Frequently Used)
+ *  8. MFU                               (Most Frequently Used)
  *
  * Run:
  *   node virtual-memory.js
@@ -21,288 +21,175 @@ const readline = require('node:readline/promises');
 const fs = require('node:fs');
 const { stdin: input, stdout: output } = require('node:process');
 
-const DEFAULT_REFERENCE_STRING =
-    '7 0 1 2 0 3 0 4 2 3 0 3 2';
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_FRAMES = 3;
-const DEFAULT_MEMORY_ACCESS_TIME = 100;
-const DEFAULT_PAGE_FAULT_SERVICE_TIME = 8000000;
+const DEFAULTS = Object.freeze({
+    REFERENCE_STRING: '7 0 1 2 0 3 0 4 2 3 0 3 2',
+    FRAMES: 3,
+    MEMORY_ACCESS_TIME: 100,
+    PAGE_FAULT_SERVICE_TIME: 8_000_000,
+    ARB_INTERVAL: 3,
+});
 
-const ALGORITHMS = {
+const ALGORITHMS = Object.freeze({
     fifo: 'FIFO',
-    opt: 'Optimal',
+    opt: 'Optimal (Bélády)',
     lru: 'LRU',
     arb: 'LRU Approximation (ARB)',
-    clock: 'Second Chance / Clock',
-    enhanced: 'Enhanced Second Chance',
-    lfu: 'Least Frequently Used',
-    mfu: 'Most Frequently Used',
-};
+    clock: 'Second-Chance / Clock',
+    enhanced: 'Enhanced Second-Chance',
+    lfu: 'Least Frequently Used (LFU)',
+    mfu: 'Most Frequently Used (MFU)',
+});
 
-module.exports = {
-    DEFAULT_REFERENCE_STRING,
-    DEFAULT_FRAMES,
-    DEFAULT_MEMORY_ACCESS_TIME,
-    DEFAULT_PAGE_FAULT_SERVICE_TIME,
-    ALGORITHMS,
-};
+// Exported for tests
+module.exports = { DEFAULTS, ALGORITHMS, simulate };
 
-function printLine() {
-    console.log('-'.repeat(80));
+// ── I/O helpers ───────────────────────────────────────────────────────────────
+
+function makeDivider(char = '─', len = 80) {
+    return char.repeat(len);
 }
 
-function createQuestionReader() {
+/** Creates a question-asker that works in both TTY and piped-input modes. */
+function createReader() {
     if (input.isTTY) {
-        const rl =
-            readline.createInterface({
-                input,
-                output});
+        const rl = readline.createInterface({ input, output });
         return {
             ask: prompt => rl.question(prompt),
-            close: () => rl.close(),};}
-    const answers =
-        fs.readFileSync(0, 'utf8')
-            .split(/\r?\n/);
-    let index = 0;
+            close: () => rl.close(),
+        };
+    }
+
+    const lines = fs.readFileSync(0, 'utf8').split(/\r?\n/);
+    let cursor = 0;
     return {
         ask: async prompt => {
-            const answer =
-                answers[index] ?? '';
-            index++;
-            console.log(
-                `${prompt}${answer}`);
-            return answer;},
-        close: () => {},};
+            const answer = lines[cursor++] ?? '';
+            console.log(`${prompt}${answer}`);
+            return answer;
+        },
+        close: () => { },
+    };
 }
 
-function parsePositiveInteger(value) {
-    const number =
-        Number.parseInt(value, 10);
-    if (Number.isNaN(number) ||
-        number <= 0) {
-        return null;}
-    return number;
+/** Parses a string into a positive integer, or returns null on failure. */
+function parsePositiveInt(raw) {
+    const n = Number.parseInt(raw, 10);
+    return Number.isNaN(n) || n <= 0 ? null : n;
 }
 
-async function askPositiveInteger(ask, question, defaultValue) {
+/** Repeatedly prompts until the user enters a positive integer (or hits Enter for the default). */
+async function promptPositiveInt(ask, label, defaultValue) {
     while (true) {
-        const answer =(
-                await ask(`${question} [${defaultValue}]: `)).trim();
-        if (answer === '') {
-            return defaultValue;}
-        const value =
-            parsePositiveInteger(answer);
-        if (value !== null) {
-            return value;}
-        console.log(
-            'Please enter a positive number.');}
+        const raw = (await ask(`${label} [${defaultValue}]: `)).trim();
+        if (raw === '') return defaultValue;
+
+        const value = parsePositiveInt(raw);
+        if (value !== null) return value;
+
+        console.log('  ⚠  Please enter a positive integer.');
+    }
 }
 
-async function askAlgorithm(ask) {
+/** Prompts the user to choose one of the supported algorithms. */
+async function promptAlgorithm(ask) {
+    const menu = [
+        '',
+        '  Algorithms',
+        '  ──────────',
+        '  1. FIFO',
+        '  2. Optimal (Bélády)',
+        '  3. LRU',
+        '  4. ARB  (LRU Approximation — Additional Reference Bits)',
+        '  5. Clock (Second-Chance)',
+        '  6. Enhanced Clock (Second-Chance + Dirty Bit)',
+        '  7. LFU  (Least Frequently Used)',
+        '  8. MFU  (Most Frequently Used)',
+        '',
+    ].join('\n');
+
+    const keyMap = {
+        '': 'fifo', '1': 'fifo',
+        '2': 'opt', '3': 'lru',
+        '4': 'arb', '5': 'clock',
+        '6': 'enhanced', '7': 'lfu', '8': 'mfu',
+    };
+
     while (true) {
-        console.log('\nAlgorithms');
-        console.log(' 1. FIFO');
-        console.log(' 2. OPTIMAL');
-        console.log(' 3. LRU');
-        console.log(' 4. ARB');
-        console.log(' 5. CLOCK');
-        console.log(' 6. ENHANCED CLOCK');
-        console.log(' 7. LFU');
-        console.log(' 8. MFU');
-        const answer =
-            (await ask(
-                '\nChoose algorithm [1]: ')).trim();
-        if (answer === '' || answer === '1')
-            return 'fifo';
-        if (answer === '2')
-            return 'opt';
-        if (answer === '3')
-            return 'lru';
-        if (answer === '4')
-            return 'arb';
-        if (answer === '5')
-            return 'clock';
-        if (answer === '6')
-            return 'enhanced';
-        if (answer === '7')
-            return 'lfu';
-        if (answer === '8')
-            return 'mfu';
-        console.log(
-            'Invalid selection.');}
+        console.log(menu);
+        const raw = (await ask('  Choose algorithm [1]: ')).trim();
+        if (raw in keyMap) return keyMap[raw];
+        console.log('  ⚠  Invalid selection — enter a number from 1 to 8.\n');
+    }
 }
 
+/** Parses the reference-string input and validates it. */
+function parseReferenceString(raw) {
+    const pages = (raw || DEFAULTS.REFERENCE_STRING)
+        .trim()
+        .split(/\s+/)
+        .map(Number);
+
+    if (pages.some(Number.isNaN)) {
+        throw new Error('Reference string contains non-numeric values.');
+    }
+    if (pages.length === 0) {
+        throw new Error('Reference string must not be empty.');
+    }
+    return pages;
+}
+
+/** Collects all simulation parameters from the user. */
 async function getUserInput() {
-    const reader =
-        createQuestionReader();
-    const ask = reader.ask;
-    try {const algorithm =
-            await askAlgorithm(ask);
-        const refStringInput =
-            (await ask(
-                `Reference String [${DEFAULT_REFERENCE_STRING}]: `)).trim();
-        const referenceString =
-            (refStringInput ||
-            DEFAULT_REFERENCE_STRING)
-            .split(/\s+/)
-            .map(Number);
-	if (referenceString.some(
-     		   Number.isNaN)
-) {
-   		 throw new Error(
-      		  'Reference string contains invalid values.');
-}
-        const frames =
-            await askPositiveInteger(
-                ask,
-                'Number of Frames',
-                DEFAULT_FRAMES
-            );
-        const memoryAccessTime =
-            await askPositiveInteger(
-                ask,
-                'Memory Access Time (ns)',
-                DEFAULT_MEMORY_ACCESS_TIME
-            );
-        const pageFaultServiceTime =
-            await askPositiveInteger(
-                ask,
-                'Page Fault Service Time (ns)',
-                DEFAULT_PAGE_FAULT_SERVICE_TIME
-            );
-        return {
-            algorithm,
-            referenceString,
-            frames,
-            memoryAccessTime,
-            pageFaultServiceTime,
-        };
+    const reader = createReader();
+    try {
+        const algorithm = await promptAlgorithm(reader.ask);
+        const refRaw = (await reader.ask(`  Reference String [${DEFAULTS.REFERENCE_STRING}]: `)).trim();
+        const referenceString = parseReferenceString(refRaw);
+        const frames = await promptPositiveInt(reader.ask, '  Number of Frames', DEFAULTS.FRAMES);
+        const memoryAccessTime = await promptPositiveInt(reader.ask, '  Memory Access Time (ns)', DEFAULTS.MEMORY_ACCESS_TIME);
+        const pageFaultServiceTime = await promptPositiveInt(reader.ask, '  Page Fault Service Time (ns)', DEFAULTS.PAGE_FAULT_SERVICE_TIME);
+
+        return { algorithm, referenceString, frames, memoryAccessTime, pageFaultServiceTime };
     } finally {
-        reader.close();}
+        reader.close();
+    }
 }
 
-function createFrames(count) {
-    return Array.from(
-        { length: count },
-        () => ({
-            page: null,
-            R: 0,
-            M: 0,
-            refByte: 0,
-            count: 0,
-            lastUsed: 0,}));
+// ── Frame / State factories ───────────────────────────────────────────────────
+
+/** Creates a single empty frame. */
+function makeFrame() {
+    return { page: null, R: 0, M: 0, refByte: 0, count: 0, lastUsed: 0 };
 }
 
-function findPage(frames, page) {
-    return frames.findIndex(
-        frame =>
-            frame.page === page);
-}
-
-function findEmptyFrame(frames) {
-    return frames.findIndex(
-        frame =>
-            frame.page === null);
-}
-
-function createState(config) {
+/** Creates the initial simulation state. */
+function makeState(frameCount) {
     return {
-        frames:
-            createFrames(config.frames),
+        frames: Array.from({ length: frameCount }, makeFrame),
         pageHits: 0,
         pageFaults: 0,
         clockHand: 0,
-        fifoQueue: [],
-        time: 0,};
+        fifoQueue: [],   // stores frame indices in arrival order
+        time: 0,
+    };
 }
 
-function getFaultRate(
-    pageFaults,
-    totalReferences) {
-    if (totalReferences === 0) {
-        return 0;}
-    return pageFaults /
-        totalReferences;
+// ── Frame helpers ─────────────────────────────────────────────────────────────
+
+/** Returns the index of the frame holding `page`, or -1 if not present. */
+function indexOfPage(frames, page) {
+    return frames.findIndex(f => f.page === page);
 }
 
-function calculateEAT(mat, pfst, faultRate) {
-    return mat + (faultRate * pfst);
+/** Returns the index of the first empty frame, or -1 if all are occupied. */
+function indexOfEmpty(frames) {
+    return frames.findIndex(f => f.page === null);
 }
 
-function printHeader(config) {
-    console.log(
-        '\nVIRTUAL MEMORY MANAGEMENT SIMULATOR');
-    printLine();
-    console.log(
-        `Algorithm: ${
-            ALGORITHMS[
-                config.algorithm]}`);
-    console.log(
-        `Frames: ${config.frames}`);
-    console.log(
-        `Reference String: ${
-            config.referenceString
-                .join(' ')}`);
-    printLine();
-}
-
-function printFrameTable(frames) {
-    console.log('\nFrame Table');
-    console.log(
-        '+-------+------+---+---+---------+-------+');
-    console.log(
-        '|Frame  |Page  |R  |M  |RefByte  |Count  |');
-    console.log(
-        '+-------+------+---+---+---------+-------+');
-    frames.forEach((frame, index) => {
-        const page =
-            frame.page === null
-                ? '-'
-                : frame.page;
-        const refByte =
-            frame.refByte
-                .toString(2)
-                .padStart(8, '0');
-        console.log(
-            `|F${index}`.padEnd(8) +
-            `|${String(page)}`.padEnd(6) +
-            `|${frame.R}`.padEnd(4) +
-            `|${frame.M}`.padEnd(4) +
-            `|${refByte}`.padEnd(10) +
-            `|${frame.count}`.padEnd(8) +
-            '|');
-});
-    console.log(
-        '+-------+------+---+---+---------+-------+');
-}
-
-function printStep(page, status, victim, state) {
-    printLine();
-    console.log(
-        `Current Page Reference: ${page}`);
-    console.log(
-        `Status: ${status}`);
-    console.log(
-        `Victim Page: ${
-            victim === null
-                ? 'None'
-                : victim}`);
-    printFrameTable(state.frames);
-    const total = state.pageHits + state.pageFaults;
-    const rate = getFaultRate(state.pageFaults, total);
-    console.log(
-        `Clock Hand: F${state.clockHand}`);
-    console.log(
-        `Page Fault Count: ${state.pageFaults}`);
-    console.log(
-        `Page Fault Rate: ${(rate * 100)
-            .toFixed(2)}%`);
-}
-
-function loadPage(
-    frame,
-    page,
-    time) {
+/** Loads a page into a frame, resetting all metadata. */
+function loadIntoFrame(frame, page, time) {
     frame.page = page;
     frame.R = 1;
     frame.M = 0;
@@ -311,409 +198,407 @@ function loadPage(
     frame.lastUsed = time;
 }
 
-function processHit(frame, state) {
+/** Records a page hit on a frame. */
+function recordHit(frame, state) {
     state.pageHits++;
     frame.R = 1;
     frame.count++;
     frame.lastUsed = state.time;
-    frame.M = Math.random() < 0.3 ? 1 : frame.M;
+    // Simulate occasional write access (30 % chance)
+    if (Math.random() < 0.3) frame.M = 1;
 }
 
-function simulateWriteAccess(frame) {
-    frame.M = 1;
-}
-
-function selectFIFO(state) {
-    return state.fifoQueue.shift();
-}
+// ── Replacement-algorithm implementations ─────────────────────────────────────
 
 function runFIFO(page, state) {
-    const hitIndex =
-        findPage(state.frames, page);
-    if (hitIndex !== -1) {
-        processHit(state.frames[hitIndex], state);
-        return {status:
-                'PAGE HIT',
-                victim: null};}
+    const hit = indexOfPage(state.frames, page);
+    if (hit !== -1) {
+        recordHit(state.frames[hit], state);
+        return { status: 'PAGE HIT', victim: null };
+    }
+
     state.pageFaults++;
-    const empty =
-        findEmptyFrame(
-            state.frames);
+
+    const empty = indexOfEmpty(state.frames);
     if (empty !== -1) {
-        loadPage(state.frames[empty], page, state.time);
-        state.fifoQueue.push(
-            empty);
-        return {status:
-                'PAGE FAULT',
-                victim: null};}
-    const victimFrame =
-        selectFIFO(state);
-    const victimPage =
-        state.frames[victimFrame].page;
-    loadPage(state.frames[victimFrame], page, state.time);
-    state.fifoQueue.push(
-        victimFrame);
-    return {status:
-            'PAGE FAULT',
-            victim:
-            victimPage};
+        loadIntoFrame(state.frames[empty], page, state.time);
+        state.fifoQueue.push(empty);
+        return { status: 'PAGE FAULT', victim: null };
+    }
+
+    const victimIdx = state.fifoQueue.shift();
+    const victimPage = state.frames[victimIdx].page;
+    loadIntoFrame(state.frames[victimIdx], page, state.time);
+    state.fifoQueue.push(victimIdx);
+    return { status: 'PAGE FAULT', victim: victimPage };
 }
 
-function selectOPT(frames, refs, currentIndex) {
+/** Picks the frame whose page will be used farthest in the future (or never). */
+function pickOptimalVictim(frames, refs, fromIndex) {
     let victim = 0;
     let farthest = -1;
-    for (let i = 0;
-        i < frames.length;
-        i++) {
+
+    for (let i = 0; i < frames.length; i++) {
         let nextUse = Infinity;
-        for (let j = currentIndex + 1;
-            j < refs.length;
-            j++) {
-            if (refs[j] ===
-                frames[i].page) 
-                {nextUse = j;
-                break;}}
-        if (nextUse > farthest) 
-            {farthest =
-                nextUse;
-            victim = i;}}
+        for (let j = fromIndex + 1; j < refs.length; j++) {
+            if (refs[j] === frames[i].page) { nextUse = j; break; }
+        }
+        if (nextUse > farthest) { farthest = nextUse; victim = i; }
+    }
     return victim;
 }
 
 function runOPT(page, state, refs, currentIndex) {
-    const hit =
-        findPage(state.frames, page);
+    const hit = indexOfPage(state.frames, page);
     if (hit !== -1) {
-        processHit(state.frames[hit], state);
-        return {status:
-                'PAGE HIT',
-                victim: null};
+        recordHit(state.frames[hit], state);
+        return { status: 'PAGE HIT', victim: null };
     }
+
     state.pageFaults++;
-    const empty =
-        findEmptyFrame(
-            state.frames);
+
+    const empty = indexOfEmpty(state.frames);
     if (empty !== -1) {
-        loadPage(state.frames[empty], page, state.time);
-        return {status:
-                'PAGE FAULT',
-                victim: null};}
-    const victim =
-        selectOPT(state.frames, refs, currentIndex);
-    const victimPage =
-        state.frames[victim].page;
-    loadPage(state.frames[victim], page, state.time);
-    return {status:
-            'PAGE FAULT',
-            victim:
-            victimPage};
+        loadIntoFrame(state.frames[empty], page, state.time);
+        return { status: 'PAGE FAULT', victim: null };
+    }
+
+    const victimIdx = pickOptimalVictim(state.frames, refs, currentIndex);
+    const victimPage = state.frames[victimIdx].page;
+    loadIntoFrame(state.frames[victimIdx], page, state.time);
+    return { status: 'PAGE FAULT', victim: victimPage };
 }
 
-function selectLRU(frames) {
-    let victim = 0;
-    for (let i = 1;
-        i < frames.length;
-        i++) {
-        if (frames[i].lastUsed <
-            frames[victim].lastUsed) {victim = i;}}
-    return victim;
+/** Picks the frame least recently used (smallest lastUsed timestamp). */
+function pickLRUVictim(frames) {
+    return frames.reduce(
+        (best, _, i) => frames[i].lastUsed < frames[best].lastUsed ? i : best,
+        0
+    );
 }
 
 function runLRU(page, state) {
-    const hit =
-        findPage(state.frames, page);
+    const hit = indexOfPage(state.frames, page);
     if (hit !== -1) {
-        processHit( state.frames[hit], state);
-        return {status:
-                'PAGE HIT',
-            victim: null};}
+        recordHit(state.frames[hit], state);
+        return { status: 'PAGE HIT', victim: null };
+    }
+
     state.pageFaults++;
-    const empty =
-        findEmptyFrame(
-            state.frames);
+
+    const empty = indexOfEmpty(state.frames);
     if (empty !== -1) {
-        loadPage(state.frames[empty], page, state.time);
-        return {status:
-                'PAGE FAULT',
-                victim: null};}
-    const victim =
-        selectLRU( state.frames);
-    const victimPage =
-        state.frames[victim].page;
-    loadPage(
-        state.frames[victim], page, state.time);
-    return {status:
-            'PAGE FAULT',
-            victim:
-            victimPage};
+        loadIntoFrame(state.frames[empty], page, state.time);
+        return { status: 'PAGE FAULT', victim: null };
+    }
+
+    const victimIdx = pickLRUVictim(state.frames);
+    const victimPage = state.frames[victimIdx].page;
+    loadIntoFrame(state.frames[victimIdx], page, state.time);
+    return { status: 'PAGE FAULT', victim: victimPage };
 }
 
-function ageFrames(frames) {
+/**
+ * Shifts each frame's reference byte right by 1 and inserts the current R bit
+ * into the MSB, then clears R. Called periodically at every ARB_INTERVAL ticks.
+ */
+function ageAllFrames(frames) {
     for (const frame of frames) {
-        // shift right by 1
-        frame.refByte = (frame.refByte >>> 1);
-        // insert R into MSB (bit 7)
-        if (frame.R === 1) {
-            frame.refByte = frame.refByte | 0b10000000;}
-        // reset reference bit after aging
-        frame.R = 0;}
+        frame.refByte = (frame.refByte >>> 1) | (frame.R === 1 ? 0b10000000 : 0);
+        frame.R = 0;
+    }
 }
 
 function runARB(page, state) {
-    // AGE ALL FRAMES FIRST (core ARB behavior)
-const ARB_INTERVAL = 3;
-if (state.time % ARB_INTERVAL === 0) {
-    ageFrames(state.frames);
-}
-const hit = findPage(state.frames, page);
-if (hit !== -1) {
-    processHit(state.frames[hit], state);
-    state.frames[hit].R = 1;
-    return {status: 'PAGE HIT',
-            victim: null};
-}
+    if (state.time % DEFAULTS.ARB_INTERVAL === 0) {
+        ageAllFrames(state.frames);
+    }
+
+    const hit = indexOfPage(state.frames, page);
+    if (hit !== -1) {
+        recordHit(state.frames[hit], state);
+        state.frames[hit].R = 1;
+        return { status: 'PAGE HIT', victim: null };
+    }
+
     state.pageFaults++;
-    const empty = findEmptyFrame(state.frames);
+
+    const empty = indexOfEmpty(state.frames);
     if (empty !== -1) {
-        loadPage(state.frames[empty], page, state.time);
+        loadIntoFrame(state.frames[empty], page, state.time);
         state.frames[empty].R = 1;
-        return {status: 'PAGE FAULT',
-                victim: null};}
-    // pick frame with LOWEST refByte (least recently used-ish)
-    let victim = 0;
-    for (let i = 1; i < state.frames.length; i++) {
-        if (state.frames[i].refByte <
-            state.frames[victim].refByte) {
-            victim = i;}}
-    const victimPage = state.frames[victim].page;
-    loadPage(state.frames[victim], page, state.time);
-    state.frames[victim].R = 1;
-    return {status: 'PAGE FAULT',
-            victim: victimPage};
+        return { status: 'PAGE FAULT', victim: null };
+    }
+
+    // Replace the frame with the smallest reference byte (least recently used)
+    const victimIdx = state.frames.reduce(
+        (best, _, i) => state.frames[i].refByte < state.frames[best].refByte ? i : best,
+        0
+    );
+    const victimPage = state.frames[victimIdx].page;
+    loadIntoFrame(state.frames[victimIdx], page, state.time);
+    state.frames[victimIdx].R = 1;
+    return { status: 'PAGE FAULT', victim: victimPage };
 }
 
 function runClock(page, state) {
-    const hit =
-        findPage(state.frames, page);
+    const hit = indexOfPage(state.frames, page);
     if (hit !== -1) {
-        processHit(state.frames[hit], state);
+        recordHit(state.frames[hit], state);
         state.frames[hit].R = 1;
-        return {status:
-                'PAGE HIT',
-                victim: null};}
+        return { status: 'PAGE HIT', victim: null };
+    }
+
     state.pageFaults++;
+
+    // Walk the clock hand until we find a frame with R=0 (or an empty slot)
     while (true) {
-        const frame =
-            state.frames[
-                state.clockHand];
-        if (frame.page === null) {
-            loadPage(frame, page, state.time);
-            state.clockHand =
-                (state.clockHand + 1) %
-                state.frames.length;
-            return {status:
-                    'PAGE FAULT',
-                    victim: null};}
-        if (frame.R === 0) {
-            const victim =
-                frame.page;
-            loadPage(frame, page, state.time);
-            state.clockHand =
-                (state.clockHand + 1) %
-                state.frames.length;
-            return {status:
-                    'PAGE FAULT',
-                    victim};}
-        frame.R = 0;
-        state.clockHand =
-            (state.clockHand + 1) % 
-            state.frames.length;}
+        const frame = state.frames[state.clockHand];
+        const advance = () => { state.clockHand = (state.clockHand + 1) % state.frames.length; };
+
+        if (frame.page === null || frame.R === 0) {
+            const victimPage = frame.page;   // null if empty slot
+            loadIntoFrame(frame, page, state.time);
+            advance();
+            return { status: 'PAGE FAULT', victim: victimPage };
+        }
+
+        frame.R = 0;   // give this page a second chance
+        advance();
+    }
 }
 
-function getClass(r, m) {
-    if (r === 0 && m === 0) return 0;
-    if (r === 0 && m === 1) return 1;
-    if (r === 1 && m === 0) return 2;
-    return 3;
+/** Maps (R, M) pairs to priority classes: 0 (best to evict) → 3 (worst). */
+function evictionClass(frame) {
+    return (frame.R << 1) | frame.M;   // (1,1)→3, (1,0)→2, (0,1)→1, (0,0)→0
 }
 
 function runEnhancedClock(page, state) {
-    const hit = findPage(state.frames, page);
+    const hit = indexOfPage(state.frames, page);
     if (hit !== -1) {
-        processHit(state.frames[hit], state);
+        recordHit(state.frames[hit], state);
         state.frames[hit].R = 1;
-        return { status: 'PAGE HIT', victim: null };}
+        return { status: 'PAGE HIT', victim: null };
+    }
+
     state.pageFaults++;
-    let start = state.clockHand;
-    let victim = -1;
+
+    // Scan from the clock hand; prefer the lowest eviction class
+    let victimIdx = -1;
     let bestClass = Infinity;
+
     for (let pass = 0; pass < state.frames.length; pass++) {
-        const i = (start + pass) % state.frames.length;
+        const i = (state.clockHand + pass) % state.frames.length;
         const frame = state.frames[i];
-        if (frame.page === null) {
-            victim = i;
-            break;}
-        const cls = getClass(frame.R, frame.M);
+
+        if (frame.page === null) { victimIdx = i; break; }
+
+        const cls = evictionClass(frame);
         if (cls < bestClass) {
             bestClass = cls;
-            victim = i;
-            // class 0 is best possible
-            if (cls === 0) break;}}
-    const victimPage = state.frames[victim].page;
-    loadPage(state.frames[victim], page, state.time);
-    state.frames[victim].R = 1;
-    state.clockHand = (victim + 1) % state.frames.length;
-    return {status: 'PAGE FAULT',
-            victim: victimPage};
+            victimIdx = i;
+            if (cls === 0) break;   // can't do better than class 0
+        }
+    }
+
+    const victimPage = state.frames[victimIdx].page;
+    loadIntoFrame(state.frames[victimIdx], page, state.time);
+    state.frames[victimIdx].R = 1;
+    state.clockHand = (victimIdx + 1) % state.frames.length;
+    return { status: 'PAGE FAULT', victim: victimPage };
+}
+
+/** Picks the victim for LFU: smallest count, ties broken by oldest lastUsed. */
+function pickFrequencyVictim(frames, preferLeast) {
+    return frames.reduce((best, _, i) => {
+        const cur = frames[i];
+        const bst = frames[best];
+        const worseThan = preferLeast
+            ? cur.count < bst.count
+            : cur.count > bst.count;
+        return worseThan || (cur.count === bst.count && cur.lastUsed < bst.lastUsed) ? i : best;
+    }, 0);
 }
 
 function runLFU(page, state) {
-    const hit =
-        findPage(state.frames, page);
+    const hit = indexOfPage(state.frames, page);
     if (hit !== -1) {
-        processHit(state.frames[hit], state);
-        return {status:
-                'PAGE HIT',
-                victim: null};}
+        recordHit(state.frames[hit], state);
+        return { status: 'PAGE HIT', victim: null };
+    }
+
     state.pageFaults++;
-    const empty =
-        findEmptyFrame(state.frames);
+
+    const empty = indexOfEmpty(state.frames);
     if (empty !== -1) {
-        loadPage(state.frames[empty], page, state.time);
-        return {status:
-                'PAGE FAULT',
-                victim: null};}
-    let victim = 0;
-    for (let i = 1; i < state.frames.length; i++) {
-       const current = state.frames[i];
-       const best = state.frames[victim];
-       if (current.count < best.count ||
-        (current.count === best.count &&
-         current.lastUsed < best.lastUsed)) 
-        {victim = i;}
-}
-    const victimPage = state.frames[victim].page;
-    loadPage(state.frames[victim], page, state.time);
-    return {status:
-            'PAGE FAULT',
-            victim:
-            victimPage};
+        loadIntoFrame(state.frames[empty], page, state.time);
+        return { status: 'PAGE FAULT', victim: null };
+    }
+
+    const victimIdx = pickFrequencyVictim(state.frames, true);
+    const victimPage = state.frames[victimIdx].page;
+    loadIntoFrame(state.frames[victimIdx], page, state.time);
+    return { status: 'PAGE FAULT', victim: victimPage };
 }
 
 function runMFU(page, state) {
-    const hit =
-        findPage(state.frames, page);
+    const hit = indexOfPage(state.frames, page);
     if (hit !== -1) {
-        processHit(state.frames[hit], state);
-        return {status:
-                'PAGE HIT',
-                victim: null};}
+        recordHit(state.frames[hit], state);
+        return { status: 'PAGE HIT', victim: null };
+    }
+
     state.pageFaults++;
-    const empty =
-        findEmptyFrame(
-            state.frames);
+
+    const empty = indexOfEmpty(state.frames);
     if (empty !== -1) {
-        loadPage(state.frames[empty], page, state.time);
-        return {status:
-                'PAGE FAULT',
-                victim: null};}
-    let victim = 0;
-    for (let i = 1; i < state.frames.length; i++) {
-       const current = state.frames[i];
-       const best = state.frames[victim];
-       if (current.count > best.count ||
-        (current.count === best.count &&
-         current.lastUsed < best.lastUsed)) 
-        {victim = i;}
-}
-    const victimPage =
-        state.frames[victim].page;
-    loadPage(state.frames[victim], page, state.time);
-    return {status:
-            'PAGE FAULT',
-            victim:
-            victimPage};
+        loadIntoFrame(state.frames[empty], page, state.time);
+        return { status: 'PAGE FAULT', victim: null };
+    }
+
+    const victimIdx = pickFrequencyVictim(state.frames, false);
+    const victimPage = state.frames[victimIdx].page;
+    loadIntoFrame(state.frames[victimIdx], page, state.time);
+    return { status: 'PAGE FAULT', victim: victimPage };
 }
 
-function simulateReference(page, state, config, index) {
-    switch (config.algorithm) {
-        case 'fifo':
-            return runFIFO(page, state);
-        case 'opt':
-            return runOPT(page, state, config.referenceString, index);
-        case 'lru':
-            return runLRU(page, state);
-	    case 'arb':
- 	         return runARB(page, state);
-        case 'clock':
-            return runClock(page, state);
-        case 'enhanced':
- 	        return runEnhancedClock(page, state);
-        case 'lfu':
-            return runLFU(page,state);
-        case 'mfu':
-            return runMFU(page, state);
-        default:
-            throw new Error(
-                'Algorithm not implemented yet.');}
+// ── Dispatch ──────────────────────────────────────────────────────────────────
+
+const RUNNERS = {
+    fifo: (page, state, _refs, _i) => runFIFO(page, state),
+    opt: (page, state, refs, i) => runOPT(page, state, refs, i),
+    lru: (page, state, _refs, _i) => runLRU(page, state),
+    arb: (page, state, _refs, _i) => runARB(page, state),
+    clock: (page, state, _refs, _i) => runClock(page, state),
+    enhanced: (page, state, _refs, _i) => runEnhancedClock(page, state),
+    lfu: (page, state, _refs, _i) => runLFU(page, state),
+    mfu: (page, state, _refs, _i) => runMFU(page, state),
+};
+
+function dispatchStep(page, state, config, index) {
+    const runner = RUNNERS[config.algorithm];
+    if (!runner) throw new Error(`Unknown algorithm: "${config.algorithm}"`);
+    return runner(page, state, config.referenceString, index);
 }
 
-function printSummary(config, state) {
-    printLine();
-    console.log(
-        'FINAL SUMMARY');
-    printLine();
-    const total =
-        state.pageHits +
-        state.pageFaults;
-    const rate =
-        getFaultRate(
-            state.pageFaults,
-            total);
-    const eat =
-        calculateEAT(
-            config.memoryAccessTime,
-            config.pageFaultServiceTime,
-            rate);
-    console.log(
-        `Total References: ${total}`);
-    console.log(
-        `Page Hits: ${state.pageHits}`);
-    console.log(
-        `Page Faults: ${state.pageFaults}`);
-    console.log(
-        `Page Fault Rate: ${(rate * 100)
-            .toFixed(2)}%` );
-    console.log(
-        `Memory Access Time: ${config.memoryAccessTime} ns`);
-    console.log(
-        `Page Fault Service Time: ${config.pageFaultServiceTime} ns`);
-    console.log(
-        `Effective Access Time: ${eat.toFixed(2)} ns`);
-    printLine();
+// ── Public simulate() — usable from tests ─────────────────────────────────────
+
+/**
+ * Runs the full simulation and returns an array of step records plus summary stats.
+ * Each step: { time, page, status, victim, frames: [...snapshot] }
+ */
+function simulate(config) {
+    const state = makeState(config.frames);
+    const steps = [];
+
+    for (let i = 0; i < config.referenceString.length; i++) {
+        state.time = i;
+        const page = config.referenceString[i];
+        const result = dispatchStep(page, state, config, i);
+
+        steps.push({
+            time: i,
+            page,
+            status: result.status,
+            victim: result.victim,
+            // Deep snapshot so callers see the state *after* this reference
+            frames: state.frames.map(f => ({ ...f })),
+            clockHand: state.clockHand,
+            pageFaults: state.pageFaults,
+            pageHits: state.pageHits,
+        });
+    }
+
+    const total = state.pageHits + state.pageFaults;
+    const faultRate = total > 0 ? state.pageFaults / total : 0;
+
+    return {
+        steps,
+        summary: {
+            totalReferences: total,
+            pageHits: state.pageHits,
+            pageFaults: state.pageFaults,
+            pageFaultRate: faultRate,
+            memoryAccessTime: config.memoryAccessTime,
+            pageFaultServiceTime: config.pageFaultServiceTime,
+            effectiveAccessTime: calculateEAT(config.memoryAccessTime, config.pageFaultServiceTime, faultRate),
+        },
+    };
 }
+
+// ── Presentation ──────────────────────────────────────────────────────────────
+
+function calculateEAT(mat, pfst, faultRate) {
+    return mat + faultRate * pfst;
+}
+
+function printHeader(config) {
+    console.log('\n' + makeDivider('═'));
+    console.log('  VIRTUAL MEMORY MANAGEMENT SIMULATOR');
+    console.log(makeDivider('═'));
+    console.log(`  Algorithm : ${ALGORITHMS[config.algorithm]}`);
+    console.log(`  Frames    : ${config.frames}`);
+    console.log(`  Ref String: ${config.referenceString.join(' ')}`);
+    console.log(makeDivider('─'));
+}
+
+function printFrameTable(frames) {
+    const SEP = '+--------+-------+---+---+----------+-------+';
+    console.log('\n  Frame Table');
+    console.log('  ' + SEP);
+    console.log('  | Frame  | Page  | R | M | RefByte  | Count |');
+    console.log('  ' + SEP);
+    for (const [i, f] of frames.entries()) {
+        const page = f.page === null ? '—' : String(f.page);
+        const refByte = f.refByte.toString(2).padStart(8, '0');
+        console.log(
+            `  | F${String(i).padEnd(5)} | ${page.padEnd(5)} | ${f.R} | ${f.M} | ${refByte} | ${String(f.count).padEnd(5)} |`
+        );
+    }
+    console.log('  ' + SEP);
+}
+
+function printStep(step) {
+    console.log('\n' + makeDivider('─'));
+    console.log(`  Reference : ${step.page}`);
+    console.log(`  Status    : ${step.status}`);
+    console.log(`  Victim    : ${step.victim === null ? 'none' : step.victim}`);
+    console.log(`  Clock Hand: F${step.clockHand}`);
+    console.log(`  Faults so far: ${step.pageFaults}  |  Hits so far: ${step.pageHits}`);
+    console.log(`  Fault Rate   : ${((step.pageFaults / (step.pageFaults + step.pageHits)) * 100).toFixed(2)}%`);
+    printFrameTable(step.frames);
+}
+
+function printSummary(summary) {
+    console.log('\n' + makeDivider('═'));
+    console.log('  FINAL SUMMARY');
+    console.log(makeDivider('═'));
+    console.log(`  Total References       : ${summary.totalReferences}`);
+    console.log(`  Page Hits              : ${summary.pageHits}`);
+    console.log(`  Page Faults            : ${summary.pageFaults}`);
+    console.log(`  Page Fault Rate        : ${(summary.pageFaultRate * 100).toFixed(2)} %`);
+    console.log(makeDivider('─'));
+    console.log(`  Memory Access Time     : ${summary.memoryAccessTime} ns`);
+    console.log(`  Page Fault Service Time: ${summary.pageFaultServiceTime} ns`);
+    console.log(`  Effective Access Time  : ${summary.effectiveAccessTime.toFixed(2)} ns`);
+    console.log(makeDivider('═') + '\n');
+}
+
+// ── Entry point ───────────────────────────────────────────────────────────────
 
 async function main() {
-    const config =
-        await getUserInput();
-    const state =
-        createState(config);
+    const config = await getUserInput();
+    const { steps, summary } = simulate(config);
+
     printHeader(config);
-    for (let i = 0;
-        i < config.referenceString.length;
-        i++) {
-        state.time = i;
-        const page =
-            config.referenceString[i];
-        const result =
-            simulateReference(page, state, config, i);
-        printStep(page, result.status, result.victim, state);}
-    printSummary(config, state);
+    for (const step of steps) printStep(step);
+    printSummary(summary);
 }
 
-main().catch(error => {
-    console.error(
-        'Program failed:',
-        error.message);
-    process.exitCode = 1;
-});
+// Guard so that `require('./virtual-memory')` in tests doesn't auto-run main()
+if (require.main === module) {
+    main().catch(err => {
+        console.error(`\n  ✖  ${err.message}`);
+        process.exitCode = 1;
+    });
+}
