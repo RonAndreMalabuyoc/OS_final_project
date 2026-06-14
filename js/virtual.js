@@ -563,6 +563,83 @@ function runOPT(
     };
 }
 
+function selectLRU(frames) {
+    let victim = 0;
+    for (
+        let i = 1;
+        i < frames.length;
+        i++
+    ) {
+        if (
+            frames[i].lastUsed <
+            frames[victim].lastUsed
+        ) {
+            victim = i;
+        }
+    }
+    return victim;
+}
+
+function runLRU(
+    page,
+    state
+) {
+    const hit =
+        findPage(
+            state.frames,
+            page
+        );
+    if (hit !== -1) {
+        processHit(
+            state.frames[hit],
+            state
+        );
+        return {
+            status:
+                'PAGE HIT',
+            victim: null
+        };
+    }
+    state.pageFaults++;
+    const empty =
+        findEmptyFrame(
+            state.frames
+        );
+    if (empty !== -1) {
+        loadPage(
+            state.frames[empty],
+            page,
+            state.time
+        );
+        return {
+            status:
+                'PAGE FAULT',
+            victim: null
+        };
+    }
+    const victim =
+        selectLRU(
+            state.frames
+        );
+    const victimPage =
+        state.frames[
+            victim
+        ].page;
+    loadPage(
+        state.frames[
+            victim
+        ],
+        page,
+        state.time
+    );
+    return {
+        status:
+            'PAGE FAULT',
+        victim:
+            victimPage
+    };
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
