@@ -130,10 +130,49 @@
 
             <div class="vm-config-grid">
                 <div class="vm-config-full">
-                    <label class="cpu-label" for="refString">Reference String</label>
-                    <input type="text" id="refString" class="cpu-input" value="7 0 1 2 0 3 0 4 2 3 0 3 2"
-                        placeholder="e.g. 7 0 1 2 0 3 0 4 2 3" style="font-family: 'Courier New', monospace;" />
-                    <p class="vm-config-hint">Space-separated page numbers.</p>
+                    <label class="cpu-label">Reference String</label>
+
+                    <!-- Hidden input keeps the rest of the JS unchanged -->
+                    <input type="hidden" id="refString" value="7 0 1 2 0 3 0 4 2 3 0 3 2" />
+
+                    <!-- Chip tray -->
+                    <div class="ref-tray" id="refTray" role="list" aria-label="Reference string pages">
+                        <!-- chips injected by JS -->
+                    </div>
+
+                    <!-- Numpad -->
+                    <div class="ref-numpad" id="refNumpad">
+                        <button class="ref-num-btn" data-val="0">0</button>
+                        <button class="ref-num-btn" data-val="1">1</button>
+                        <button class="ref-num-btn" data-val="2">2</button>
+                        <button class="ref-num-btn" data-val="3">3</button>
+                        <button class="ref-num-btn" data-val="4">4</button>
+                        <button class="ref-num-btn" data-val="5">5</button>
+                        <button class="ref-num-btn" data-val="6">6</button>
+                        <button class="ref-num-btn" data-val="7">7</button>
+                        <button class="ref-num-btn" data-val="8">8</button>
+                        <button class="ref-num-btn" data-val="9">9</button>
+                        <button class="ref-num-btn ref-num-del" id="refDel" aria-label="Delete last page">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                                <line x1="18" y1="9" x2="12" y2="15" />
+                                <line x1="12" y1="9" x2="18" y2="15" />
+                            </svg>
+                        </button>
+                        <button class="ref-num-btn ref-num-clear" id="refClearPages" aria-label="Clear all pages">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="vm-config-hint">Tap numbers to add pages · tap a chip to remove it · count: <span
+                            id="refCount">13</span></p>
                 </div>
                 <div>
                     <label class="cpu-label" for="numFrames">Number of Frames</label>
@@ -341,6 +380,121 @@
 
         .vm-step-frame.empty-slot {
             opacity: 0.35;
+        }
+
+        /* ── Chip Builder ──────────────────────────────────────────── */
+        .ref-tray {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 48px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface2);
+            margin-bottom: 10px;
+            align-content: flex-start;
+        }
+
+        .ref-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: 99px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            animation: chipIn 0.15s ease;
+        }
+
+        @keyframes chipIn {
+            from {
+                opacity: 0;
+                transform: scale(0.7);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .ref-chip:hover {
+            opacity: 0.75;
+        }
+
+        .ref-chip:active {
+            transform: scale(0.9);
+        }
+
+        .ref-chip-x {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            line-height: 1;
+        }
+
+        .ref-numpad {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .ref-num-btn {
+            width: 42px;
+            height: 38px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ref-num-btn:hover {
+            background: var(--surface2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .ref-num-btn:active {
+            transform: scale(0.9);
+        }
+
+        .ref-num-del {
+            background: rgba(240, 165, 0, 0.1);
+            border-color: rgba(240, 165, 0, 0.35);
+            color: var(--amber);
+        }
+
+        .ref-num-del:hover {
+            background: rgba(240, 165, 0, 0.2);
+            border-color: var(--amber);
+            color: var(--amber);
+        }
+
+        .ref-num-clear {
+            background: rgba(224, 85, 85, 0.1);
+            border-color: rgba(224, 85, 85, 0.3);
+            color: var(--red);
+        }
+
+        .ref-num-clear:hover {
+            background: rgba(224, 85, 85, 0.2);
+            border-color: var(--red);
+            color: var(--red);
         }
 
         /* ── Reuse results-table for frame table ───────────────────── */
@@ -774,9 +928,58 @@
                 });
             }
 
+            /* ── Chip Builder ────────────────────────────── */
+            const EXAMPLE_STRING = [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2];
+            let refPages = [...EXAMPLE_STRING];
+
+            const refTray = document.getElementById('refTray');
+            const refHidden = document.getElementById('refString');
+            const refCount = document.getElementById('refCount');
+
+            function syncHidden() {
+                refHidden.value = refPages.join(' ');
+                refCount.textContent = refPages.length;
+            }
+
+            function renderChips() {
+                refTray.innerHTML = '';
+                refPages.forEach((page, i) => {
+                    const chip = document.createElement('button');
+                    chip.className = 'ref-chip';
+                    chip.setAttribute('role', 'listitem');
+                    chip.title = 'Click to remove';
+                    chip.innerHTML = `${page}<span class="ref-chip-x">×</span>`;
+                    chip.addEventListener('click', () => {
+                        refPages.splice(i, 1);
+                        renderChips();
+                        syncHidden();
+                    });
+                    refTray.appendChild(chip);
+                });
+                syncHidden();
+            }
+
+            document.querySelectorAll('.ref-num-btn[data-val]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (refPages.length >= 50) return;
+                    refPages.push(parseInt(btn.dataset.val));
+                    renderChips();
+                });
+            });
+
+            document.getElementById('refDel').addEventListener('click', () => {
+                if (refPages.length > 0) { refPages.pop(); renderChips(); }
+            });
+
+            document.getElementById('refClearPages').addEventListener('click', () => {
+                refPages = []; renderChips();
+            });
+
+            renderChips();
+
             /* ── Button Handlers ─────────────────────────── */
             document.getElementById('btnRun').addEventListener('click', () => {
-                const refs = parseRefString(document.getElementById('refString').value);
+                const refs = parseRefString(refHidden.value);
                 if (refs.length === 0) return;
                 const numFrames = parseInt(document.getElementById('numFrames').value) || 3;
                 const mat = parseInt(document.getElementById('memAccessTime').value) || 100;
@@ -787,14 +990,15 @@
             });
 
             document.getElementById('btnLoadExample').addEventListener('click', () => {
-                document.getElementById('refString').value = '7 0 1 2 0 3 0 4 2 3 0 3 2';
+                refPages = [...EXAMPLE_STRING];
+                renderChips();
                 document.getElementById('numFrames').value = '3';
                 document.getElementById('memAccessTime').value = '100';
                 document.getElementById('pageFaultTime').value = '8000000';
             });
 
             document.getElementById('btnReset').addEventListener('click', () => {
-                document.getElementById('refString').value = '';
+                refPages = []; renderChips();
                 document.getElementById('numFrames').value = '3';
                 document.getElementById('memAccessTime').value = '100';
                 document.getElementById('pageFaultTime').value = '8000000';
