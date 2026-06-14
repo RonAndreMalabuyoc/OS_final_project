@@ -56,13 +56,10 @@ function createQuestionReader() {
         const rl =
             readline.createInterface({
                 input,
-                output
-            });
+                output});
         return {
             ask: prompt => rl.question(prompt),
-            close: () => rl.close(),
-        };
-    }
+            close: () => rl.close(),};}
     const answers =
         fs.readFileSync(0, 'utf8')
             .split(/\r?\n/);
@@ -73,50 +70,32 @@ function createQuestionReader() {
                 answers[index] ?? '';
             index++;
             console.log(
-                `${prompt}${answer}`
-            );
-            return answer;
-        },
-        close: () => {},
-    };
+                `${prompt}${answer}`);
+            return answer;},
+        close: () => {},};
 }
 
 function parsePositiveInteger(value) {
     const number =
         Number.parseInt(value, 10);
-    if (
-        Number.isNaN(number) ||
-        number <= 0
-    ) {
-        return null;
-    }
+    if (Number.isNaN(number) ||
+        number <= 0) {
+        return null;}
     return number;
 }
 
-async function askPositiveInteger(
-    ask,
-    question,
-    defaultValue
-) {
+async function askPositiveInteger(ask, question, defaultValue) {
     while (true) {
-        const answer =
-            (
-                await ask(
-                    `${question} [${defaultValue}]: `
-                )
-            ).trim();
+        const answer =(
+                await ask(`${question} [${defaultValue}]: `)).trim();
         if (answer === '') {
-            return defaultValue;
-        }
+            return defaultValue;}
         const value =
             parsePositiveInteger(answer);
         if (value !== null) {
-            return value;
-        }
+            return value;}
         console.log(
-            'Please enter a positive number.'
-        );
-    }
+            'Please enter a positive number.');}
 }
 
 async function askAlgorithm(ask) {
@@ -131,11 +110,8 @@ async function askAlgorithm(ask) {
         console.log(' 7. LFU');
         console.log(' 8. MFU');
         const answer =
-            (
-                await ask(
-                    '\nChoose algorithm [1]: '
-                )
-            ).trim();
+            (await ask(
+                '\nChoose algorithm [1]: ')).trim();
         if (answer === '' || answer === '1')
             return 'fifo';
         if (answer === '2')
@@ -153,39 +129,28 @@ async function askAlgorithm(ask) {
         if (answer === '8')
             return 'mfu';
         console.log(
-            'Invalid selection.'
-        );
-    }
+            'Invalid selection.');}
 }
 
 async function getUserInput() {
     const reader =
         createQuestionReader();
     const ask = reader.ask;
-    try {
-        const algorithm =
+    try {const algorithm =
             await askAlgorithm(ask);
         const refStringInput =
-            (
-                await ask(
-                    `Reference String [${DEFAULT_REFERENCE_STRING}]: `
-                )
-            ).trim();
+            (await ask(
+                `Reference String [${DEFAULT_REFERENCE_STRING}]: `)).trim();
         const referenceString =
-            (
-                refStringInput ||
-                DEFAULT_REFERENCE_STRING
-            )
+            (refStringInput ||
+            DEFAULT_REFERENCE_STRING)
             .split(/\s+/)
             .map(Number);
-	if (
-		referenceString.some(
-     		   Number.isNaN
-    )
+	if (referenceString.some(
+     		   Number.isNaN)
 ) {
    		 throw new Error(
-      		  'Reference string contains invalid values.'
-    );
+      		  'Reference string contains invalid values.');
 }
         const frames =
             await askPositiveInteger(
@@ -213,8 +178,7 @@ async function getUserInput() {
             pageFaultServiceTime,
         };
     } finally {
-        reader.close();
-    }
+        reader.close();}
 }
 
 function createFrames(count) {
@@ -226,46 +190,37 @@ function createFrames(count) {
             M: 0,
             refByte: 0,
             count: 0,
-            lastUsed: 0,
-        })
-    );
+            lastUsed: 0,}));
 }
 
 function findPage(frames, page) {
     return frames.findIndex(
         frame =>
-            frame.page === page
-    );
+            frame.page === page);
 }
 
 function findEmptyFrame(frames) {
     return frames.findIndex(
         frame =>
-            frame.page === null
-    );
+            frame.page === null);
 }
 
 function createState(config) {
     return {
         frames:
-            createFrames(
-                config.frames
-            ),
+            createFrames(config.frames),
         pageHits: 0,
         pageFaults: 0,
         clockHand: 0,
         fifoQueue: [],
-        time: 0,
-    };
+        time: 0,};
 }
 
 function getFaultRate(
     pageFaults,
-    totalReferences
-) {
+    totalReferences) {
     if (totalReferences === 0) {
-        return 0;
-    }
+        return 0;}
     return pageFaults /
         totalReferences;
 }
@@ -276,47 +231,29 @@ function calculateEAT(mat, pfst, faultRate) {
 
 function printHeader(config) {
     console.log(
-        '\nVIRTUAL MEMORY MANAGEMENT SIMULATOR'
-    );
+        '\nVIRTUAL MEMORY MANAGEMENT SIMULATOR');
     printLine();
     console.log(
         `Algorithm: ${
             ALGORITHMS[
-                config.algorithm
-            ]
-        }`
-    );
+                config.algorithm]}`);
     console.log(
-        `Frames: ${config.frames}`
-    );
+        `Frames: ${config.frames}`);
     console.log(
         `Reference String: ${
             config.referenceString
-                .join(' ')
-        }`
-    );
+                .join(' ')}`);
     printLine();
 }
-
-main().catch(error => {
-    console.error(
-        'Program failed:',
-        error.message
-    );
-    process.exitCode = 1;
-});
 
 function printFrameTable(frames) {
     console.log('\nFrame Table');
     console.log(
-        '+-------+------+---+---+---------+-------+'
-    );
+        '+-------+------+---+---+---------+-------+');
     console.log(
-        '|Frame  |Page  |R  |M  |RefByte  |Count  |'
-    );
+        '|Frame  |Page  |R  |M  |RefByte  |Count  |');
     console.log(
-        '+-------+------+---+---+---------+-------+'
-    );
+        '+-------+------+---+---+---------+-------+');
     frames.forEach((frame, index) => {
         const page =
             frame.page === null
@@ -333,62 +270,39 @@ function printFrameTable(frames) {
             `|${frame.M}`.padEnd(4) +
             `|${refByte}`.padEnd(10) +
             `|${frame.count}`.padEnd(8) +
-            '|'
-        );
-    });
+            '|');
+});
     console.log(
-        '+-------+------+---+---+---------+-------+'
-    );
+        '+-------+------+---+---+---------+-------+');
 }
 
-function printStep(
-    page,
-    status,
-    victim,
-    state
-) {
+function printStep(page, status, victim, state) {
     printLine();
     console.log(
-        `Current Page Reference: ${page}`
-    );
+        `Current Page Reference: ${page}`);
     console.log(
-        `Status: ${status}`
-    );
+        `Status: ${status}`);
     console.log(
         `Victim Page: ${
             victim === null
                 ? 'None'
-                : victim
-        }`
-    );
-    printFrameTable(
-        state.frames
-    );
-    const total =
-        state.pageHits +
-        state.pageFaults;
-    const rate =
-        getFaultRate(
-            state.pageFaults,
-            total
-        );
+                : victim}`);
+    printFrameTable(state.frames);
+    const total = state.pageHits + state.pageFaults;
+    const rate = getFaultRate(state.pageFaults, total);
     console.log(
-        `Clock Hand: F${state.clockHand}`
-    );
+        `Clock Hand: F${state.clockHand}`);
     console.log(
-        `Page Fault Count: ${state.pageFaults}`
-    );
+        `Page Fault Count: ${state.pageFaults}`);
     console.log(
         `Page Fault Rate: ${(rate * 100)
-            .toFixed(2)}%`
-    );
+            .toFixed(2)}%`);
 }
 
 function loadPage(
     frame,
     page,
-    time
-) {
+    time) {
     frame.page = page;
     frame.R = 1;
     frame.M = 0;
@@ -413,391 +327,207 @@ function selectFIFO(state) {
     return state.fifoQueue.shift();
 }
 
-function runFIFO(
-    page,
-    state
-) {
+function runFIFO(page, state) {
     const hitIndex =
-        findPage(
-            state.frames,
-            page
-        );
+        findPage(state.frames, page);
     if (hitIndex !== -1) {
-        processHit(
-            state.frames[hitIndex],
-            state
-        );
-        return {
-            status:
+        processHit(state.frames[hitIndex], state);
+        return {status:
                 'PAGE HIT',
-            victim: null
-        };
-    }
+                victim: null};}
     state.pageFaults++;
     const empty =
         findEmptyFrame(
-            state.frames
-        );
+            state.frames);
     if (empty !== -1) {
-        loadPage(
-            state.frames[empty],
-            page,
-            state.time
-        );
+        loadPage(state.frames[empty], page, state.time);
         state.fifoQueue.push(
-            empty
-        );
-        return {
-            status:
+            empty);
+        return {status:
                 'PAGE FAULT',
-            victim: null
-        };
-    }
+                victim: null};}
     const victimFrame =
         selectFIFO(state);
     const victimPage =
-        state.frames[
-            victimFrame
-        ].page;
-    loadPage(
-        state.frames[
-            victimFrame
-        ],
-        page,
-        state.time
-    );
+        state.frames[victimFrame].page;
+    loadPage(state.frames[victimFrame], page, state.time);
     state.fifoQueue.push(
-        victimFrame
-    );
-    return {
-        status:
+        victimFrame);
+    return {status:
             'PAGE FAULT',
-        victim:
-            victimPage
-    };
+            victim:
+            victimPage};
 }
 
-function selectOPT(
-    frames,
-    refs,
-    currentIndex
-) {
+function selectOPT(frames, refs, currentIndex) {
     let victim = 0;
     let farthest = -1;
-    for (
-        let i = 0;
+    for (let i = 0;
         i < frames.length;
-        i++
-    ) {
+        i++) {
         let nextUse = Infinity;
-        for (
-            let j = currentIndex + 1;
+        for (let j = currentIndex + 1;
             j < refs.length;
-            j++
-        ) {
-            if (
-                refs[j] ===
-                frames[i].page
-            ) {
-                nextUse = j;
-                break;
-            }
-        }
-        if (
-            nextUse > farthest
-        ) {
-            farthest =
+            j++) {
+            if (refs[j] ===
+                frames[i].page) 
+                {nextUse = j;
+                break;}}
+        if (nextUse > farthest) 
+            {farthest =
                 nextUse;
-            victim = i;
-        }
-    }
+            victim = i;}}
     return victim;
 }
 
-function runOPT(
-    page,
-    state,
-    refs,
-    currentIndex
-) {
+function runOPT(page, state, refs, currentIndex) {
     const hit =
-        findPage(
-            state.frames,
-            page
-        );
+        findPage(state.frames, page);
     if (hit !== -1) {
-        processHit(
-            state.frames[hit],
-            state
-        );
-        return {
-            status:
+        processHit(state.frames[hit], state);
+        return {status:
                 'PAGE HIT',
-            victim: null
-        };
+                victim: null};
     }
     state.pageFaults++;
     const empty =
         findEmptyFrame(
-            state.frames
-        );
+            state.frames);
     if (empty !== -1) {
-        loadPage(
-            state.frames[empty],
-            page,
-            state.time
-        );
-        return {
-            status:
+        loadPage(state.frames[empty], page, state.time);
+        return {status:
                 'PAGE FAULT',
-            victim: null
-        };
-    }
+                victim: null};}
     const victim =
-        selectOPT(
-            state.frames,
-            refs,
-            currentIndex
-        );
+        selectOPT(state.frames, refs, currentIndex);
     const victimPage =
-        state.frames[
-            victim
-        ].page;
-    loadPage(
-        state.frames[
-            victim
-        ],
-        page,
-        state.time
-    );
-    return {
-        status:
+        state.frames[victim].page;
+    loadPage(state.frames[victim], page, state.time);
+    return {status:
             'PAGE FAULT',
-        victim:
-            victimPage
-    };
+            victim:
+            victimPage};
 }
 
 function selectLRU(frames) {
     let victim = 0;
-    for (
-        let i = 1;
+    for (let i = 1;
         i < frames.length;
-        i++
-    ) {
-        if (
-            frames[i].lastUsed <
-            frames[victim].lastUsed
-        ) {
-            victim = i;
-        }
-    }
+        i++) {
+        if (frames[i].lastUsed <
+            frames[victim].lastUsed) {victim = i;}}
     return victim;
 }
 
-function runLRU(
-    page,
-    state
-) {
+function runLRU(page, state) {
     const hit =
-        findPage(
-            state.frames,
-            page
-        );
+        findPage(state.frames, page);
     if (hit !== -1) {
-        processHit(
-            state.frames[hit],
-            state
-        );
-        return {
-            status:
+        processHit( state.frames[hit], state);
+        return {status:
                 'PAGE HIT',
-            victim: null
-        };
-    }
+            victim: null};}
     state.pageFaults++;
     const empty =
         findEmptyFrame(
-            state.frames
-        );
+            state.frames);
     if (empty !== -1) {
-        loadPage(
-            state.frames[empty],
-            page,
-            state.time
-        );
-        return {
-            status:
+        loadPage(state.frames[empty], page, state.time);
+        return {status:
                 'PAGE FAULT',
-            victim: null
-        };
-    }
+                victim: null};}
     const victim =
-        selectLRU(
-            state.frames
-        );
+        selectLRU( state.frames);
     const victimPage =
-        state.frames[
-            victim
-        ].page;
+        state.frames[victim].page;
     loadPage(
-        state.frames[
-            victim
-        ],
-        page,
-        state.time
-    );
-    return {
-        status:
+        state.frames[victim], page, state.time);
+    return {status:
             'PAGE FAULT',
-        victim:
-            victimPage
-    };
+            victim:
+            victimPage};
 }
 
 function ageFrames(frames) {
     for (const frame of frames) {
         // shift right by 1
         frame.refByte = (frame.refByte >>> 1);
-
         // insert R into MSB (bit 7)
         if (frame.R === 1) {
-            frame.refByte = frame.refByte | 0b10000000;
-        }
-
+            frame.refByte = frame.refByte | 0b10000000;}
         // reset reference bit after aging
-        frame.R = 0;
-    }
+        frame.R = 0;}
 }
 
 function runARB(page, state) {
     // AGE ALL FRAMES FIRST (core ARB behavior)
-
 const ARB_INTERVAL = 3;
-
 if (state.time % ARB_INTERVAL === 0) {
     ageFrames(state.frames);
 }
-
 const hit = findPage(state.frames, page);
-
 if (hit !== -1) {
     processHit(state.frames[hit], state);
     state.frames[hit].R = 1;
-    return {
-        status: 'PAGE HIT',
-        victim: null
-    };
+    return {status: 'PAGE HIT',
+            victim: null};
 }
     state.pageFaults++;
-
     const empty = findEmptyFrame(state.frames);
-
     if (empty !== -1) {
         loadPage(state.frames[empty], page, state.time);
         state.frames[empty].R = 1;
-
-        return {
-            status: 'PAGE FAULT',
-            victim: null
-        };
-    }
-
+        return {status: 'PAGE FAULT',
+                victim: null};}
     // pick frame with LOWEST refByte (least recently used-ish)
     let victim = 0;
-
     for (let i = 1; i < state.frames.length; i++) {
-        if (
-            state.frames[i].refByte <
-            state.frames[victim].refByte
-        ) {
-            victim = i;
-        }
-    }
-
+        if (state.frames[i].refByte <
+            state.frames[victim].refByte) {
+            victim = i;}}
     const victimPage = state.frames[victim].page;
-
     loadPage(state.frames[victim], page, state.time);
     state.frames[victim].R = 1;
-
-    return {
-        status: 'PAGE FAULT',
-        victim: victimPage
-    };
+    return {status: 'PAGE FAULT',
+            victim: victimPage};
 }
 
-function runClock(
-    page,
-    state
-) {
+function runClock(page, state) {
     const hit =
-        findPage(
-            state.frames,
-            page
-        );
+        findPage(state.frames, page);
     if (hit !== -1) {
-        processHit(
-            state.frames[hit],
-            state
-        );
+        processHit(state.frames[hit], state);
         state.frames[hit].R = 1;
-        return {
-            status:
+        return {status:
                 'PAGE HIT',
-            victim: null
-        };
-    }
+                victim: null};}
     state.pageFaults++;
     while (true) {
         const frame =
             state.frames[
-                state.clockHand
-            ];
-        if (
-            frame.page === null
-        ) {
-            loadPage(
-                frame,
-                page,
-                state.time
-            );
+                state.clockHand];
+        if (frame.page === null) {
+            loadPage(frame, page, state.time);
             state.clockHand =
-                (
-                    state.clockHand + 1
-                ) %
+                (state.clockHand + 1) %
                 state.frames.length;
-            return {
-                status:
+            return {status:
                     'PAGE FAULT',
-                victim: null
-            };
-        }
+                    victim: null};}
         if (frame.R === 0) {
             const victim =
                 frame.page;
-            loadPage(
-                frame,
-                page,
-                state.time
-            );
+            loadPage(frame, page, state.time);
             state.clockHand =
-                (
-                    state.clockHand + 1
-                ) %
+                (state.clockHand + 1) %
                 state.frames.length;
-            return {
-                status:
+            return {status:
                     'PAGE FAULT',
-                victim
-            };
-        }
+                    victim};}
         frame.R = 0;
         state.clockHand =
-            (
-                state.clockHand + 1
-            ) %
-            state.frames.length;
-    }
+            (state.clockHand + 1) % 
+            state.frames.length;}
 }
 
 function getClass(r, m) {
@@ -809,381 +539,181 @@ function getClass(r, m) {
 
 function runEnhancedClock(page, state) {
     const hit = findPage(state.frames, page);
-
     if (hit !== -1) {
         processHit(state.frames[hit], state);
         state.frames[hit].R = 1;
-        return { status: 'PAGE HIT', victim: null };
-    }
-
+        return { status: 'PAGE HIT', victim: null };}
     state.pageFaults++;
-
     let start = state.clockHand;
     let victim = -1;
     let bestClass = Infinity;
-
     for (let pass = 0; pass < state.frames.length; pass++) {
         const i = (start + pass) % state.frames.length;
         const frame = state.frames[i];
-
         if (frame.page === null) {
             victim = i;
-            break;
-        }
-
+            break;}
         const cls = getClass(frame.R, frame.M);
-
         if (cls < bestClass) {
             bestClass = cls;
             victim = i;
-
             // class 0 is best possible
-            if (cls === 0) break;
-        }
-    }
-
+            if (cls === 0) break;}}
     const victimPage = state.frames[victim].page;
-
     loadPage(state.frames[victim], page, state.time);
     state.frames[victim].R = 1;
-
     state.clockHand = (victim + 1) % state.frames.length;
-
-    return {
-        status: 'PAGE FAULT',
-        victim: victimPage
-    };
+    return {status: 'PAGE FAULT',
+            victim: victimPage};
 }
 
-function runLFU(
-    page,
-    state
-) {
+function runLFU(page, state) {
     const hit =
-        findPage(
-            state.frames,
-            page
-        );
-
+        findPage(state.frames, page);
     if (hit !== -1) {
-        processHit(
-            state.frames[hit],
-            state
-        );
-
-        return {
-            status:
+        processHit(state.frames[hit], state);
+        return {status:
                 'PAGE HIT',
-            victim: null
-        };
-    }
-
+                victim: null};}
     state.pageFaults++;
-
     const empty =
-        findEmptyFrame(
-            state.frames
-        );
-
+        findEmptyFrame(state.frames);
     if (empty !== -1) {
-        loadPage(
-            state.frames[empty],
-            page,
-            state.time
-        );
-
-        return {
-            status:
+        loadPage(state.frames[empty], page, state.time);
+        return {status:
                 'PAGE FAULT',
-            victim: null
-        };
-    }
-
+                victim: null};}
     let victim = 0;
-
     for (let i = 1; i < state.frames.length; i++) {
        const current = state.frames[i];
        const best = state.frames[victim];
-
-       if (
-           current.count < best.count ||
-        (
-              current.count === best.count &&
-              current.lastUsed < best.lastUsed
-        )
-    ) {
-        victim = i;
-    }
+       if (current.count < best.count ||
+        (current.count === best.count &&
+         current.lastUsed < best.lastUsed)) 
+        {victim = i;}
 }
-
-    const victimPage =
-        state.frames[victim].page;
-
-    loadPage(
-        state.frames[victim],
-        page,
-        state.time
-    );
-
-    return {
-        status:
+    const victimPage = state.frames[victim].page;
+    loadPage(state.frames[victim], page, state.time);
+    return {status:
             'PAGE FAULT',
-        victim:
-            victimPage
-    };
+            victim:
+            victimPage};
 }
 
-function runMFU(
-    page,
-    state
-) {
+function runMFU(page, state) {
     const hit =
-        findPage(
-            state.frames,
-            page
-        );
-
+        findPage(state.frames, page);
     if (hit !== -1) {
-        processHit(
-            state.frames[hit],
-            state
-        );
-
-        return {
-            status:
+        processHit(state.frames[hit], state);
+        return {status:
                 'PAGE HIT',
-            victim: null
-        };
-    }
-
+                victim: null};}
     state.pageFaults++;
-
     const empty =
         findEmptyFrame(
-            state.frames
-        );
-
+            state.frames);
     if (empty !== -1) {
-        loadPage(
-            state.frames[empty],
-            page,
-            state.time
-        );
-
-        return {
-            status:
+        loadPage(state.frames[empty], page, state.time);
+        return {status:
                 'PAGE FAULT',
-            victim: null
-        };
-    }
-
+                victim: null};}
     let victim = 0;
-
     for (let i = 1; i < state.frames.length; i++) {
        const current = state.frames[i];
        const best = state.frames[victim];
-
-       if (
-           current.count > best.count ||
-        (
-               current.count === best.count &&
-               current.lastUsed < best.lastUsed
-        ) 
-    ) {
-        victim = i;
-    }
+       if (current.count > best.count ||
+        (current.count === best.count &&
+         current.lastUsed < best.lastUsed)) 
+        {victim = i;}
 }
-
     const victimPage =
         state.frames[victim].page;
-
-    loadPage(
-        state.frames[victim],
-        page,
-        state.time
-    );
-
-    return {
-        status:
+    loadPage(state.frames[victim], page, state.time);
+    return {status:
             'PAGE FAULT',
-        victim:
-            victimPage
-    };
+            victim:
+            victimPage};
 }
 
-function simulateReference(
-    page,
-    state,
-    config,
-    index
-) {
-    switch (
-        config.algorithm
-    ) {
+function simulateReference(page, state, config, index) {
+    switch (config.algorithm) {
         case 'fifo':
-            return runFIFO(
-                page,
-                state
-            );
-
-        case 'lru':
-            return runLRU(
-                page,
-                state
-            );
-
-	case 'arb':
- 	   return runARB(
-		page, 
-		state
-	    );
-
+            return runFIFO(page, state);
         case 'opt':
-            return runOPT(
-                page,
-                state,
-                config.referenceString,
-                index
-            );
-
+            return runOPT(page, state, config.referenceString, index);
+        case 'lru':
+            return runLRU(page, state);
+	    case 'arb':
+ 	         return runARB(page, state);
         case 'clock':
-            return runClock(
-                page,
-                state
-            );
-
-	case 'enhanced':
- 	   return runEnhancedClock(
-		page, 
-		state
-	    );
-
+            return runClock(page, state);
+        case 'enhanced':
+ 	        return runEnhancedClock(page, state);
         case 'lfu':
-            return runLFU(
-                page,
-                state
-            );
-
+            return runLFU(page,state);
         case 'mfu':
-            return runMFU(
-                page,
-                state
-            );
-
+            return runMFU(page, state);
         default:
             throw new Error(
-                'Algorithm not implemented yet.'
-            );
-    }
+                'Algorithm not implemented yet.');}
 }
 
-function printSummary(
-    config,
-    state
-) {
+function printSummary(config, state) {
     printLine();
-
     console.log(
-        'FINAL SUMMARY'
-    );
-
+        'FINAL SUMMARY');
     printLine();
-
     const total =
         state.pageHits +
         state.pageFaults;
-
     const rate =
         getFaultRate(
             state.pageFaults,
-            total
-        );
-
+            total);
     const eat =
         calculateEAT(
             config.memoryAccessTime,
             config.pageFaultServiceTime,
-            rate
-        );
-
+            rate);
     console.log(
-        `Total References: ${total}`
-    );
-
+        `Total References: ${total}`);
     console.log(
-        `Page Hits: ${state.pageHits}`
-    );
-
+        `Page Hits: ${state.pageHits}`);
     console.log(
-        `Page Faults: ${state.pageFaults}`
-    );
-
+        `Page Faults: ${state.pageFaults}`);
     console.log(
         `Page Fault Rate: ${(rate * 100)
-            .toFixed(2)}%`
-    );
-
+            .toFixed(2)}%` );
     console.log(
-        `Memory Access Time: ${config.memoryAccessTime} ns`
-    );
-
+        `Memory Access Time: ${config.memoryAccessTime} ns`);
     console.log(
-        `Page Fault Service Time: ${config.pageFaultServiceTime} ns`
-    );
-
+        `Page Fault Service Time: ${config.pageFaultServiceTime} ns`);
     console.log(
-        `Effective Access Time: ${eat.toFixed(2)} ns`
-    );
-
+        `Effective Access Time: ${eat.toFixed(2)} ns`);
     printLine();
 }
 
 async function main() {
     const config =
         await getUserInput();
-
     const state =
         createState(config);
-
     printHeader(config);
-
-    for (
-        let i = 0;
+    for (let i = 0;
         i < config.referenceString.length;
-        i++
-    ) {
+        i++) {
         state.time = i;
-
         const page =
             config.referenceString[i];
-
         const result =
-            simulateReference(
-                page,
-                state,
-                config,
-                i
-            );
-
-        printStep(
-            page,
-            result.status,
-            result.victim,
-            state
-        );
-    }
-
-    printSummary(
-        config,
-        state
-    );
+            simulateReference(page, state, config, i);
+        printStep(page, result.status, result.victim, state);}
+    printSummary(config, state);
 }
 
 main().catch(error => {
     console.error(
         'Program failed:',
-        error.message
-    );
-
+        error.message);
     process.exitCode = 1;
 });
