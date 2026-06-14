@@ -1077,6 +1077,67 @@ function simulateReference(
     }
 }
 
+function printSummary(
+    config,
+    state
+) {
+    printLine();
+
+    console.log(
+        'FINAL SUMMARY'
+    );
+
+    printLine();
+
+    const total =
+        state.pageHits +
+        state.pageFaults;
+
+    const rate =
+        getFaultRate(
+            state.pageFaults,
+            total
+        );
+
+    const eat =
+        calculateEAT(
+            config.memoryAccessTime,
+            config.pageFaultServiceTime,
+            rate
+        );
+
+    console.log(
+        `Total References: ${total}`
+    );
+
+    console.log(
+        `Page Hits: ${state.pageHits}`
+    );
+
+    console.log(
+        `Page Faults: ${state.pageFaults}`
+    );
+
+    console.log(
+        `Page Fault Rate: ${(rate * 100)
+            .toFixed(2)}%`
+    );
+
+    console.log(
+        `Memory Access Time: ${config.memoryAccessTime} ns`
+    );
+
+    console.log(
+        `Page Fault Service Time: ${config.pageFaultServiceTime} ns`
+    );
+
+    console.log(
+        `Effective Access Time: ${eat.toFixed(2)} ns`
+    );
+
+    printLine();
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
