@@ -11,7 +11,6 @@
     <style>
         /* ── Storage-specific styles ─────────────────────── */
 
-        /* Disk visualization */
         .disk-viz-wrapper {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -26,7 +25,6 @@
             min-height: 120px;
         }
 
-        /* Track ruler */
         .disk-ruler {
             position: relative;
             height: 32px;
@@ -64,11 +62,10 @@
             background: var(--border-light);
         }
 
-        /* Seek path animation area */
         .disk-seek-canvas-wrap {
             position: relative;
             width: 100%;
-            height: 180px;
+            height: 300px;
             margin-top: 8px;
         }
 
@@ -78,7 +75,6 @@
             border-radius: var(--radius-sm);
         }
 
-        /* Seek order list */
         .seek-order-wrap {
             margin-top: 1.25rem;
             background: var(--bg-card);
@@ -128,7 +124,6 @@
             font-size: 12px;
         }
 
-        /* Storage config */
         .storage-config-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -150,7 +145,6 @@
             max-width: 100%;
         }
 
-        /* Request input area */
         .req-input-row {
             display: flex;
             gap: 8px;
@@ -212,7 +206,6 @@
             font-style: italic;
         }
 
-        /* Metrics for storage */
         .storage-metrics-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -258,7 +251,6 @@
             opacity: 1;
         }
 
-        /* Scan direction selector */
         .scan-dir-group {
             display: flex;
             gap: 8px;
@@ -290,7 +282,6 @@
             box-shadow: 0 0 16px -4px var(--green);
         }
 
-        /* Algo options box */
         .storage-algo-options {
             padding: 14px 16px;
             background: var(--bg-card);
@@ -313,7 +304,79 @@
             margin-bottom: 8px;
         }
 
-        /* Comparison table */
+        /* Step-by-step computation table */
+        .calc-table-wrap {
+            margin-top: 1.25rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+
+        .calc-table-header {
+            padding: 12px 16px;
+            background: var(--bg-surface);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+        }
+
+        table.calc-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.calc-table th {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        table.calc-table td {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            padding: 7px 16px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid rgba(42, 42, 58, 0.5);
+            animation: fadeInRow 0.3s ease forwards;
+            opacity: 0;
+        }
+
+        table.calc-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.calc-table tr.total-row td {
+            color: var(--green);
+            font-weight: 700;
+            border-top: 1px solid var(--border);
+            background: var(--green-dim);
+        }
+
+        table.calc-table td.from-col {
+            color: var(--text-primary);
+        }
+
+        table.calc-table td.dist-col {
+            color: var(--cyan);
+        }
+
+        table.calc-table tr.edge-row td {
+            background: rgba(240, 165, 0, 0.06);
+        }
+
+        table.calc-table tr.wrap-row td {
+            background: rgba(108, 99, 255, 0.06);
+        }
+
         .compare-grid {
             display: grid;
             gap: 0.75rem;
@@ -366,7 +429,6 @@
             text-align: right;
         }
 
-        /* Section label for output */
         .storage-section-label {
             font-family: var(--font-mono);
             font-size: 11px;
@@ -387,7 +449,6 @@
             background: var(--border);
         }
 
-        /* Disk platter background canvas specific */
         #auroraCanvas {
             opacity: 0.9;
         }
@@ -396,10 +457,8 @@
 
 <body>
 
-    <!-- Scroll progress bar -->
     <div id="scrollProgress"></div>
 
-    <!-- Back to top -->
     <button id="backToTop" aria-label="Back to top">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
             stroke-linecap="round" stroke-linejoin="round">
@@ -407,7 +466,6 @@
         </svg>
     </button>
 
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-left">
             <div class="nav-logo">
@@ -443,7 +501,6 @@
         </button>
     </nav>
 
-    <!-- Page Header with Disk Platter Background -->
     <div class="cpu-hero-wrapper">
         <canvas id="auroraCanvas"></canvas>
         <header class="cpu-page-header">
@@ -465,7 +522,6 @@
 
     <main class="cpu-main">
 
-        <!-- ─── Algorithm Selector ─────────────────────────────────── -->
         <section class="cpu-section" id="algorithmSection">
             <div class="section-label">Algorithm</div>
             <div class="algo-selector" id="algoSelector">
@@ -477,7 +533,6 @@
                 <button class="algo-pill" data-algo="clook">C-LOOK</button>
             </div>
 
-            <!-- SCAN / C-SCAN / LOOK / C-LOOK direction option -->
             <div class="storage-algo-options" id="dirOptions">
                 <div class="storage-algo-options-label">Initial Head Direction</div>
                 <div class="scan-dir-group">
@@ -486,7 +541,6 @@
                 </div>
             </div>
 
-            <!-- Algorithm description -->
             <div class="algo-description" id="algoDescription">
                 <div class="algo-desc-icon">💡</div>
                 <p id="algoDescText">Services requests in the order they arrive in the queue. Simple but can cause
@@ -494,7 +548,6 @@
             </div>
         </section>
 
-        <!-- ─── Disk Configuration ────────────────────────────────── -->
         <section class="cpu-section" id="diskConfigSection">
             <div class="section-label">Disk Configuration</div>
             <div class="storage-config-grid">
@@ -511,7 +564,6 @@
             </div>
         </section>
 
-        <!-- ─── Request Queue ─────────────────────────────────────── -->
         <section class="cpu-section" id="requestSection">
             <div class="section-label">Request Queue</div>
 
@@ -533,7 +585,6 @@
                 <button class="btn btn-ghost btn-danger" id="btnClearReqs" style="align-self:flex-end;">Clear</button>
             </div>
 
-            <!-- Tag display -->
             <div class="req-tags-wrap" id="reqTagsWrap">
                 <span class="req-tags-empty" id="reqTagsEmpty">No requests yet — add track numbers above.</span>
             </div>
@@ -549,34 +600,44 @@
             </div>
         </section>
 
-        <!-- ─── Output ────────────────────────────────────────────── -->
         <section class="cpu-section cpu-output-section" id="outputSection" style="display:none;">
 
-            <!-- Seek path visualization -->
             <div class="section-label">Seek Path</div>
             <div class="disk-viz-wrapper">
-                <!-- Ruler -->
                 <div class="disk-ruler" id="diskRuler">
                     <div class="disk-ruler-bar"></div>
-                    <!-- ticks injected by JS -->
                 </div>
-                <!-- Canvas for animated seek arm -->
                 <div class="disk-seek-canvas-wrap">
                     <canvas id="seekCanvas"></canvas>
                 </div>
             </div>
 
-            <!-- Seek order -->
             <div class="seek-order-wrap">
                 <div class="seek-order-label">Service Order</div>
                 <div class="seek-order-list" id="seekOrderList"></div>
             </div>
 
-            <!-- Metrics -->
+            <!-- Step-by-step computation table -->
+            <div class="calc-table-wrap" id="calcTableWrap">
+                <div class="calc-table-header">Step-by-Step Head Movement Computation</div>
+                <table class="calc-table" id="calcTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>From Track</th>
+                            <th>To Track</th>
+                            <th>Calculation</th>
+                            <th>Distance</th>
+                            <th>Running Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calcTableBody"></tbody>
+                </table>
+            </div>
+
             <div class="storage-section-label">Performance Metrics</div>
             <div class="storage-metrics-grid" id="metricsGrid"></div>
 
-            <!-- Algorithm comparison -->
             <div class="storage-section-label">Algorithm Comparison</div>
             <div class="compare-grid" id="compareGrid"></div>
 
@@ -596,141 +657,188 @@
              *  DISK SCHEDULING ALGORITHMS
              * ══════════════════════════════════════════════════════════ */
 
-            /**
-             * Returns { order: number[], totalSeek: number }
-             * order = sequence of tracks visited (including start head)
-             */
-
             function fcfs(requests, head) {
                 const order = [head, ...requests];
                 let seek = 0;
-                for (let i = 1; i < order.length; i++) seek += Math.abs(order[i] - order[i - 1]);
-                return { order, totalSeek: seek };
+                const steps = [];
+                for (let i = 1; i < order.length; i++) {
+                    const dist = Math.abs(order[i] - order[i - 1]);
+                    seek += dist;
+                    steps.push({ from: order[i - 1], to: order[i], dist });
+                }
+                return { order, totalSeek: seek, steps };
             }
 
             function sstf(requests, head) {
                 const remaining = [...requests];
                 const order = [head];
-                let seek = 0;
-                let cur = head;
-
+                const steps = [];
+                let seek = 0, cur = head;
                 while (remaining.length > 0) {
-                    // Find closest track
                     let minDist = Infinity, minIdx = 0;
-                    remaining.forEach((r, i) => {
-                        const d = Math.abs(r - cur);
-                        if (d < minDist) { minDist = d; minIdx = i; }
-                    });
+                    remaining.forEach((r, i) => { const d = Math.abs(r - cur); if (d < minDist) { minDist = d; minIdx = i; } });
+                    const to = remaining[minIdx];
                     seek += minDist;
-                    cur = remaining[minIdx];
+                    steps.push({ from: cur, to, dist: minDist });
+                    cur = to;
                     order.push(cur);
                     remaining.splice(minIdx, 1);
                 }
-                return { order, totalSeek: seek };
+                return { order, totalSeek: seek, steps };
             }
 
+            // SCAN: always sweeps to the disk edge before reversing
             function scan(requests, head, diskSize, direction) {
-                // direction: 'up' (toward higher) or 'down' (toward lower)
                 const sorted = [...requests].sort((a, b) => a - b);
                 const order = [head];
+                const steps = [];
                 let seek = 0;
 
-                const higher = sorted.filter(r => r >= head);
-                const lower = sorted.filter(r => r < head).reverse();
-
-                if (direction === 'up') {
-                    // go to end, then come back
-                    [...higher, ...lower].forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
+                if (direction === 'down') {
+                    const lower = sorted.filter(r => r < head).reverse();
+                    const higher = sorted.filter(r => r >= head);
+                    lower.forEach(r => {
+                        const d = Math.abs(r - order[order.length - 1]);
+                        seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
                     });
-                    // add disk end if needed for proper SCAN
-                    if (higher.length > 0 && higher[higher.length - 1] < diskSize) {
-                        // SCAN goes to end but we only mark visited requests
+                    // Always go to track 0
+                    const fromEdge = order[order.length - 1];
+                    if (fromEdge !== 0) {
+                        seek += fromEdge; steps.push({ from: fromEdge, to: 0, dist: fromEdge, isEdge: true }); order.push(0);
                     }
+                    higher.forEach(r => {
+                        const d = Math.abs(r - order[order.length - 1]);
+                        seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
+                    });
                 } else {
-                    [...lower, ...higher].forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
+                    const higher = sorted.filter(r => r > head);
+                    const lower = sorted.filter(r => r <= head).reverse();
+                    higher.forEach(r => {
+                        const d = Math.abs(r - order[order.length - 1]);
+                        seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
+                    });
+                    // Always go to diskSize
+                    const fromEdge = order[order.length - 1];
+                    if (fromEdge !== diskSize) {
+                        const d = diskSize - fromEdge;
+                        seek += d; steps.push({ from: fromEdge, to: diskSize, dist: d, isEdge: true }); order.push(diskSize);
+                    }
+                    lower.forEach(r => {
+                        const d = Math.abs(r - order[order.length - 1]);
+                        seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
                     });
                 }
-
-                return { order, totalSeek: seek };
+                return { order, totalSeek: seek, steps };
             }
 
+            // C-SCAN: reaches disk edge, then jumps (broken line) to other side
             function cscan(requests, head, diskSize, direction) {
                 const sorted = [...requests].sort((a, b) => a - b);
                 const order = [head];
+                const steps = [];
                 let seek = 0;
 
-                const higher = sorted.filter(r => r >= head);
-                const lower = sorted.filter(r => r < head);
-
                 if (direction === 'up') {
-                    // Service higher tracks first, jump to 0, service lower
-                    const sequence = [...higher, ...lower];
-                    sequence.forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
+                    const higher = sorted.filter(r => r >= head);
+                    const lower = sorted.filter(r => r < head);
+                    higher.forEach(r => {
+                        const d = Math.abs(r - order[order.length - 1]);
+                        seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
                     });
+                    // Always go to disk end
+                    const lastHigh = order[order.length - 1];
+                    if (lastHigh !== diskSize) {
+                        const toEdge = diskSize - lastHigh;
+                        seek += toEdge; steps.push({ from: lastHigh, to: diskSize, dist: toEdge, isEdge: true }); order.push(diskSize);
+                    }
+                    if (lower.length > 0) {
+                        // Jump (broken line) from diskSize to 0
+                        seek += diskSize; steps.push({ from: diskSize, to: 0, dist: diskSize, isWrap: true }); order.push(0);
+                        lower.forEach(r => {
+                            const d = Math.abs(r - order[order.length - 1]);
+                            seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
+                        });
+                    }
                 } else {
-                    // Service lower tracks first (going down), jump to max, service higher
-                    const reversedLower = [...lower].reverse();
-                    const sequence = [...reversedLower, ...higher.reverse()];
-                    sequence.forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
+                    const lower = sorted.filter(r => r <= head).reverse();
+                    const higher = sorted.filter(r => r > head).reverse();
+                    lower.forEach(r => {
+                        const d = Math.abs(r - order[order.length - 1]);
+                        seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
                     });
+                    const lastLow = order[order.length - 1];
+                    if (lastLow !== 0) {
+                        seek += lastLow; steps.push({ from: lastLow, to: 0, dist: lastLow, isEdge: true }); order.push(0);
+                    }
+                    if (higher.length > 0) {
+                        seek += diskSize; steps.push({ from: 0, to: diskSize, dist: diskSize, isWrap: true }); order.push(diskSize);
+                        higher.forEach(r => {
+                            const d = Math.abs(r - order[order.length - 1]);
+                            seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r);
+                        });
+                    }
                 }
-
-                return { order, totalSeek: seek };
+                return { order, totalSeek: seek, steps };
             }
 
+            // LOOK: only to furthest request, no disk edge
             function look(requests, head, direction) {
                 const sorted = [...requests].sort((a, b) => a - b);
                 const order = [head];
+                const steps = [];
                 let seek = 0;
 
-                const higher = sorted.filter(r => r >= head);
-                const lower = sorted.filter(r => r < head).reverse();
-
-                if (direction === 'up') {
-                    [...higher, ...lower].forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
-                    });
+                if (direction === 'down') {
+                    const lower = sorted.filter(r => r < head).reverse();
+                    const higher = sorted.filter(r => r >= head);
+                    lower.forEach(r => { const d = Math.abs(r - order[order.length - 1]); seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r); });
+                    higher.forEach(r => { const d = Math.abs(r - order[order.length - 1]); seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r); });
                 } else {
-                    [...lower, ...higher].forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
-                    });
+                    const higher = sorted.filter(r => r >= head);
+                    const lower = sorted.filter(r => r < head).reverse();
+                    higher.forEach(r => { const d = Math.abs(r - order[order.length - 1]); seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r); });
+                    lower.forEach(r => { const d = Math.abs(r - order[order.length - 1]); seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r); });
                 }
-                return { order, totalSeek: seek };
+                return { order, totalSeek: seek, steps };
             }
 
+            // C-LOOK: jump (broken line) from last request to first on other side
             function clook(requests, head, direction) {
                 const sorted = [...requests].sort((a, b) => a - b);
                 const order = [head];
+                const steps = [];
                 let seek = 0;
 
-                const higher = sorted.filter(r => r >= head);
-                const lower = sorted.filter(r => r < head);
-
                 if (direction === 'up') {
-                    const sequence = [...higher, ...lower];
-                    sequence.forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
-                    });
+                    const higher = sorted.filter(r => r >= head);
+                    const lower = sorted.filter(r => r < head);
+                    higher.forEach(r => { const d = Math.abs(r - order[order.length - 1]); seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r); });
+                    if (lower.length > 0) {
+                        const fromPos = order[order.length - 1];
+                        const firstLow = lower[0];
+                        const jumpDist = fromPos - firstLow;
+                        seek += jumpDist; steps.push({ from: fromPos, to: firstLow, dist: jumpDist, isWrap: true }); order.push(firstLow);
+                        for (let i = 1; i < lower.length; i++) {
+                            const d = Math.abs(lower[i] - order[order.length - 1]);
+                            seek += d; steps.push({ from: order[order.length - 1], to: lower[i], dist: d }); order.push(lower[i]);
+                        }
+                    }
                 } else {
-                    const reversedLower = [...lower].reverse();
-                    const sequence = [...reversedLower, ...higher.reverse()];
-                    sequence.forEach(r => {
-                        seek += Math.abs(r - order[order.length - 1]);
-                        order.push(r);
-                    });
+                    const lower = sorted.filter(r => r <= head).reverse();
+                    const higher = sorted.filter(r => r > head).reverse();
+                    lower.forEach(r => { const d = Math.abs(r - order[order.length - 1]); seek += d; steps.push({ from: order[order.length - 1], to: r, dist: d }); order.push(r); });
+                    if (higher.length > 0) {
+                        const fromPos = order[order.length - 1];
+                        const firstHigh = higher[0];
+                        const jumpDist = firstHigh - fromPos;
+                        seek += jumpDist; steps.push({ from: fromPos, to: firstHigh, dist: jumpDist, isWrap: true }); order.push(firstHigh);
+                        for (let i = 1; i < higher.length; i++) {
+                            const d = Math.abs(higher[i] - order[order.length - 1]);
+                            seek += d; steps.push({ from: order[order.length - 1], to: higher[i], dist: d }); order.push(higher[i]);
+                        }
+                    }
                 }
-                return { order, totalSeek: seek };
+                return { order, totalSeek: seek, steps };
             }
 
             function runAll(requests, head, diskSize, direction) {
@@ -753,33 +861,25 @@
             let requests = [];
 
             const ALGO_NAMES = {
-                fcfs: 'FCFS',
-                sstf: 'SSTF',
-                scan: 'SCAN',
-                cscan: 'C-SCAN',
-                look: 'LOOK',
-                clook: 'C-LOOK',
+                fcfs: 'FCFS', sstf: 'SSTF', scan: 'SCAN',
+                cscan: 'C-SCAN', look: 'LOOK', clook: 'C-LOOK',
             };
 
             const ALGO_COLORS = {
-                fcfs: '#6c63ff',
-                sstf: '#00c8e0',
-                scan: '#f0a500',
-                cscan: '#34c77b',
-                look: '#a855f7',
-                clook: '#ec4899',
+                fcfs: '#6c63ff', sstf: '#00c8e0', scan: '#f0a500',
+                cscan: '#34c77b', look: '#a855f7', clook: '#ec4899',
             };
 
             const ALGO_DESC = {
                 fcfs: 'Services requests in the order they arrive in the queue. Simple but can cause excessive seek times if requests are scattered.',
                 sstf: 'Always services the closest pending request to the current head position. Minimizes immediate seek distance but may cause starvation for distant tracks.',
-                scan: 'The head moves in one direction servicing requests, reaches the end of the disk, then reverses. Resembles an elevator — hence "Elevator Algorithm".',
-                cscan: 'Like SCAN but only services requests in one direction. After reaching the end, the head jumps back to the beginning without servicing on the return trip.',
+                scan: 'The head moves in one direction servicing requests, reaches the disk edge (track 0 or max), then reverses. Resembles an elevator — hence "Elevator Algorithm".',
+                cscan: 'Like SCAN but only services requests in one direction. After reaching the disk edge, the head jumps back (dashed line) to the other end without servicing on the return.',
                 look: 'Like SCAN but the head only goes as far as the last request in each direction — it does not travel all the way to the disk edge.',
-                clook: 'Like C-SCAN but only travels as far as the furthest request in each direction, then jumps back to the lowest pending request.',
+                clook: 'Like C-SCAN but only travels as far as the furthest request in each direction, then jumps (dashed line) to the lowest/highest pending request.',
             };
 
-            /* ── Theme ────────────────────────────────────── */
+            /* ── Theme ── */
             const themeBtn = document.getElementById('themeToggle');
             if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
             themeBtn.addEventListener('click', () => {
@@ -787,7 +887,7 @@
                 localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
             });
 
-            /* ── Scroll progress + back-to-top ───────────── */
+            /* ── Scroll ── */
             const progressBar = document.getElementById('scrollProgress');
             const backToTop = document.getElementById('backToTop');
             window.addEventListener('scroll', () => {
@@ -798,7 +898,7 @@
             }, { passive: true });
             backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-            /* ── Algorithm pills ──────────────────────────── */
+            /* ── Algorithm pills ── */
             const pills = document.querySelectorAll('.algo-pill');
             const dirOptions = document.getElementById('dirOptions');
             const algoDescEl = document.getElementById('algoDescText');
@@ -814,7 +914,7 @@
                 });
             });
 
-            /* ── Scan direction ───────────────────────────── */
+            /* ── Scan direction ── */
             document.querySelectorAll('.scan-dir-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.scan-dir-btn').forEach(b => b.classList.remove('active'));
@@ -823,31 +923,26 @@
                 });
             });
 
-            /* ── Disk size display ────────────────────────── */
+            /* ── Disk size display ── */
             const diskSizeInput = document.getElementById('diskSize');
             const diskSizeDisplay = document.getElementById('diskSizeDisplay');
             diskSizeInput.addEventListener('input', () => {
                 diskSizeDisplay.textContent = diskSizeInput.value;
             });
 
-            /* ── Request tags ─────────────────────────────── */
+            /* ── Request tags ── */
             const reqInput = document.getElementById('reqInput');
             const tagsWrap = document.getElementById('reqTagsWrap');
             const tagsEmpty = document.getElementById('reqTagsEmpty');
 
             function renderTags() {
-                // Remove old tags (keep empty label)
                 tagsWrap.querySelectorAll('.req-tag').forEach(t => t.remove());
                 tagsEmpty.style.display = requests.length === 0 ? '' : 'none';
-
                 requests.forEach((r, i) => {
                     const tag = document.createElement('span');
                     tag.className = 'req-tag';
                     tag.innerHTML = `${r} <span class="req-tag-x">✕</span>`;
-                    tag.addEventListener('click', () => {
-                        requests.splice(i, 1);
-                        renderTags();
-                    });
+                    tag.addEventListener('click', () => { requests.splice(i, 1); renderTags(); });
                     tagsWrap.appendChild(tag);
                 });
             }
@@ -861,35 +956,23 @@
             }
 
             document.getElementById('btnAddReq').addEventListener('click', () => {
-                addRequest(reqInput.value);
-                reqInput.value = '';
-                reqInput.focus();
+                addRequest(reqInput.value); reqInput.value = ''; reqInput.focus();
             });
-
             reqInput.addEventListener('keydown', e => {
-                if (e.key === 'Enter') {
-                    addRequest(reqInput.value);
-                    reqInput.value = '';
-                }
+                if (e.key === 'Enter') { addRequest(reqInput.value); reqInput.value = ''; }
             });
-
             document.getElementById('btnLoadExample').addEventListener('click', () => {
-                requests = [98, 183, 37, 122, 14, 124, 65, 67];
-                renderTags();
+                requests = [98, 183, 37, 122, 14, 124, 65, 67]; renderTags();
             });
-
             document.getElementById('btnClearReqs').addEventListener('click', () => {
-                requests = [];
-                renderTags();
+                requests = []; renderTags();
             });
 
-            /* ── Run ──────────────────────────────────────── */
+            /* ── Run ── */
             document.getElementById('btnRun').addEventListener('click', () => {
                 if (requests.length === 0) return;
-
                 const head = parseInt(document.getElementById('headStart').value) || 0;
                 const diskSize = parseInt(diskSizeInput.value) || 199;
-
                 let result;
                 switch (currentAlgo) {
                     case 'fcfs': result = fcfs(requests, head); break;
@@ -899,7 +982,6 @@
                     case 'look': result = look(requests, head, currentDir); break;
                     case 'clook': result = clook(requests, head, currentDir); break;
                 }
-
                 const allResults = runAll(requests, head, diskSize, currentDir);
                 renderOutput(result, allResults, head, diskSize);
             });
@@ -913,36 +995,32 @@
             function renderOutput(result, allResults, head, diskSize) {
                 const outSec = document.getElementById('outputSection');
                 outSec.style.display = '';
-
                 renderRuler(diskSize);
-                renderSeekCanvas(result.order, diskSize);
+                renderSeekCanvas(result.order, result.steps, diskSize);
                 renderSeekOrder(result.order);
+                renderCalcTable(result.steps, result.totalSeek);
                 renderMetrics(result, head, diskSize);
                 renderComparison(allResults);
-
                 setTimeout(() => outSec.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
             }
 
-            /* ── Ruler ────────────────────────────────────── */
+            /* ── Ruler ── */
             function renderRuler(diskSize) {
                 const ruler = document.getElementById('diskRuler');
-                // Remove old ticks
                 ruler.querySelectorAll('.disk-ruler-tick').forEach(t => t.remove());
-
                 const steps = 10;
                 for (let i = 0; i <= steps; i++) {
                     const val = Math.round((diskSize / steps) * i);
-                    const pct = (val / diskSize) * 100;
                     const tick = document.createElement('div');
                     tick.className = 'disk-ruler-tick';
-                    tick.style.left = pct + '%';
+                    tick.style.left = ((val / diskSize) * 100) + '%';
                     tick.textContent = val;
                     ruler.appendChild(tick);
                 }
             }
 
-            /* ── Seek Canvas ──────────────────────────────── */
-            function renderSeekCanvas(order, diskSize) {
+            /* ── Seek Canvas with dashed lines for wrap/jumps ── */
+            function renderSeekCanvas(order, steps, diskSize) {
                 const canvas = document.getElementById('seekCanvas');
                 const wrap = canvas.parentElement;
                 canvas.width = wrap.offsetWidth * 2;
@@ -951,137 +1029,121 @@
                 canvas.style.height = wrap.offsetHeight + 'px';
 
                 const ctx = canvas.getContext('2d');
-                const W = canvas.width;
-                const H = canvas.height;
-                const PAD_L = W * 0.02;
-                const PAD_R = W * 0.02;
+                const W = canvas.width, H = canvas.height;
+                const PAD_L = W * 0.02, PAD_R = W * 0.02;
                 const usableW = W - PAD_L - PAD_R;
-
                 const color = ALGO_COLORS[currentAlgo];
 
-                function trackX(track) {
-                    return PAD_L + (track / diskSize) * usableW;
-                }
-
-                // Y positions: evenly spaced
+                function trackX(t) { return PAD_L + (t / diskSize) * usableW; }
                 const yStep = H / (order.length + 1);
                 function stepY(i) { return yStep * (i + 1); }
 
                 if (seekAnimId) cancelAnimationFrame(seekAnimId);
 
+                const stepMeta = steps || [];
                 let progress = 0;
                 const TOTAL_STEPS = order.length - 1;
-                const FRAMES_PER_STEP = 28;
+                const FRAMES_PER_STEP = 80; // slower animation
                 const TOTAL_FRAMES = TOTAL_STEPS * FRAMES_PER_STEP;
+
+                function drawSeg(x1, y1, x2, y2, strokeColor, lineWidth, dashed) {
+                    ctx.beginPath();
+                    ctx.setLineDash(dashed ? [16, 12] : []);
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = lineWidth;
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+                }
 
                 function draw() {
                     ctx.clearRect(0, 0, W, H);
 
-                    // Draw grid lines
-                    for (let i = 0; i < order.length; i++) {
+                    // Grid lines
+                    order.forEach(t => {
                         ctx.beginPath();
-                        ctx.moveTo(trackX(order[i]), 0);
-                        ctx.lineTo(trackX(order[i]), H);
+                        ctx.moveTo(trackX(t), 0);
+                        ctx.lineTo(trackX(t), H);
                         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
-                    }
+                        ctx.lineWidth = 1; ctx.stroke();
+                    });
 
-                    const currentFrame = progress;
-                    const completedSteps = Math.floor(currentFrame / FRAMES_PER_STEP);
-                    const fracInStep = (currentFrame % FRAMES_PER_STEP) / FRAMES_PER_STEP;
+                    const completedSteps = Math.floor(progress / FRAMES_PER_STEP);
+                    const frac = (progress % FRAMES_PER_STEP) / FRAMES_PER_STEP;
 
-                    // Draw completed segments
+                    // Completed segments
                     for (let i = 0; i < completedSteps && i < TOTAL_STEPS; i++) {
-                        const x1 = trackX(order[i]);
-                        const y1 = stepY(i);
-                        const x2 = trackX(order[i + 1]);
-                        const y2 = stepY(i + 1);
-
-                        ctx.beginPath();
-                        ctx.moveTo(x1, y1);
-                        ctx.lineTo(x2, y2);
-                        ctx.strokeStyle = color + 'cc';
-                        ctx.lineWidth = 3;
-                        ctx.stroke();
+                        const isWrap = stepMeta[i] && stepMeta[i].isWrap;
+                        drawSeg(
+                            trackX(order[i]), stepY(i),
+                            trackX(order[i + 1]), stepY(i + 1),
+                            isWrap ? color + '66' : color + 'cc',
+                            isWrap ? 2.5 : 3,
+                            isWrap
+                        );
                     }
 
-                    // Draw current animating segment
+                    // Animating segment
                     if (completedSteps < TOTAL_STEPS) {
                         const i = completedSteps;
-                        const x1 = trackX(order[i]);
-                        const y1 = stepY(i);
-                        const x2 = trackX(order[i + 1]);
-                        const y2 = stepY(i + 1);
-
-                        ctx.beginPath();
-                        ctx.moveTo(x1, y1);
-                        ctx.lineTo(x1 + (x2 - x1) * fracInStep, y1 + (y2 - y1) * fracInStep);
-                        ctx.strokeStyle = color + 'ee';
-                        ctx.lineWidth = 3;
-                        ctx.stroke();
+                        const x1 = trackX(order[i]), y1 = stepY(i);
+                        const x2 = trackX(order[i + 1]), y2 = stepY(i + 1);
+                        const isWrap = stepMeta[i] && stepMeta[i].isWrap;
+                        drawSeg(
+                            x1, y1,
+                            x1 + (x2 - x1) * frac, y1 + (y2 - y1) * frac,
+                            isWrap ? color + 'cc' : color + 'ee',
+                            isWrap ? 2.5 : 3,
+                            isWrap
+                        );
                     }
 
-                    // Draw dots
+                    // Dots + labels
                     for (let i = 0; i <= Math.min(completedSteps, order.length - 1); i++) {
-                        const x = trackX(order[i]);
-                        const y = stepY(i);
+                        const x = trackX(order[i]), y = stepY(i);
                         const isHead = i === 0;
+                        const isEdgePt = stepMeta[i - 1] && stepMeta[i - 1].isEdge;
+                        const isWrapPt = stepMeta[i - 1] && stepMeta[i - 1].isWrap;
 
-                        // Outer ring
-                        ctx.beginPath();
-                        ctx.arc(x, y, isHead ? 10 : 7, 0, Math.PI * 2);
-                        ctx.fillStyle = isHead ? color : color + '44';
-                        ctx.fill();
+                        let dotColor = isHead ? '#34c77b' : (isEdgePt ? '#f0a500' : color + '99');
 
-                        // Inner dot
-                        ctx.beginPath();
-                        ctx.arc(x, y, isHead ? 4 : 3, 0, Math.PI * 2);
-                        ctx.fillStyle = isHead ? '#fff' : color;
-                        ctx.fill();
-
+                        // Glow
+                        ctx.beginPath(); ctx.arc(x, y, isHead ? 14 : (isEdgePt ? 12 : 9), 0, Math.PI * 2);
+                        ctx.fillStyle = isHead ? '#34c77b44' : (isEdgePt ? 'rgba(240,165,0,0.18)' : color + '22'); ctx.fill();
+                        // Dot
+                        ctx.beginPath(); ctx.arc(x, y, isHead ? 7 : (isEdgePt ? 6 : 5), 0, Math.PI * 2);
+                        ctx.fillStyle = dotColor; ctx.fill();
+                        // Inner
+                        ctx.beginPath(); ctx.arc(x, y, isHead ? 3 : 2.5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#fff'; ctx.fill();
                         // Label
-                        ctx.font = `bold ${24}px JetBrains Mono, monospace`;
-                        ctx.fillStyle = isHead ? color : 'rgba(200,200,220,0.8)';
+                        ctx.font = 'bold 22px JetBrains Mono, monospace';
+                        ctx.fillStyle = isHead ? '#34c77b' : (isEdgePt ? '#f0a500' : 'rgba(200,200,220,0.9)');
                         ctx.textAlign = 'center';
-                        ctx.fillText(order[i], x, y - 16);
-                    }
+                        ctx.fillText(order[i], x, y - 20);
 
-                    if (progress < TOTAL_FRAMES) {
-                        progress++;
-                        seekAnimId = requestAnimationFrame(draw);
-                    } else {
-                        // Draw final state fully
-                        for (let i = 0; i < order.length; i++) {
-                            const x = trackX(order[i]);
-                            const y = stepY(i);
-                            const isHead = i === 0;
-
-                            ctx.beginPath();
-                            ctx.arc(x, y, isHead ? 10 : 7, 0, Math.PI * 2);
-                            ctx.fillStyle = isHead ? color : color + '44';
-                            ctx.fill();
-
-                            ctx.beginPath();
-                            ctx.arc(x, y, isHead ? 4 : 3, 0, Math.PI * 2);
-                            ctx.fillStyle = isHead ? '#fff' : color;
-                            ctx.fill();
-
-                            ctx.font = `bold 24px JetBrains Mono, monospace`;
-                            ctx.fillStyle = isHead ? color : 'rgba(200,200,220,0.8)';
-                            ctx.textAlign = 'center';
-                            ctx.fillText(order[i], x, y - 16);
+                        if (isEdgePt) {
+                            ctx.font = 'bold 18px monospace';
+                            ctx.fillStyle = '#f0a50099';
+                            ctx.fillText('edge', x, y + 28);
+                        }
+                        if (isWrapPt) {
+                            ctx.font = 'bold 18px monospace';
+                            ctx.fillStyle = color + '88';
+                            ctx.fillText('jump', x, y + 28);
                         }
                     }
+
+                    if (progress < TOTAL_FRAMES) { progress++; seekAnimId = requestAnimationFrame(draw); }
                 }
                 draw();
             }
 
-            /* ── Seek Order Tags ──────────────────────────── */
+            /* ── Seek Order Tags ── */
             function renderSeekOrder(order) {
                 const container = document.getElementById('seekOrderList');
                 container.innerHTML = '';
-
                 order.forEach((track, i) => {
                     if (i > 0) {
                         const arrow = document.createElement('span');
@@ -1089,7 +1151,6 @@
                         arrow.textContent = '→';
                         container.appendChild(arrow);
                     }
-
                     const tag = document.createElement('span');
                     tag.className = 'seek-order-item' + (i === 0 ? ' seek-start' : '');
                     tag.style.animationDelay = (i * 40) + 'ms';
@@ -1098,68 +1159,100 @@
                 });
             }
 
-            /* ── Metrics ──────────────────────────────────── */
+            /* ── Step-by-step Computation Table ── */
+            function renderCalcTable(steps, total) {
+                const tbody = document.getElementById('calcTableBody');
+                tbody.innerHTML = '';
+                let running = 0;
+
+                steps.forEach((s, i) => {
+                    running += s.dist;
+                    const tr = document.createElement('tr');
+                    tr.style.animationDelay = ((i + 1) * 50) + 'ms';
+
+                    // Natural calculation format: |to − from| = larger − smaller = dist
+                    let calcText;
+                    if (s.from > s.to) {
+                        calcText = `|${s.to} − ${s.from}| = ${s.from} − ${s.to} = ${s.dist}`;
+                    } else {
+                        calcText = `|${s.to} − ${s.from}| = ${s.to} − ${s.from} = ${s.dist}`;
+                    }
+
+                    let toNote = '';
+                    if (s.isEdge) { toNote = `<span style="color:var(--amber);font-size:10px;"> ← disk edge</span>`; }
+                    if (s.isWrap) { toNote = `<span style="color:#6c63ff;font-size:10px;"> ← jump (no service)</span>`; }
+
+                    if (s.isEdge) tr.classList.add('edge-row');
+                    if (s.isWrap) tr.classList.add('wrap-row');
+
+                    tr.innerHTML = `
+                        <td>${i + 1}</td>
+                        <td class="from-col">${s.from}</td>
+                        <td class="from-col">${s.to}${toNote}</td>
+                        <td class="dist-col">${calcText}</td>
+                        <td style="color:var(--green);font-weight:600;">${s.dist}</td>
+                        <td style="color:var(--cyan);font-weight:600;">${running}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                const totalRow = document.createElement('tr');
+                totalRow.className = 'total-row';
+                totalRow.innerHTML = `
+                    <td colspan="4" style="font-weight:700;">Total Head Movement</td>
+                    <td colspan="2" style="font-size:1.1em;">${total} tracks</td>
+                `;
+                tbody.appendChild(totalRow);
+            }
+
+            /* ── Metrics ── */
             function renderMetrics(result, head, diskSize) {
                 const grid = document.getElementById('metricsGrid');
                 grid.innerHTML = '';
-
-                const n = result.order.length - 1; // number of requests served
+                const n = result.order.length - 1;
                 const avgSeek = n > 0 ? result.totalSeek / n : 0;
-                const maxPossible = diskSize * n;
-                const efficiency = maxPossible > 0 ? ((1 - result.totalSeek / maxPossible) * 100) : 100;
-
                 const items = [
                     { label: 'Total Seek Distance', value: result.totalSeek, unit: 'cylinders', icon: '📏' },
                     { label: 'Avg Seek / Request', value: avgSeek.toFixed(1), unit: 'cylinders', icon: '⚡' },
                     { label: 'Requests Served', value: n, unit: 'requests', icon: '✅' },
                     { label: 'Algorithm', value: ALGO_NAMES[currentAlgo], unit: '', icon: '⚙️' },
                 ];
-
                 items.forEach((item, i) => {
                     const card = document.createElement('div');
                     card.className = 'storage-metric-card';
                     card.style.animationDelay = (i * 100) + 'ms';
                     card.innerHTML = `
-                    <div class="metric-icon">${item.icon}</div>
-                    <div class="metric-value">${item.value}<span class="metric-unit">${item.unit}</span></div>
-                    <div class="metric-label">${item.label}</div>
-                `;
+                        <div class="metric-icon">${item.icon}</div>
+                        <div class="metric-value">${item.value}<span class="metric-unit">${item.unit}</span></div>
+                        <div class="metric-label">${item.label}</div>
+                    `;
                     grid.appendChild(card);
                 });
             }
 
-            /* ── Algorithm Comparison ─────────────────────── */
+            /* ── Algorithm Comparison ── */
             function renderComparison(allResults) {
                 const grid = document.getElementById('compareGrid');
                 grid.innerHTML = '';
-
                 const maxSeek = Math.max(...Object.values(allResults).map(r => r.totalSeek));
                 const algos = Object.entries(allResults).sort((a, b) => a[1].totalSeek - b[1].totalSeek);
-
                 algos.forEach(([algo, result], i) => {
                     const row = document.createElement('div');
                     row.className = 'compare-row';
                     row.style.animationDelay = (i * 60) + 'ms';
-
                     const barPct = maxSeek > 0 ? (result.totalSeek / maxSeek) * 100 : 0;
                     const color = ALGO_COLORS[algo];
                     const isCurrent = algo === currentAlgo;
-
                     row.innerHTML = `
-                    <span class="compare-algo-name" style="color:${isCurrent ? color : ''}">
-                        ${isCurrent ? '▶ ' : ''}${ALGO_NAMES[algo]}
-                    </span>
-                    <div class="compare-bar-wrap">
-                        <div class="compare-bar-fill" style="width:${barPct}%; background:${color};"></div>
-                    </div>
-                    <span class="compare-seek-val" style="color:${color}">${result.totalSeek}</span>
-                `;
-
-                    if (isCurrent) {
-                        row.style.borderColor = color + '66';
-                        row.style.background = color + '0d';
-                    }
-
+                        <span class="compare-algo-name" style="color:${isCurrent ? color : ''}">
+                            ${isCurrent ? '▶ ' : ''}${ALGO_NAMES[algo]}
+                        </span>
+                        <div class="compare-bar-wrap">
+                            <div class="compare-bar-fill" style="width:${barPct}%; background:${color};"></div>
+                        </div>
+                        <span class="compare-seek-val" style="color:${color}">${result.totalSeek}</span>
+                    `;
+                    if (isCurrent) { row.style.borderColor = color + '66'; row.style.background = color + '0d'; }
                     grid.appendChild(row);
                 });
             }
@@ -1200,9 +1293,7 @@
             setTimeout(typeChar, 400);
 
             /* ══════════════════════════════════════════════════════════
-             *  DISK PLATTER BACKGROUND CANVAS
-             *  Concentric circles + sweeping seek arm (Storage animation
-             *  from index.html, accent #34c77b)
+             *  DISK PLATTER BACKGROUND
              * ══════════════════════════════════════════════════════════ */
             const bgCanvas = document.getElementById('auroraCanvas');
             const bgCtx = bgCanvas.getContext('2d');
@@ -1215,18 +1306,15 @@
             window.addEventListener('resize', resizeBg);
             resizeBg();
 
-            const rgb = { r: 52, g: 199, b: 123 }; // #34c77b
+            const rgb = { r: 52, g: 199, b: 123 };
 
             function drawDiskBg() {
                 bt++;
                 bgCtx.clearRect(0, 0, BW, BH);
-
-                const cx = BW * 0.5;
-                const cy = BH * 0.5;
+                const cx = BW * 0.5, cy = BH * 0.5;
                 const maxR = Math.min(BW, BH) * 0.48;
                 const tracks = 8;
 
-                // Concentric track rings
                 for (let i = 1; i <= tracks; i++) {
                     const r = (maxR / tracks) * i;
                     bgCtx.beginPath();
@@ -1236,10 +1324,8 @@
                     bgCtx.stroke();
                 }
 
-                // Sweeping arm
                 const sweep = Math.sin(bt * 0.018) * (Math.PI * 0.65);
                 const angle = -Math.PI / 2 + sweep;
-
                 bgCtx.beginPath();
                 bgCtx.moveTo(cx, cy);
                 bgCtx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
@@ -1247,19 +1333,14 @@
                 bgCtx.lineWidth = Math.max(1.5, BW * 0.002);
                 bgCtx.stroke();
 
-                // Head dot on current track
                 const trackIndex = Math.floor((Math.sin(bt * 0.018) * 0.5 + 0.5) * (tracks - 1)) + 1;
                 const headR = (maxR / tracks) * trackIndex;
                 bgCtx.beginPath();
-                bgCtx.arc(
-                    cx + Math.cos(angle) * headR,
-                    cy + Math.sin(angle) * headR,
-                    Math.max(4, BW * 0.006), 0, Math.PI * 2
-                );
+                bgCtx.arc(cx + Math.cos(angle) * headR, cy + Math.sin(angle) * headR,
+                    Math.max(4, BW * 0.006), 0, Math.PI * 2);
                 bgCtx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.85)`;
                 bgCtx.fill();
 
-                // Center spindle
                 bgCtx.beginPath();
                 bgCtx.arc(cx, cy, Math.max(5, BW * 0.01), 0, Math.PI * 2);
                 bgCtx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.45)`;
@@ -1269,7 +1350,7 @@
             }
             drawDiskBg();
 
-            /* ── Load example on start ────────────────────── */
+            /* ── Load example on start ── */
             requests = [98, 183, 37, 122, 14, 124, 65, 67];
             renderTags();
 
