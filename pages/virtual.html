@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Memory Simulator — OS Simulator</title>
+    <meta name="description"
+        content="Interactive virtual memory page replacement simulator. Supports FIFO, Optimal, LRU, ARB, Clock, Enhanced Clock, LFU, and MFU algorithms." />
+    <style>
+        /* ── Reset & Tokens ─────────────────────────────────────── */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #0d0f17;
+            --surface: #151823;
+            --surface2: #1c2030;
+            --border: rgba(255, 255, 255, 0.07);
+            --text: #e8eaf0;
+            --muted: #7b819a;
+            --accent: #6c63ff;
+            --cyan: #00c8e0;
+            --amber: #f0a500;
+            --green: #34c77b;
+            --red: #e05555;
+            --purple: #a855f7;
+            --radius: 10px;
+            --radius-lg: 16px;
+        }
+
+        body.light {
+            --bg: #f0f2fa;
+            --surface: #ffffff;
+            --surface2: #f5f6fb;
+            --border: rgba(0, 0, 0, 0.08);
+            --text: #1a1d2e;
+            --muted: #6b7080;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        /* ── Scroll Progress ─────────────────────────────────────── */
+        #scrollProgress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--cyan));
+            width: 0;
+            z-index: 1000;
+            transition: width 0.1s linear;
+        }
+
+        /* ── Back to Top ─────────────────────────────────────────── */
+        #backToTop {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.3s, transform 0.3s;
+            z-index: 999;
+        }
+
+        #backToTop.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #backToTop svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* ── Navbar ──────────────────────────────────────────────── */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            height: 60px;
+            background: rgba(13, 15, 23, 0.85);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        body.light .navbar {
+            background: rgba(240, 242, 250, 0.85);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-logo {
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--muted);
+            font-size: 0.88rem;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text);
+            background: var(--surface2);
+        }
+
+        .nav-links a.active {
+            color: var(--text);
+            background: var(--surface2);
+        }
+
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            transition: color 0.2s, background 0.2s;
+        }
+
+        .theme-toggle:hover {
+            color: var(--text);
+        }
+
+        .theme-toggle svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .icon-sun {
+            display: none;
+        }
+
+        body.light .icon-moon {
+            display: none;
+        }
+
+        body.light .icon-sun {
+            display: block;
+        }
+
+        /* ── Hero ────────────────────────────────────────────────── */
+        .vm-hero-wrapper {
+            position: relative;
+            overflow: hidden;
+        }
+
+        #auroraCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .vm-page-header {
+            position: relative;
+            z-index: 1;
+            padding: 4.5rem 2rem 3.5rem;
+        }
+
+        .vm-page-header-inner {
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .vm-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 1.2rem;
+        }
+
+        .vm-breadcrumb a {
+            color: var(--muted);
+            text-decoration: none;
+        }
+
+        .vm-breadcrumb a:hover {
+            color: var(--text);
+        }
+
+        .vm-breadcrumb svg {
+            opacity: 0.5;
+        }
+
+        .vm-page-header h1 {
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.75rem;
+            min-height: 3.5em;
+        }
+
+        .typewriter-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 0.85em;
+            background: var(--accent);
+            margin-left: 2px;
+            animation: blink 0.9s infinite;
+            vertical-align: middle;
+        }
+
+        .typewriter-cursor.done {
+            animation: none;
+            opacity: 0;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: 0
+            }
+        }
+
+        .vm-page-header p {
+            color: var(--muted);
+            font-size: 1.05rem;
+        }
+
+        /* ── Main Layout ─────────────────────────────────────────── */
+        .vm-main {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 5rem;
+        }
+
+        /* ── Section ─────────────────────────────────────────────── */
+        .vm-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        /* ── Algorithm Pills ─────────────────────────────────────── */
+        .algo-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .algo-pill {
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 0.83rem;
+            font-weight: 600;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .algo-pill:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .algo-pill.active {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            box-shadow: 0 0 16px rgba(108, 99, 255, 0.35);
+        }
+
+        .algo-description {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 0.9rem 1rem;
+            font-size: 0.88rem;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+
+        .algo-desc-icon {
+            font-size: 1.1rem;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* ── Inputs ──────────────────────────────────────────────── */
+        .vm-input {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--text);
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+            transition: border-color 0.2s;
+        }
+
+        .vm-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .vm-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muted);
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        @media (max-width: 600px) {
+            .config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .ref-string-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .config-hint {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 0.35rem;
+        }
+
+        /* ── Buttons ─────────────────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 8px 14px;
+            border-radius: var(--radius);
+            font-size: 0.86rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .btn-primary:hover {
+            filter: brightness(1.15);
+        }
+
+        .btn-ghost {
+            background: var(--surface2);
+            color: var(--muted);
+            border-color: var(--border);
+        }
+
+        .btn-ghost:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .btn-run {
+            padding: 10px 28px;
+            font-size: 0.95rem;
+            background: linear-gradient(135deg, var(--accent), var(--cyan));
+            border: none;
+            box-shadow: 0 4px 18px rgba(108, 99, 255, 0.3);
+        }
+
+        .btn-run:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(108, 99, 255, 0.45);
+        }
+
+        .sim-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        /* ── Page Reference Table Visualization ──────────────────── */
+        .vm-output-section {
+            display: none;
+        }
+
+        .frame-table-scroll {
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+
+        .frame-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.82rem;
+            font-family: 'Courier New', monospace;
+        }
+
+        .frame-table th {
+            background: var(--surface2);
+            color: var(--muted);
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+            font-weight: 700;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .frame-table td {
+            padding: 7px 12px;
+            text-align: center;
+            border: 1px solid var(--border);
+            transition: background 0.2s;
+        }
+
+        .frame-table tr:hover td {
+            background: var(--surface2);
+        }
+
+        .cell-hit {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .cell-fault {
+            color: var(--red);
+            font-weight: 700;
+        }
+
+        .cell-page {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .cell-victim {
+            color: var(--amber);
+        }
+
+        .cell-empty {
+            color: var(--muted);
+            opacity: 0.4;
+        }
+
+        /* ── Step Cards / Frame State Visualization ──────────────── */
+        .step-timeline {
+            display: flex;
+            gap: 2px;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-col {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 44px;
+            opacity: 0;
+            transform: translateY(8px);
+            animation: stepIn 0.25s forwards;
+        }
+
+        @keyframes stepIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-ref {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 4px 6px;
+            border-radius: 6px 6px 0 0;
+            width: 100%;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+        }
+
+        .step-ref.hit {
+            background: rgba(52, 199, 123, 0.18);
+            color: var(--green);
+        }
+
+        .step-ref.fault {
+            background: rgba(224, 85, 85, 0.18);
+            color: var(--red);
+        }
+
+        .step-frame {
+            width: 100%;
+            height: 36px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.78rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            border: 1px solid var(--border);
+            background: var(--surface2);
+            color: var(--muted);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step-frame.occupied {
+            color: var(--text);
+        }
+
+        .step-frame.new-page {
+            background: rgba(108, 99, 255, 0.22);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .step-frame.victim-page {
+            background: rgba(240, 165, 0, 0.18);
+            color: var(--amber);
+            border-color: var(--amber);
+        }
+
+        /* ── Metrics ─────────────────────────────────────────────── */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.2rem 1rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fadeUp 0.35s forwards;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .metric-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .metric-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1.1;
+        }
+
+        .metric-unit {
+            font-size: 0.7rem;
+            color: var(--muted);
+            margin-left: 2px;
+            font-weight: 400;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            margin-top: 0.3rem;
+        }
+
+        /* ── Results Table ───────────────────────────────────────── */
+        .results-table-wrap {
+            overflow-x: auto;
+        }
+
+        .results-table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.85rem;
+        }
+
+        .results-table th {
+            background: var(--surface2);
+            color: var(--muted);
+            font-size: 0.72rem;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .results-table td {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            text-align: center;
+            animation: fadeUp 0.3s forwards;
+            opacity: 0;
+        }
+
+        /* ── Footer ──────────────────────────────────────────────── */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.78rem;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Fault badge ─────────────────────────────────────────── */
+        .fault-badge {
+            display: inline-block;
+            padding: 1px 7px;
+            border-radius: 99px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .fault-badge.hit {
+            background: rgba(52, 199, 123, 0.18);
+            color: var(--green);
+        }
+
+        .fault-badge.fault {
+            background: rgba(224, 85, 85, 0.18);
+            color: var(--red);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="scrollProgress"></div>
+
+    <button id="backToTop" aria-label="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15" />
+        </svg>
+    </button>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-logo">
+                <span class="dot"></span>
+                OS Simulator
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="cpu.html">CPU Scheduling</a></li>
+                <li><a href="memory.html">Memory</a></li>
+                <li><a href="virtual.html" class="active">Virtual Memory</a></li>
+                <li><a href="storage.html">Storage</a></li>
+            </ul>
+        </div>
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Hero -->
+    <div class="vm-hero-wrapper">
+        <canvas id="auroraCanvas"></canvas>
+        <header class="vm-page-header">
+            <div class="vm-page-header-inner">
+                <div class="vm-breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    <span>Virtual Memory</span>
+                </div>
+                <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
+                <p>Set a reference string, choose a replacement algorithm, and trace every page fault.</p>
+            </div>
+        </header>
+    </div>
+
+    <main class="vm-main">
+
+        <!-- Algorithm Selector -->
+        <section class="vm-section">
+            <div class="section-label">Algorithm</div>
+            <div class="algo-selector" id="algoSelector">
+                <button class="algo-pill active" data-algo="fifo">FIFO</button>
+                <button class="algo-pill" data-algo="opt">Optimal</button>
+                <button class="algo-pill" data-algo="lru">LRU</button>
+                <button class="algo-pill" data-algo="arb">ARB</button>
+                <button class="algo-pill" data-algo="clock">Clock</button>
+                <button class="algo-pill" data-algo="enhanced">Enhanced Clock</button>
+                <button class="algo-pill" data-algo="lfu">LFU</button>
+                <button class="algo-pill" data-algo="mfu">MFU</button>
+            </div>
+            <div class="algo-description">
+                <div class="algo-desc-icon">💡</div>
+                <p id="algoDescText">Pages are replaced in the order they were loaded into memory. Simple and
+                    non-preemptive — but prone to Bélády's anomaly.</p>
+            </div>
+        </section>
+
+        <!-- Configuration -->
+        <section class="vm-section">
+            <div class="section-label">Configuration</div>
+
+            <div class="ref-string-group">
+                <label class="vm-label" for="refString">Reference String</label>
+                <input type="text" id="refString" class="vm-input" value="7 0 1 2 0 3 0 4 2 3 0 3 2"
+                    placeholder="e.g. 7 0 1 2 0 3 0 4 2 3" />
+                <p class="config-hint">Space-separated page numbers.</p>
+            </div>
+
+            <div class="config-grid">
+                <div>
+                    <label class="vm-label" for="numFrames">Number of Frames</label>
+                    <input type="number" id="numFrames" class="vm-input" value="3" min="1" max="20" />
+                </div>
+                <div>
+                    <label class="vm-label" for="memAccessTime">Memory Access Time (ns)</label>
+                    <input type="number" id="memAccessTime" class="vm-input" value="100" min="1" />
+                </div>
+                <div>
+                    <label class="vm-label" for="pageFaultTime">Page Fault Service Time (ns)</label>
+                    <input type="number" id="pageFaultTime" class="vm-input" value="8000000" min="1" />
+                </div>
+            </div>
+
+            <div class="sim-actions">
+                <button class="btn btn-run" id="btnRun">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill="currentColor" stroke="none">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Run Simulation
+                </button>
+                <button class="btn btn-ghost" id="btnLoadExample">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    Load Example
+                </button>
+                <button class="btn btn-ghost" id="btnReset">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 .49-4" />
+                    </svg>
+                    Reset
+                </button>
+            </div>
+        </section>
+
+        <!-- Output -->
+        <section class="vm-section vm-output-section" id="outputSection">
+
+            <div class="section-label">Frame State Trace</div>
+            <div class="step-timeline" id="stepTimeline"></div>
+
+            <div class="section-label" style="margin-top:2rem;">Step-by-Step Results</div>
+            <div class="frame-table-scroll">
+                <table class="frame-table" id="frameTable">
+                    <thead>
+                        <tr id="frameTableHead"></tr>
+                    </thead>
+                    <tbody id="frameTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="section-label" style="margin-top:2rem;">Performance Metrics</div>
+            <div class="metrics-grid" id="metricsGrid"></div>
+
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        OS_final_project &nbsp;·&nbsp; Module — Virtual Memory Management
+    </footer>
+
+    <script>
+        (function () {
+            'use strict';
+
+            /* ── Theme ───────────────────────────────────────────────── */
+            const themeBtn = document.getElementById('themeToggle');
+            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+            themeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('light');
+                localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+            });
+
+            /* ── Scroll ──────────────────────────────────────────────── */
+            const progressBar = document.getElementById('scrollProgress');
+            const backToTop = document.getElementById('backToTop');
+            window.addEventListener('scroll', () => {
+                const s = window.scrollY, max = document.documentElement.scrollHeight - window.innerHeight;
+                progressBar.style.width = (s / max * 100) + '%';
+                backToTop.classList.toggle('visible', s > 300);
+            }, { passive: true });
+            backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+            /* ── Algorithm descriptions ──────────────────────────────── */
+            const ALGO_DESC = {
+                fifo: "Pages are replaced in the order they were loaded into memory. Simple and non-preemptive — but prone to Bélády's anomaly with more frames causing more faults.",
+                opt: "Replaces the page that will not be used for the longest time in the future. Optimal (lowest possible fault rate) but not implementable in real systems — used as a benchmark.",
+                lru: "Replaces the page that has not been used for the longest time. Requires timestamps or a stack. Good approximation of optimal with lower overhead.",
+                arb: "LRU Approximation using Additional Reference Bits. A shift register byte is maintained per frame; periodically the R bit is shifted in. Frame with lowest byte value is replaced.",
+                clock: "Second-Chance / Clock algorithm. A circular buffer with R bits. On fault, the pointer scans and gives pages with R=1 a second chance by clearing R before replacing R=0 frames.",
+                enhanced: "Enhanced Second-Chance. Classifies frames into 4 classes using (R, M) pairs: (0,0) best → (1,1) worst. Prefers to evict the lowest class, keeping dirty pages longer.",
+                lfu: "Least Frequently Used. Replaces the page with the smallest access count. Ties broken by least-recently-used order. Old pages with high counts can linger — a known weakness.",
+                mfu: "Most Frequently Used. Replaces the most-accessed page, betting that recently loaded pages (low count) will be needed again soon. Works well on specific access patterns.",
+            };
+
+            let currentAlgo = 'fifo';
+            const algoDescText = document.getElementById('algoDescText');
+            document.querySelectorAll('.algo-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('.algo-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentAlgo = pill.dataset.algo;
+                    algoDescText.textContent = ALGO_DESC[currentAlgo] || '';
+                });
+            });
+
+            /* ── Simulation Engines ──────────────────────────────────── */
+
+            function parseRefString(str) {
+                return str.trim().split(/\s+/).map(Number).filter(n => !isNaN(n));
+            }
+
+            function createFrames(n) {
+                return Array.from({ length: n }, () => ({ page: null, R: 0, M: 0, refByte: 0, count: 0, lastUsed: 0 }));
+            }
+            function findPage(frames, page) { return frames.findIndex(f => f.page === page); }
+            function findEmpty(frames) { return frames.findIndex(f => f.page === null); }
+            function loadPage(frame, page, time) { frame.page = page; frame.R = 1; frame.M = 0; frame.refByte = 0; frame.count = 1; frame.lastUsed = time; }
+            function processHit(frame, state) { state.hits++; frame.R = 1; frame.count++; frame.lastUsed = state.time; frame.M = Math.random() < 0.3 ? 1 : frame.M; }
+
+            function simulate(algo, refs, numFrames) {
+                const frames = createFrames(numFrames);
+                const steps = [];
+                let state = { hits: 0, faults: 0, clockHand: 0, fifoQueue: [], time: 0 };
+
+                refs.forEach((page, i) => {
+                    state.time = i;
+                    let status, victim = null;
+
+                    if (algo === 'fifo') {
+                        ({ status, victim } = runFIFO(page, frames, state));
+                    } else if (algo === 'opt') {
+                        ({ status, victim } = runOPT(page, frames, state, refs, i));
+                    } else if (algo === 'lru') {
+                        ({ status, victim } = runLRU(page, frames, state));
+                    } else if (algo === 'arb') {
+                        ({ status, victim } = runARB(page, frames, state));
+                    } else if (algo === 'clock') {
+                        ({ status, victim } = runClock(page, frames, state));
+                    } else if (algo === 'enhanced') {
+                        ({ status, victim } = runEnhancedClock(page, frames, state));
+                    } else if (algo === 'lfu') {
+                        ({ status, victim } = runLFU(page, frames, state));
+                    } else if (algo === 'mfu') {
+                        ({ status, victim } = runMFU(page, frames, state));
+                    }
+
+                    steps.push({
+                        page, status, victim,
+                        frameSnap: frames.map(f => ({ ...f })),
+                    });
+                });
+
+                return { steps, hits: state.hits, faults: state.faults };
+            }
+
+            function runFIFO(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); state.fifoQueue.push(empty); return { status: 'FAULT', victim: null }; }
+                const vf = state.fifoQueue.shift();
+                const vp = frames[vf].page;
+                loadPage(frames[vf], page, state.time); state.fifoQueue.push(vf);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runOPT(page, frames, state, refs, idx) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0, farthest = -1;
+                for (let i = 0; i < frames.length; i++) {
+                    let next = Infinity;
+                    for (let j = idx + 1; j < refs.length; j++) { if (refs[j] === frames[i].page) { next = j; break; } }
+                    if (next > farthest) { farthest = next; victim = i; }
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runLRU(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) { if (frames[i].lastUsed < frames[victim].lastUsed) victim = i; }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runARB(page, frames, state) {
+                const ARB_INTERVAL = 3;
+                if (state.time % ARB_INTERVAL === 0) {
+                    for (const f of frames) {
+                        f.refByte = (f.refByte >>> 1);
+                        if (f.R === 1) f.refByte = f.refByte | 0b10000000;
+                        f.R = 0;
+                    }
+                }
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); frames[hit].R = 1; return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); frames[empty].R = 1; return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) { if (frames[i].refByte < frames[victim].refByte) victim = i; }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time); frames[victim].R = 1;
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runClock(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); frames[hit].R = 1; return { status: 'HIT', victim: null }; }
+                state.faults++;
+                while (true) {
+                    const frame = frames[state.clockHand];
+                    if (frame.page === null) {
+                        loadPage(frame, page, state.time);
+                        state.clockHand = (state.clockHand + 1) % frames.length;
+                        return { status: 'FAULT', victim: null };
+                    }
+                    if (frame.R === 0) {
+                        const vp = frame.page;
+                        loadPage(frame, page, state.time);
+                        state.clockHand = (state.clockHand + 1) % frames.length;
+                        return { status: 'FAULT', victim: vp };
+                    }
+                    frame.R = 0;
+                    state.clockHand = (state.clockHand + 1) % frames.length;
+                }
+            }
+
+            function runEnhancedClock(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); frames[hit].R = 1; return { status: 'HIT', victim: null }; }
+                state.faults++;
+                let victim = -1, bestClass = Infinity;
+                for (let pass = 0; pass < frames.length; pass++) {
+                    const i = (state.clockHand + pass) % frames.length;
+                    const f = frames[i];
+                    if (f.page === null) { victim = i; break; }
+                    const cls = (f.R === 0 && f.M === 0) ? 0 : (f.R === 0 && f.M === 1) ? 1 : (f.R === 1 && f.M === 0) ? 2 : 3;
+                    if (cls < bestClass) { bestClass = cls; victim = i; if (cls === 0) break; }
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time); frames[victim].R = 1;
+                state.clockHand = (victim + 1) % frames.length;
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runLFU(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) {
+                    if (frames[i].count < frames[victim].count || (frames[i].count === frames[victim].count && frames[i].lastUsed < frames[victim].lastUsed)) victim = i;
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runMFU(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) {
+                    if (frames[i].count > frames[victim].count || (frames[i].count === frames[victim].count && frames[i].lastUsed < frames[victim].lastUsed)) victim = i;
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            /* ── Render ──────────────────────────────────────────────── */
+            function renderOutput({ steps, hits, faults }, refs, numFrames, mat, pfst) {
+                const outputSection = document.getElementById('outputSection');
+                outputSection.style.display = '';
+
+                renderStepTimeline(steps, numFrames);
+                renderFrameTable(steps, refs, numFrames);
+                renderMetrics(hits, faults, refs.length, mat, pfst);
+
+                setTimeout(() => outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+            }
+
+            function renderStepTimeline(steps, numFrames) {
+                const container = document.getElementById('stepTimeline');
+                container.innerHTML = '';
+
+                steps.forEach((step, i) => {
+                    const col = document.createElement('div');
+                    col.className = 'step-col';
+                    col.style.animationDelay = (i * 40) + 'ms';
+
+                    const ref = document.createElement('div');
+                    ref.className = `step-ref ${step.status === 'HIT' ? 'hit' : 'fault'}`;
+                    ref.textContent = step.page;
+                    col.appendChild(ref);
+
+                    for (let f = 0; f < numFrames; f++) {
+                        const cell = document.createElement('div');
+                        const frame = step.frameSnap[f];
+                        cell.className = 'step-frame';
+
+                        if (frame.page !== null) {
+                            cell.classList.add('occupied');
+                            cell.textContent = frame.page;
+
+                            if (step.status === 'FAULT' && frame.page === step.page) {
+                                cell.classList.add('new-page');
+                            } else if (step.status === 'FAULT' && step.victim !== null) {
+                                // look at prev step to see what was in this slot
+                            }
+                        } else {
+                            cell.classList.add('cell-empty');
+                            cell.textContent = '—';
+                        }
+
+                        col.appendChild(cell);
+                    }
+
+                    container.appendChild(col);
+                });
+            }
+
+            function renderFrameTable(steps, refs, numFrames) {
+                const head = document.getElementById('frameTableHead');
+                const body = document.getElementById('frameTableBody');
+                head.innerHTML = '';
+                body.innerHTML = '';
+
+                // Header
+                ['Step', 'Page', ...Array.from({ length: numFrames }, (_, i) => `F${i}`), 'Status', 'Victim'].forEach(label => {
+                    const th = document.createElement('th');
+                    th.textContent = label;
+                    head.appendChild(th);
+                });
+
+                // Rows
+                steps.forEach((step, i) => {
+                    const tr = document.createElement('tr');
+
+                    const tdStep = document.createElement('td'); tdStep.textContent = i + 1; tr.appendChild(tdStep);
+                    const tdPage = document.createElement('td'); tdPage.textContent = step.page; tdPage.className = 'cell-page'; tr.appendChild(tdPage);
+
+                    for (let f = 0; f < numFrames; f++) {
+                        const td = document.createElement('td');
+                        const frame = step.frameSnap[f];
+                        td.textContent = frame.page !== null ? frame.page : '—';
+                        if (frame.page === null) td.className = 'cell-empty';
+                        else if (step.status === 'FAULT' && frame.page === step.page) td.style.color = 'var(--accent)';
+                        tr.appendChild(td);
+                    }
+
+                    const tdStatus = document.createElement('td');
+                    tdStatus.innerHTML = `<span class="fault-badge ${step.status === 'HIT' ? 'hit' : 'fault'}">${step.status}</span>`;
+                    tr.appendChild(tdStatus);
+
+                    const tdVictim = document.createElement('td');
+                    tdVictim.textContent = step.victim !== null ? step.victim : '—';
+                    if (step.victim !== null) tdVictim.className = 'cell-victim';
+                    tr.appendChild(tdVictim);
+
+                    tr.style.animationDelay = (i * 30) + 'ms';
+                    body.appendChild(tr);
+                });
+            }
+
+            function renderMetrics(hits, faults, total, mat, pfst) {
+                const grid = document.getElementById('metricsGrid');
+                grid.innerHTML = '';
+
+                const faultRate = faults / total;
+                const hitRate = hits / total;
+                const eat = mat + (faultRate * pfst);
+
+                const items = [
+                    { label: 'Page Faults', value: faults, unit: '', icon: '❌', color: 'var(--red)' },
+                    { label: 'Page Hits', value: hits, unit: '', icon: '✅', color: 'var(--green)' },
+                    { label: 'Fault Rate', value: (faultRate * 100).toFixed(1), unit: '%', icon: '📉', color: 'var(--amber)' },
+                    { label: 'Hit Rate', value: (hitRate * 100).toFixed(1), unit: '%', icon: '📈', color: 'var(--cyan)' },
+                    { label: 'Eff. Access Time', value: eat.toFixed(0), unit: 'ns', icon: '⚡', color: 'var(--accent)' },
+                ];
+
+                items.forEach((item, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'metric-card';
+                    card.style.animationDelay = (i * 80) + 'ms';
+                    card.innerHTML = `
+                    <div class="metric-icon">${item.icon}</div>
+                    <div class="metric-value" style="color:${item.color}">${item.value}<span class="metric-unit">${item.unit}</span></div>
+                    <div class="metric-label">${item.label}</div>
+                `;
+                    grid.appendChild(card);
+                });
+            }
+
+            /* ── Button handlers ─────────────────────────────────────── */
+            document.getElementById('btnRun').addEventListener('click', () => {
+                const refStr = document.getElementById('refString').value;
+                const refs = parseRefString(refStr);
+                if (refs.length === 0) return;
+                const numFrames = parseInt(document.getElementById('numFrames').value) || 3;
+                const mat = parseInt(document.getElementById('memAccessTime').value) || 100;
+                const pfst = parseInt(document.getElementById('pageFaultTime').value) || 8000000;
+
+                const result = simulate(currentAlgo, refs, numFrames);
+                renderOutput(result, refs, numFrames, mat, pfst);
+            });
+
+            document.getElementById('btnLoadExample').addEventListener('click', () => {
+                document.getElementById('refString').value = '7 0 1 2 0 3 0 4 2 3 0 3 2';
+                document.getElementById('numFrames').value = '3';
+            });
+
+            document.getElementById('btnReset').addEventListener('click', () => {
+                document.getElementById('outputSection').style.display = 'none';
+                document.getElementById('refString').value = '';
+                document.getElementById('numFrames').value = '3';
+                document.getElementById('memAccessTime').value = '100';
+                document.getElementById('pageFaultTime').value = '8000000';
+            });
+
+            /* ── Typewriter ──────────────────────────────────────────── */
+            const typeTarget = document.getElementById('typeTarget');
+            const cursor = document.getElementById('cursor');
+            const line1 = 'Virtual Memory';
+            const line2 = 'Simulator';
+            const full = line1 + '|' + line2;
+            let charIndex = 0, passedBreak = false;
+            const span1 = document.createElement('span');
+            const br = document.createElement('br');
+            const span2 = document.createElement('span');
+            span2.style.color = 'var(--cyan)';
+            typeTarget.insertBefore(span1, cursor);
+            function typeChar() {
+                if (charIndex < full.length) {
+                    const ch = full[charIndex];
+                    if (ch === '|') { typeTarget.insertBefore(br, cursor); typeTarget.insertBefore(span2, cursor); passedBreak = true; }
+                    else { if (passedBreak) span2.textContent += ch; else span1.textContent += ch; }
+                    charIndex++;
+                    setTimeout(typeChar, 70 + Math.random() * 35);
+                } else { cursor.classList.add('done'); }
+            }
+            setTimeout(typeChar, 400);
+
+            /* ── Aurora Canvas ───────────────────────────────────────── */
+            const canvas = document.getElementById('auroraCanvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, t = 0;
+            function resizeCanvas() { W = canvas.width = canvas.offsetWidth; H = canvas.height = canvas.offsetHeight; }
+            window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+            const orbs = [
+                { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 185 },
+                { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 220 },
+                { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 260 },
+                { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 195 },
+                { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 240 },
+            ];
+
+            function isLight() { return document.body.classList.contains('light'); }
+            function drawAurora() {
+                t++;
+                ctx.clearRect(0, 0, W, H);
+                const light = isLight();
+                orbs.forEach(o => {
+                    const angle = o.phase + t * o.spd * Math.PI * 2;
+                    const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
+                    const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
+                    const radius = o.r * Math.min(W, H);
+                    const alpha = light ? 0.13 : 0.22;
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    grad.addColorStop(0, `hsla(${o.hue}, 90%, ${light ? 55 : 65}%, ${alpha})`);
+                    grad.addColorStop(0.5, `hsla(${o.hue + 20}, 80%, ${light ? 50 : 60}%, ${alpha * 0.5})`);
+                    grad.addColorStop(1, `hsla(${o.hue + 40}, 70%, 50%, 0)`);
+                    ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = grad; ctx.fill();
+                });
+                requestAnimationFrame(drawAurora);
+            }
+            drawAurora();
+
+        })();
+    </script>
+
+</body>
+
+</html>
