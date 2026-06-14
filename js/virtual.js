@@ -217,6 +217,59 @@ async function getUserInput() {
     }
 }
 
+function createFrames(count) {
+    return Array.from(
+        { length: count },
+        () => ({
+            page: null,
+            R: 0,
+            M: 0,
+            refByte: 0,
+            count: 0,
+            lastUsed: 0,
+        })
+    );
+}
+
+function findPage(frames, page) {
+    return frames.findIndex(
+        frame =>
+            frame.page === page
+    );
+}
+
+function findEmptyFrame(frames) {
+    return frames.findIndex(
+        frame =>
+            frame.page === null
+    );
+}
+
+function loadPage(
+    frame,
+    page,
+    time
+) {
+    frame.page = page;
+    frame.R = 1;
+    frame.M = 0;
+    frame.refByte = 0;
+    frame.count = 1;
+    frame.lastUsed = time;
+}
+
+function processHit(frame, state) {
+    state.pageHits++;
+    frame.R = 1;
+    frame.count++;
+    frame.lastUsed = state.time;
+    frame.M = Math.random() < 0.3 ? 1 : frame.M;
+}
+
+function simulateWriteAccess(frame) {
+    frame.M = 1;
+}
+
 main().catch(error => {
     console.error(
         'Program failed:',
