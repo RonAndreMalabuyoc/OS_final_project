@@ -25,7 +25,7 @@
     <nav class="navbar">
         <div class="nav-left">
             <div class="nav-logo">
-                <span class="dot"></span>
+                <span class="nav-duck-icon" aria-hidden="true">🦆</span>
                 OS Simulator
             </div>
             <ul class="nav-links">
@@ -37,554 +37,736 @@
             </ul>
         </div>
 
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-        </button>
+        <div class="nav-right">
+            <div class="nav-clock" id="navClock">00:00:00</div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+            </button>
+        </div>
     </nav>
 
-    <!-- Hero with aurora canvas -->
+
+    <!-- Hero -->
     <div class="hero-wrapper">
         <canvas id="auroraCanvas"></canvas>
+
         <section class="hero">
-            <div class="hero-badge">
-                <span>●</span> Interactive Simulations
+            <div class="hero-inner">
+                <div class="hero-stickers" aria-hidden="true">
+                    <div class="sticker s1">🦆 OS Visualized</div>
+                    <div class="sticker s2">⚙️ CPU Scheduling</div>
+                    <div class="sticker s3">🧠 Memory</div>
+                    <div class="sticker s4">📄 Virtual Memory</div>
+                    <div class="sticker s5">💾 Storage</div>
+                    <div class="sticker s6">📊 Live Gantt</div>
+                    <div class="sticker s7">13+ Algorithms</div>
+                </div>
+                <div class="hero-text">
+                    <div class="hero-badge">
+                        <span>●</span> Interactive Simulations
+                    </div>
+                    <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
+                    <p>
+                        Step-by-step simulations for CPU scheduling, memory management,
+                        virtual memory, and mass storage — built to make OS concepts click.
+                    </p>
+                    <div class="hero-actions">
+                        <a href="pages/cpu.html" class="btn btn-primary">Start Simulating →</a>
+                        <a href="#modules" class="btn btn-ghost">Browse Modules</a>
+                    </div>
+                </div>
             </div>
-            <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
-            <p>
-                Step-by-step simulations for CPU scheduling, memory management,
-                virtual memory, and mass storage — built to make OS concepts click.
-            </p>
-            <div class="hero-actions">
-                <a href="pages/cpu.html" class="btn btn-primary">Start Simulating →</a>
-                <a href="#modules" class="btn btn-ghost">Browse Modules</a>
+            <div class="scroll-hint" aria-label="Scroll down">
+                <span class="scroll-hint-text">scroll down</span>
+                <div class="scroll-hint-duck">🦆</div>
+                <div class="scroll-hint-arrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
             </div>
         </section>
-    </div>
 
-    <!-- Stats -->
-    <div class="stats-bar">
-        <div class="stat-item">
-            <div class="stat-num">4</div>
-            <div class="stat-label">Modules</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-num">13+</div>
-            <div class="stat-label">Algorithms</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-num">5</div>
-            <div class="stat-label">CPU Schedulers</div>
-        </div>
-        <div class="stat-item">
-            <div class="stat-num">Live</div>
-            <div class="stat-label">Gantt Animation</div>
-        </div>
-    </div>
-
-    <!-- Modules Showcase -->
-    <section class="modules-showcase" id="modules">
-
-        <!-- Module 04: CPU -->
-        <div class="module-panel" data-module="cpu" style="--panel-accent:#6c63ff;">
-            <div class="panel-bg">
-                <canvas class="panel-canvas" data-anim="cpu"></canvas>
-            </div>
-            <div class="panel-overlay"></div>
-            <div class="panel-content">
-                <div class="panel-meta">
-                    <span class="panel-num">Module 04</span>
-                    <span class="panel-status status-ready">Ready</span>
-                </div>
-                <div class="panel-icon">⚙️</div>
-                <h2 class="panel-title">CPU Scheduling</h2>
-                <p class="panel-desc">
-                    Simulate process scheduling with animated Gantt charts and
-                    real-time waiting &amp; turnaround time stats.
-                </p>
-                <div class="panel-algorithms">
-                    <span class="algo-tag">FCFS</span>
-                    <span class="algo-tag">SJF</span>
-                    <span class="algo-tag">SRTF</span>
-                    <span class="algo-tag">Round Robin</span>
-                    <span class="algo-tag">Priority</span>
-                </div>
-                <a href="pages/cpu.html" class="btn btn-primary panel-btn">Open Module →</a>
-            </div>
-        </div>
-
-        <!-- Module 05: Memory -->
-        <div class="module-panel" data-module="memory" style="--panel-accent:#00c8e0;">
-            <div class="panel-bg">
-                <canvas class="panel-canvas" data-anim="memory"></canvas>
-            </div>
-            <div class="panel-overlay"></div>
-            <div class="panel-content">
-                <div class="panel-meta">
-                    <span class="panel-num">Module 05</span>
-                    <span class="panel-status status-ready">Ready</span>
-                </div>
-                <div class="panel-icon">🧠</div>
-                <h2 class="panel-title">Memory Management</h2>
-                <p class="panel-desc">
-                    Explore contiguous allocation with MVT variable partitions and
-                    visual memory maps — First Fit, Next Fit, Best Fit, Worst Fit.
-                </p>
-                <div class="panel-algorithms">
-                    <span class="algo-tag">First Fit</span>
-                    <span class="algo-tag">Next Fit</span>
-                    <span class="algo-tag">Best Fit</span>
-                    <span class="algo-tag">Worst Fit</span>
-                </div>
-                <a href="pages/memory.html" class="btn btn-primary panel-btn">Open Module →</a>
-            </div>
+        <div class="wave-divider" aria-hidden="true">
+            <!-- back wave: slower, going opposite direction -->
+            <svg class="wave-back" viewBox="0 0 2880 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M0,50 C180,10 360,90 540,50 C720,10 900,90 1080,50 C1260,10 1440,90 1620,50 C1800,10 1980,90 2160,50 C2340,10 2520,90 2700,50 C2790,30 2840,60 2880,50 L2880,100 L0,100 Z" />
+            </svg>
+            <!-- front wave: faster -->
+            <svg class="wave-front" viewBox="0 0 2880 100" preserveAspectRatio="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                    d="M0,60 C180,20 360,95 540,55 C720,15 900,95 1080,60 C1260,20 1440,95 1620,60 C1800,20 1980,95 2160,60 C2340,20 2520,95 2700,60 C2790,35 2840,75 2880,60 L2880,100 L0,100 Z" />
+            </svg>
         </div>
 
 
-        <!-- Module 06: Virtual -->
-        <div class="module-panel locked" data-module="virtual" style="--panel-accent:#f0a500;">
-            <div class="panel-bg">
-                <canvas class="panel-canvas" data-anim="virtual"></canvas>
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                    </svg>
+                </div>
+                <div class="stat-num">4</div>
+                <div class="stat-label">Modules</div>
             </div>
-            <div class="panel-overlay"></div>
-            <div class="panel-content">
-                <div class="panel-meta">
-                    <span class="panel-num">Module 06</span>
-                    <span class="panel-status status-soon">Coming Soon</span>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="8" y1="6" x2="21" y2="6" />
+                        <line x1="8" y1="12" x2="21" y2="12" />
+                        <line x1="8" y1="18" x2="21" y2="18" />
+                        <line x1="3" y1="6" x2="3.01" y2="6" />
+                        <line x1="3" y1="12" x2="3.01" y2="12" />
+                        <line x1="3" y1="18" x2="3.01" y2="18" />
+                    </svg>
                 </div>
-                <div class="panel-icon">📄</div>
-                <h2 class="panel-title">Virtual Memory</h2>
-                <p class="panel-desc">
-                    Visualize page tables, page faults, and replacement policies
-                    like FIFO, LRU, and Optimal.
-                </p>
-                <div class="panel-algorithms">
-                    <span class="algo-tag">FIFO</span>
-                    <span class="algo-tag">LRU</span>
-                    <span class="algo-tag">Optimal</span>
-                    <span class="algo-tag">Clock</span>
+                <div class="stat-num">13+</div>
+                <div class="stat-label">Algorithms</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <rect x="4" y="4" width="16" height="16" rx="2" />
+                        <rect x="9" y="9" width="6" height="6" />
+                        <line x1="9" y1="2" x2="9" y2="4" />
+                        <line x1="15" y1="2" x2="15" y2="4" />
+                        <line x1="9" y1="20" x2="9" y2="22" />
+                        <line x1="15" y1="20" x2="15" y2="22" />
+                        <line x1="2" y1="9" x2="4" y2="9" />
+                        <line x1="2" y1="15" x2="4" y2="15" />
+                        <line x1="20" y1="9" x2="22" y2="9" />
+                        <line x1="20" y1="15" x2="22" y2="15" />
+                    </svg>
                 </div>
-                <span class="btn btn-ghost panel-btn panel-btn-disabled">Coming Soon</span>
+                <div class="stat-num">5</div>
+                <div class="stat-label">CPU Schedulers</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                </div>
+                <div class="stat-num">Live</div>
+                <div class="stat-label">Gantt Animation</div>
             </div>
         </div>
 
-        <!-- Module 07: Storage -->
-        <div class="module-panel locked" data-module="storage" style="--panel-accent:#34c77b;">
-            <div class="panel-bg">
-                <canvas class="panel-canvas" data-anim="storage"></canvas>
-            </div>
-            <div class="panel-overlay"></div>
-            <div class="panel-content">
-                <div class="panel-meta">
-                    <span class="panel-num">Module 07</span>
-                    <span class="panel-status status-soon">Coming Soon</span>
+        <!-- Modules Showcase -->
+        <section class="modules-showcase" id="modules">
+
+            <!-- Module 04: CPU -->
+            <div class="module-panel" data-module="cpu" style="--panel-accent:#6c63ff;">
+                <div class="panel-bg">
+                    <canvas class="panel-canvas" data-anim="cpu"></canvas>
                 </div>
-                <div class="panel-icon">💾</div>
-                <h2 class="panel-title">Mass Storage</h2>
-                <p class="panel-desc">
-                    Simulate disk scheduling with seek time visualization across
-                    SSTF, SCAN, and C-SCAN algorithms.
-                </p>
-                <div class="panel-algorithms">
-                    <span class="algo-tag">FCFS</span>
-                    <span class="algo-tag">SSTF</span>
-                    <span class="algo-tag">SCAN</span>
-                    <span class="algo-tag">C-SCAN</span>
+                <div class="panel-overlay"></div>
+                <div class="panel-content">
+                    <div class="panel-meta">
+                        <span class="panel-num">Module 04</span>
+                        <span class="panel-status status-ready">Ready</span>
+                    </div>
+                    <div class="panel-icon">⚙️</div>
+                    <h2 class="panel-title">CPU Scheduling</h2>
+                    <p class="panel-desc">
+                        Simulate process scheduling with animated Gantt charts and
+                        real-time waiting &amp; turnaround time stats.
+                    </p>
+                    <div class="panel-algorithms">
+                        <span class="algo-tag">FCFS</span>
+                        <span class="algo-tag">SJF</span>
+                        <span class="algo-tag">SRTF</span>
+                        <span class="algo-tag">Round Robin</span>
+                        <span class="algo-tag">Priority</span>
+                    </div>
+                    <a href="pages/cpu.html" class="btn btn-primary panel-btn">Open Module →</a>
                 </div>
-                <span class="btn btn-ghost panel-btn panel-btn-disabled">Coming Soon</span>
             </div>
-        </div>
 
-    </section>
+            <!-- Module 05: Memory -->
+            <div class="module-panel" data-module="memory" style="--panel-accent:#00c8e0;">
+                <div class="panel-bg">
+                    <canvas class="panel-canvas" data-anim="memory"></canvas>
+                </div>
+                <div class="panel-overlay"></div>
+                <div class="panel-content">
+                    <div class="panel-meta">
+                        <span class="panel-num">Module 05</span>
+                        <span class="panel-status status-ready">Ready</span>
+                    </div>
+                    <div class="panel-icon">🧠</div>
+                    <h2 class="panel-title">Memory Management</h2>
+                    <p class="panel-desc">
+                        Explore contiguous allocation with MVT variable partitions and
+                        visual memory maps — First Fit, Next Fit, Best Fit, Worst Fit.
+                    </p>
+                    <div class="panel-algorithms">
+                        <span class="algo-tag">First Fit</span>
+                        <span class="algo-tag">Next Fit</span>
+                        <span class="algo-tag">Best Fit</span>
+                        <span class="algo-tag">Worst Fit</span>
+                    </div>
+                    <a href="pages/memory.html" class="btn btn-primary panel-btn">Open Module →</a>
+                </div>
+            </div>
 
-    <footer class="footer">
-        OS_final_project &nbsp;·&nbsp; Module 04–07 Simulations
-    </footer>
 
-    <script>
-        /* ── Scroll progress bar + back to top ── */
-        const progressBar = document.getElementById('scrollProgress');
-        const backToTop = document.getElementById('backToTop');
+            <!-- Module 06: Virtual -->
+            <div class="module-panel" data-module="virtual" style="--panel-accent:#f0a500;">
+                <div class="panel-bg">
+                    <canvas class="panel-canvas" data-anim="virtual"></canvas>
+                </div>
+                <div class="panel-overlay"></div>
+                <div class="panel-content">
+                    <div class="panel-meta">
+                        <span class="panel-num">Module 06</span>
+                        <span class="panel-status status-ready">Ready</span>
+                    </div>
+                    <div class="panel-icon">📄</div>
+                    <h2 class="panel-title">Virtual Memory</h2>
+                    <p class="panel-desc">
+                        Visualize page tables, page faults, and replacement policies
+                        like FIFO, LRU, and Optimal.
+                    </p>
+                    <div class="panel-algorithms">
+                        <span class="algo-tag">FIFO</span>
+                        <span class="algo-tag">LRU</span>
+                        <span class="algo-tag">Optimal</span>
+                        <span class="algo-tag">Clock</span>
+                    </div>
+                    <a href="pages/virtual.html" class="btn btn-primary panel-btn">Open Module →</a>
+                </div>
+            </div>
 
-        window.addEventListener('scroll', () => {
-            const scrolled = window.scrollY;
-            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-            progressBar.style.width = (scrolled / maxScroll * 100) + '%';
-            backToTop.classList.toggle('visible', scrolled > 300);
+            <!-- Module 07: Storage -->
+            <div class="module-panel" data-module="storage" style="--panel-accent:#34c77b;">
+                <div class="panel-bg">
+                    <canvas class="panel-canvas" data-anim="storage"></canvas>
+                </div>
+                <div class="panel-overlay"></div>
+                <div class="panel-content">
+                    <div class="panel-meta">
+                        <span class="panel-num">Module 07</span>
+                        <span class="panel-status status-ready">Ready</span>
+                    </div>
+                    <div class="panel-icon">💾</div>
+                    <h2 class="panel-title">Mass Storage</h2>
+                    <p class="panel-desc">
+                        Simulate disk scheduling with seek time visualization across
+                        SSTF, SCAN, and C-SCAN algorithms.
+                    </p>
+                    <div class="panel-algorithms">
+                        <span class="algo-tag">FCFS</span>
+                        <span class="algo-tag">SSTF</span>
+                        <span class="algo-tag">SCAN</span>
+                        <span class="algo-tag">C-SCAN</span>
+                    </div>
+                    <a href="pages/storage.html" class="btn btn-primary panel-btn">Open Module →</a>
+                </div>
+            </div>
 
-            // Parallax: aurora drifts at 30% of scroll speed
-            canvas.style.transform = `translateY(${scrolled * 0.3}px)`;
-        }, { passive: true });
+        </section>
 
-        backToTop.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
+        <footer class="footer">
+            OS_final_project &nbsp;·&nbsp; Module 04–07 Simulations
+        </footer>
 
-        /* ── Theme toggle ── */
-        const btn = document.getElementById('themeToggle');
-        const body = document.body;
-        if (localStorage.getItem('theme') === 'light') body.classList.add('light');
-        btn.addEventListener('click', () => {
-            body.classList.toggle('light');
-            localStorage.setItem('theme', body.classList.contains('light') ? 'light' : 'dark');
-        });
+        <script>
+            /* ── Scroll progress bar + back to top ── */
+            const progressBar = document.getElementById('scrollProgress');
+            const backToTop = document.getElementById('backToTop');
+            window.addEventListener('scroll', () => {
+                const scrolled = window.scrollY;
+                const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+                progressBar.style.width = (scrolled / maxScroll * 100) + '%';
+                backToTop.classList.toggle('visible', scrolled > 300);
 
-        /* ── Scroll animations ── */
-        const panels = document.querySelectorAll('.module-panel');
+                // Parallax: aurora drifts at 30% of scroll speed
+                canvas.style.transform = `translateY(${scrolled * 0.3}px)`;
+            }, { passive: true });
 
-        const panelObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                // toggle so the animation replays on every enter/exit, both directions
-                entry.target.classList.toggle('in-view', entry.isIntersecting);
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             });
-        }, {
-            threshold: 0.35
-        });
 
-        panels.forEach(panel => panelObserver.observe(panel));
+            /* ── Theme toggle ── */
+            const btn = document.getElementById('themeToggle');
+            const body = document.body;
+            if (localStorage.getItem('theme') === 'light') body.classList.add('light');
+            btn.addEventListener('click', () => {
+                body.classList.toggle('light');
+                localStorage.setItem('theme', body.classList.contains('light') ? 'light' : 'dark');
+            });
 
-        /* ── Panel background animations ─────────────────── */
-        (function () {
+            /* ── Scroll animations ── */
+            const panels = document.querySelectorAll('.module-panel');
 
-            function hexToRgb(hex) {
-                hex = hex.trim().replace('#', '');
-                if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-                const num = parseInt(hex, 16);
-                return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
-            }
+            const panelObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    // toggle so the animation replays on every enter/exit, both directions
+                    entry.target.classList.toggle('in-view', entry.isIntersecting);
+                });
+            }, {
+                threshold: 0.35
+            });
 
-            /* CPU: scrolling Gantt-style lanes */
-            function drawCPU(state) {
-                const { ctx, canvas, t, rgb } = state;
-                const W = canvas.width, H = canvas.height;
-                ctx.clearRect(0, 0, W, H);
+            panels.forEach(panel => panelObserver.observe(panel));
 
-                const lanes = 3;
-                const laneH = H / (lanes + 1);
-                const seq = [120, 80, 160, 60, 100, 140, 70];
+            /* ── Panel background animations ─────────────────── */
+            (function () {
 
-                for (let lane = 0; lane < lanes; lane++) {
-                    const y = laneH * (lane + 0.7);
-                    const blockH = laneH * 0.6;
-                    const speed = (0.4 + lane * 0.25) * (W / 800);
-                    const offset = (t * speed) % (W + 300);
+                function hexToRgb(hex) {
+                    hex = hex.trim().replace('#', '');
+                    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+                    const num = parseInt(hex, 16);
+                    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+                }
 
-                    let x = -offset;
-                    let i = 0;
-                    while (x < W + 300) {
-                        const w = seq[(i + lane * 2) % seq.length] * (W / 800);
-                        const alpha = 0.10 + ((i + lane) % 3) * 0.07;
+                /* CPU: scrolling Gantt-style lanes */
+                function drawCPU(state) {
+                    const { ctx, canvas, t, rgb } = state;
+                    const W = canvas.width, H = canvas.height;
+                    ctx.clearRect(0, 0, W, H);
+
+                    const lanes = 3;
+                    const laneH = H / (lanes + 1);
+                    const seq = [120, 80, 160, 60, 100, 140, 70];
+
+                    for (let lane = 0; lane < lanes; lane++) {
+                        const y = laneH * (lane + 0.7);
+                        const blockH = laneH * 0.6;
+                        const speed = (0.4 + lane * 0.25) * (W / 800);
+                        const offset = (t * speed) % (W + 300);
+
+                        let x = -offset;
+                        let i = 0;
+                        while (x < W + 300) {
+                            const w = seq[(i + lane * 2) % seq.length] * (W / 800);
+                            const alpha = 0.10 + ((i + lane) % 3) * 0.07;
+                            ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+                            ctx.fillRect(x, y, w - 6, blockH);
+                            x += w;
+                            i++;
+                        }
+                    }
+                }
+
+                /* Memory: cells fading in and out */
+                function initMemoryCells(state) {
+                    const cols = 14, rows = 6;
+                    state.cells = [];
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            state.cells.push({
+                                r, c,
+                                phase: Math.random() * Math.PI * 2,
+                                speed: 0.01 + Math.random() * 0.02,
+                                max: 0.15 + Math.random() * 0.3,
+                            });
+                        }
+                    }
+                    state.cols = cols; state.rows = rows;
+                }
+
+                function drawMemory(state) {
+                    const { ctx, canvas, t, rgb } = state;
+                    const W = canvas.width, H = canvas.height;
+                    ctx.clearRect(0, 0, W, H);
+                    if (!state.cells) initMemoryCells(state);
+
+                    const gap = W * 0.006;
+                    const cellW = (W - gap * (state.cols + 1)) / state.cols;
+                    const cellH = (H - gap * (state.rows + 1)) / state.rows;
+
+                    state.cells.forEach(cell => {
+                        const alpha = Math.max(0, Math.sin(t * cell.speed + cell.phase)) * cell.max;
+                        const x = gap + cell.c * (cellW + gap);
+                        const y = gap + cell.r * (cellH + gap);
                         ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
-                        ctx.fillRect(x, y, w - 6, blockH);
-                        x += w;
-                        i++;
-                    }
-                }
-            }
-
-            /* Memory: cells fading in and out */
-            function initMemoryCells(state) {
-                const cols = 14, rows = 6;
-                state.cells = [];
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        state.cells.push({
-                            r, c,
-                            phase: Math.random() * Math.PI * 2,
-                            speed: 0.01 + Math.random() * 0.02,
-                            max: 0.15 + Math.random() * 0.3,
-                        });
-                    }
-                }
-                state.cols = cols; state.rows = rows;
-            }
-
-            function drawMemory(state) {
-                const { ctx, canvas, t, rgb } = state;
-                const W = canvas.width, H = canvas.height;
-                ctx.clearRect(0, 0, W, H);
-                if (!state.cells) initMemoryCells(state);
-
-                const gap = W * 0.006;
-                const cellW = (W - gap * (state.cols + 1)) / state.cols;
-                const cellH = (H - gap * (state.rows + 1)) / state.rows;
-
-                state.cells.forEach(cell => {
-                    const alpha = Math.max(0, Math.sin(t * cell.speed + cell.phase)) * cell.max;
-                    const x = gap + cell.c * (cellW + gap);
-                    const y = gap + cell.r * (cellH + gap);
-                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
-                    ctx.fillRect(x, y, cellW, cellH);
-                });
-            }
-
-            /* Virtual Memory: page table grid with occasional "page fault" flashes */
-            function initVirtualCells(state) {
-                const cols = 18, rows = 8;
-                state.vcells = [];
-                for (let r = 0; r < rows; r++) {
-                    for (let c = 0; c < cols; c++) {
-                        state.vcells.push({ r, c, flash: 0 });
-                    }
-                }
-                state.vcols = cols; state.vrows = rows;
-            }
-
-            function drawVirtual(state) {
-                const { ctx, canvas, rgb } = state;
-                const W = canvas.width, H = canvas.height;
-                ctx.clearRect(0, 0, W, H);
-                if (!state.vcells) initVirtualCells(state);
-
-                const gap = W * 0.004;
-                const cellW = (W - gap * (state.vcols + 1)) / state.vcols;
-                const cellH = (H - gap * (state.vrows + 1)) / state.vrows;
-
-                if (Math.random() < 0.04) {
-                    const cell = state.vcells[Math.floor(Math.random() * state.vcells.length)];
-                    cell.flash = 1;
+                        ctx.fillRect(x, y, cellW, cellH);
+                    });
                 }
 
-                state.vcells.forEach(cell => {
-                    const alpha = 0.05 + cell.flash * 0.55;
-                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
-                    const x = gap + cell.c * (cellW + gap);
-                    const y = gap + cell.r * (cellH + gap);
-                    ctx.fillRect(x, y, cellW, cellH);
-
-                    if (cell.flash > 0) {
-                        cell.flash *= 0.92;
-                        if (cell.flash < 0.01) cell.flash = 0;
+                /* Virtual Memory: page table grid with occasional "page fault" flashes */
+                function initVirtualCells(state) {
+                    const cols = 18, rows = 8;
+                    state.vcells = [];
+                    for (let r = 0; r < rows; r++) {
+                        for (let c = 0; c < cols; c++) {
+                            state.vcells.push({ r, c, flash: 0 });
+                        }
                     }
-                });
-            }
+                    state.vcols = cols; state.vrows = rows;
+                }
 
-            /* Storage: disk platter with sweeping seek arm */
-            function drawStorage(state) {
-                const { ctx, canvas, t, rgb } = state;
-                const W = canvas.width, H = canvas.height;
-                ctx.clearRect(0, 0, W, H);
+                function drawVirtual(state) {
+                    const { ctx, canvas, rgb } = state;
+                    const W = canvas.width, H = canvas.height;
+                    ctx.clearRect(0, 0, W, H);
+                    if (!state.vcells) initVirtualCells(state);
 
-                const cx = W * 0.5, cy = H * 0.5;
-                const maxR = Math.min(W, H) * 0.42;
-                const tracks = 6;
+                    const gap = W * 0.004;
+                    const cellW = (W - gap * (state.vcols + 1)) / state.vcols;
+                    const cellH = (H - gap * (state.vrows + 1)) / state.vrows;
 
-                for (let i = 1; i <= tracks; i++) {
-                    const r = (maxR / tracks) * i;
+                    if (Math.random() < 0.04) {
+                        const cell = state.vcells[Math.floor(Math.random() * state.vcells.length)];
+                        cell.flash = 1;
+                    }
+
+                    state.vcells.forEach(cell => {
+                        const alpha = 0.05 + cell.flash * 0.55;
+                        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+                        const x = gap + cell.c * (cellW + gap);
+                        const y = gap + cell.r * (cellH + gap);
+                        ctx.fillRect(x, y, cellW, cellH);
+
+                        if (cell.flash > 0) {
+                            cell.flash *= 0.92;
+                            if (cell.flash < 0.01) cell.flash = 0;
+                        }
+                    });
+                }
+
+                /* Storage: disk platter with sweeping seek arm */
+                function drawStorage(state) {
+                    const { ctx, canvas, t, rgb } = state;
+                    const W = canvas.width, H = canvas.height;
+                    ctx.clearRect(0, 0, W, H);
+
+                    const cx = W * 0.5, cy = H * 0.5;
+                    const maxR = Math.min(W, H) * 0.42;
+                    const tracks = 6;
+
+                    for (let i = 1; i <= tracks; i++) {
+                        const r = (maxR / tracks) * i;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.08 + i * 0.01})`;
+                        ctx.lineWidth = Math.max(1, W * 0.0015);
+                        ctx.stroke();
+                    }
+
+                    const sweep = Math.sin(t * 0.02) * (Math.PI * 0.6);
+                    const angle = -Math.PI / 2 + sweep;
+
                     ctx.beginPath();
-                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.08 + i * 0.01})`;
-                    ctx.lineWidth = Math.max(1, W * 0.0015);
+                    ctx.moveTo(cx, cy);
+                    ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
+                    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`;
+                    ctx.lineWidth = Math.max(1.5, W * 0.002);
                     ctx.stroke();
+
+                    const trackIndex = Math.floor((Math.sin(t * 0.02) * 0.5 + 0.5) * (tracks - 1)) + 1;
+                    const headR = (maxR / tracks) * trackIndex;
+                    ctx.beginPath();
+                    ctx.arc(cx + Math.cos(angle) * headR, cy + Math.sin(angle) * headR, W * 0.006, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.9)`;
+                    ctx.fill();
+
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, W * 0.01, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`;
+                    ctx.fill();
                 }
 
-                const sweep = Math.sin(t * 0.02) * (Math.PI * 0.6);
-                const angle = -Math.PI / 2 + sweep;
-
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
-                ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`;
-                ctx.lineWidth = Math.max(1.5, W * 0.002);
-                ctx.stroke();
-
-                const trackIndex = Math.floor((Math.sin(t * 0.02) * 0.5 + 0.5) * (tracks - 1)) + 1;
-                const headR = (maxR / tracks) * trackIndex;
-                ctx.beginPath();
-                ctx.arc(cx + Math.cos(angle) * headR, cy + Math.sin(angle) * headR, W * 0.006, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.9)`;
-                ctx.fill();
-
-                ctx.beginPath();
-                ctx.arc(cx, cy, W * 0.01, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`;
-                ctx.fill();
-            }
-
-            const ANIMATIONS = {
-                cpu: drawCPU,
-                memory: drawMemory,
-                virtual: drawVirtual,
-                storage: drawStorage,
-            };
-
-            const states = [];
-
-            document.querySelectorAll('.panel-canvas').forEach(canvasEl => {
-                const type = canvasEl.dataset.anim;
-                const fn = ANIMATIONS[type];
-                if (!fn) return;
-
-                const panel = canvasEl.closest('.module-panel');
-                const accent = getComputedStyle(panel).getPropertyValue('--panel-accent').trim() || '#6c63ff';
-
-                const state = {
-                    canvas: canvasEl,
-                    ctx: canvasEl.getContext('2d'),
-                    panel,
-                    type,
-                    rgb: hexToRgb(accent),
-                    t: 0,
+                const ANIMATIONS = {
+                    cpu: drawCPU,
+                    memory: drawMemory,
+                    virtual: drawVirtual,
+                    storage: drawStorage,
                 };
 
-                function resizeCanvas() {
-                    const rect = canvasEl.getBoundingClientRect();
-                    canvasEl.width = rect.width * 2;
-                    canvasEl.height = rect.height * 2;
-                }
-                resizeCanvas();
-                window.addEventListener('resize', resizeCanvas);
+                const states = [];
 
-                states.push(state);
-            });
+                document.querySelectorAll('.panel-canvas').forEach(canvasEl => {
+                    const type = canvasEl.dataset.anim;
+                    const fn = ANIMATIONS[type];
+                    if (!fn) return;
 
-            function loop() {
-                states.forEach(state => {
-                    if (!state.panel.classList.contains('in-view')) return;
-                    state.t += 1;
-                    ANIMATIONS[state.type](state);
+                    const panel = canvasEl.closest('.module-panel');
+                    const accent = getComputedStyle(panel).getPropertyValue('--panel-accent').trim() || '#6c63ff';
+
+                    const state = {
+                        canvas: canvasEl,
+                        ctx: canvasEl.getContext('2d'),
+                        panel,
+                        type,
+                        rgb: hexToRgb(accent),
+                        t: 0,
+                    };
+
+                    function resizeCanvas() {
+                        const rect = canvasEl.getBoundingClientRect();
+                        canvasEl.width = rect.width * 2;
+                        canvasEl.height = rect.height * 2;
+                    }
+                    resizeCanvas();
+                    window.addEventListener('resize', resizeCanvas);
+
+                    states.push(state);
                 });
-                requestAnimationFrame(loop);
-            }
-            loop();
 
-        })();
-        const cards = document.querySelectorAll('.module-card');
-
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const card = entry.target;
-                if (entry.isIntersecting) {
-                    card.classList.remove('animate-out');
-                    card.classList.add('animate-in');
-                } else {
-                    card.classList.remove('animate-in');
-                    card.classList.add('animate-out');
+                function loop() {
+                    states.forEach(state => {
+                        if (!state.panel.classList.contains('in-view')) return;
+                        state.t += 1;
+                        ANIMATIONS[state.type](state);
+                    });
+                    requestAnimationFrame(loop);
                 }
-            });
-        }, {
-            threshold: 0.15,      /* card must be 15% visible to trigger */
-            rootMargin: '0px 0px -40px 0px'
-        });
+                loop();
 
-        /* stagger the in-animation per card index */
-        cards.forEach((card, i) => {
-            card.style.animationDelay = `${i * 120}ms`;
-            observer.observe(card);
-        });
+            })();
+            const cards = document.querySelectorAll('.module-card');
 
-        /* ── Typewriter ── */
-        const typeTarget = document.getElementById('typeTarget');
-        const cursor = document.getElementById('cursor');
-
-        // Split into two lines; second line gets accent color
-        const line1 = 'Operating Systems';
-        const line2 = 'Visualized';
-        const full = line1 + '|' + line2; // '|' = line break marker
-        let charIndex = 0;
-        let passedBreak = false;
-
-        // Build h1 structure: span for line1, br, span.accent for line2, cursor
-        const span1 = document.createElement('span');
-        const br = document.createElement('br');
-        const span2 = document.createElement('span');
-        span2.classList.add('typewriter-accent');
-        span2.style.color = 'var(--accent)';
-        typeTarget.appendChild(span1);
-        typeTarget.appendChild(cursor);
-
-        function type() {
-            if (charIndex < full.length) {
-                const ch = full[charIndex];
-                if (ch === '|') {
-                    // insert line break and swap cursor into span2
-                    typeTarget.insertBefore(br, cursor);
-                    typeTarget.insertBefore(span2, cursor);
-                    passedBreak = true;
-                } else {
-                    if (passedBreak) span2.textContent += ch;
-                    else span1.textContent += ch;
-                }
-                charIndex++;
-                setTimeout(type, 75 + Math.random() * 35);
-            } else {
-                cursor.classList.add('done');
-            }
-        }
-
-        setTimeout(type, 500);
-
-        /* ── Aurora canvas ── */
-        const canvas = document.getElementById('auroraCanvas');
-        const ctx = canvas.getContext('2d');
-        let W, H, t = 0;
-
-        function resize() {
-            W = canvas.width = canvas.offsetWidth;
-            H = canvas.height = canvas.offsetHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        /* Each orb defines a slow-moving plasma blob */
-        const orbs = [
-            { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 260 },
-            { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 },
-            { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 230 },
-            { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 280 },
-            { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 185 },
-        ];
-
-        function isLight() { return body.classList.contains('light'); }
-
-        function draw() {
-            t++;
-            ctx.clearRect(0, 0, W, H);
-
-            const light = isLight();
-            /* base fill — transparent so hero-wrapper bg shows through */
-            ctx.fillStyle = 'transparent';
-
-            orbs.forEach(o => {
-                const angle = o.phase + t * o.spd * Math.PI * 2;
-                /* orbs drift gently in elliptical paths */
-                const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
-                const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
-                const radius = o.r * Math.min(W, H);
-
-                const alpha = light ? 0.28 : 0.22;
-                const alpha2 = 0.00;
-
-                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                const hue = light ? o.hue * 0.15 + 28 : o.hue;
-                grad.addColorStop(0, `hsla(${hue}, ${light ? 45 : 90}%, ${light ? 72 : 65}%, ${alpha})`);
-                grad.addColorStop(0.5, `hsla(${hue + 10}, ${light ? 35 : 80}%, ${light ? 68 : 60}%, ${alpha * 0.4})`);
-                grad.addColorStop(1, `hsla(${hue + 20}, 30%, 65%, ${alpha2})`);
-
-                ctx.beginPath()
-                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-                ctx.fillStyle = grad;
-                ctx.fill();
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const card = entry.target;
+                    if (entry.isIntersecting) {
+                        card.classList.remove('animate-out');
+                        card.classList.add('animate-in');
+                    } else {
+                        card.classList.remove('animate-in');
+                        card.classList.add('animate-out');
+                    }
+                });
+            }, {
+                threshold: 0.15,      /* card must be 15% visible to trigger */
+                rootMargin: '0px 0px -40px 0px'
             });
 
-            requestAnimationFrame(draw);
-        }
-        draw();
-    </script>
+            /* stagger the in-animation per card index */
+            cards.forEach((card, i) => {
+                card.style.animationDelay = `${i * 120}ms`;
+                observer.observe(card);
+            });
+
+            /* ── Typewriter ── */
+            const typeTarget = document.getElementById('typeTarget');
+            const cursor = document.getElementById('cursor');
+
+            // Split into two lines; second line gets accent color
+            const line1 = 'Operating Systems';
+            const line2 = 'Visualized';
+            const full = line1 + '|' + line2; // '|' = line break marker
+            let charIndex = 0;
+            let passedBreak = false;
+
+            // Build h1 structure: span for line1, br, span.accent for line2, cursor
+            const span1 = document.createElement('span');
+            const br = document.createElement('br');
+            const span2 = document.createElement('span');
+            span2.classList.add('typewriter-accent');
+            span2.style.color = 'var(--accent)';
+            typeTarget.appendChild(span1);
+            typeTarget.appendChild(cursor);
+
+            function type() {
+                if (charIndex < full.length) {
+                    const ch = full[charIndex];
+                    if (ch === '|') {
+                        // insert line break and swap cursor into span2
+                        typeTarget.insertBefore(br, cursor);
+                        typeTarget.insertBefore(span2, cursor);
+                        passedBreak = true;
+                    } else {
+                        if (passedBreak) span2.textContent += ch;
+                        else span1.textContent += ch;
+                    }
+                    charIndex++;
+                    setTimeout(type, 75 + Math.random() * 35);
+                } else {
+                    cursor.classList.add('done');
+                }
+            }
+
+            setTimeout(type, 500);
+
+            /* ── Aurora canvas ── */
+            const canvas = document.getElementById('auroraCanvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, t = 0;
+
+            function resize() {
+                W = canvas.width = canvas.offsetWidth;
+                H = canvas.height = canvas.offsetHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            const orbs = [
+                { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 260 },
+                { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 },
+                { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 230 },
+                { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 280 },
+                { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 185 },
+            ];
+
+            function isLight() { return body.classList.contains('light'); }
+
+            function draw() {
+                t++;
+                ctx.clearRect(0, 0, W, H);
+                const light = isLight();
+                orbs.forEach(o => {
+                    const angle = o.phase + t * o.spd * Math.PI * 2;
+                    const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
+                    const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
+                    const radius = o.r * Math.min(W, H);
+                    const alpha = light ? 0.28 : 0.22;
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    const hue = light ? o.hue * 0.15 + 28 : o.hue;
+                    grad.addColorStop(0, `hsla(${hue}, ${light ? 45 : 90}%, ${light ? 72 : 65}%, ${alpha})`);
+                    grad.addColorStop(0.5, `hsla(${hue + 10}, ${light ? 35 : 80}%, ${light ? 68 : 60}%, ${alpha * 0.4})`);
+                    grad.addColorStop(1, `hsla(${hue + 20}, 30%, 65%, 0)`);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+            /* ── Duck wave riders ── */
+            (function () {
+                const waveDivider = document.querySelector('.wave-divider');
+
+                const duckSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 32" width="36" height="28">
+                        <ellipse cx="20" cy="22" rx="13" ry="8" fill="#f0a500"/>
+                        <ellipse cx="20" cy="21" rx="11" ry="6.5" fill="#f5bc30"/>
+                        <circle cx="28" cy="13" r="7" fill="#f5bc30"/>
+                        <circle cx="30.5" cy="11.5" r="1.5" fill="#1a1a1a"/>
+                        <path d="M34 13 Q39 12 38 15 Q36 14 34 14 Z" fill="#e07800"/>
+                        <path d="M10 22 Q7 20 5 23 Q8 24 10 23 Z" fill="#e07800"/>
+                    </svg>`;
+
+                const wrapper = document.createElement('div');
+                wrapper.style.cssText = `
+                        position: absolute;
+                        bottom: 52%;
+                        left: -10%;
+                        transform: translateX(-50%);
+                        pointer-events: none;
+                        z-index: 10;
+                        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+                    `;
+                wrapper.innerHTML = duckSVG;
+                waveDivider.appendChild(wrapper);
+
+                let x = -0.1;
+                let t = 0;
+
+                function animateDuck() {
+                    t += 0.03;
+                    x += 0.0003; // slow crawl right
+                    if (x > 1.1) x = -0.1; // wrap around
+
+                    const waveY = Math.sin(t - x * Math.PI * 4) * 10;
+                    const tilt = Math.cos(t - x * Math.PI * 4) * 8;
+
+                    wrapper.style.left = `${x * 100}%`;
+                    wrapper.style.transform = `translateX(-50%) translateY(${waveY}px) rotate(${tilt}deg)`;
+
+                    requestAnimationFrame(animateDuck);
+                }
+                animateDuck();
+            })();
+
+            /* ── Live clock ── */
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('navClock').textContent = `${h}:${m}:${s}`;
+            }
+            updateClock();
+            setInterval(updateClock, 1000)
+
+                /* ── Particle system ── */
+                (function () {
+                    const particleCanvas = document.createElement('canvas');
+                    particleCanvas.style.cssText = `
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    `;
+                    document.querySelector('.hero-wrapper').appendChild(particleCanvas);
+
+                    const pc = particleCanvas.getContext('2d');
+                    let pW, pH;
+
+                    function resizeParticles() {
+                        pW = particleCanvas.width = particleCanvas.offsetWidth;
+                        pH = particleCanvas.height = particleCanvas.offsetHeight;
+                    }
+                    window.addEventListener('resize', resizeParticles);
+                    resizeParticles();
+
+                    const particles = Array.from({ length: 48 }, () => ({
+                        x: Math.random() * pW,
+                        y: Math.random() * pH,
+                        size: Math.random() * 1.5 + 0.5,
+                        speed: Math.random() * 0.4 + 0.1,
+                        opacity: Math.random() * 0.25 + 0.05,
+                        drift: (Math.random() - 0.5) * 0.3,
+                    }));
+
+                    function drawParticles() {
+                        pc.clearRect(0, 0, pW, pH);
+                        const light = document.body.classList.contains('light');
+                        particles.forEach(p => {
+                            p.y -= p.speed;
+                            p.x += p.drift;
+                            if (p.y < -4) { p.y = pH + 4; p.x = Math.random() * pW; }
+                            if (p.x < -4) p.x = pW + 4;
+                            if (p.x > pW + 4) p.x = -4;
+
+                            pc.beginPath();
+                            pc.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                            pc.fillStyle = light
+                                ? `rgba(0,0,0,${p.opacity * 0.5})`
+                                : `rgba(255,255,255,${p.opacity})`;
+                            pc.fill();
+                        });
+                        requestAnimationFrame(drawParticles);
+                    }
+                    drawParticles();
+                })();
+
+
+        </script>
 
 </body>
 

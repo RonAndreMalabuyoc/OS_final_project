@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Virtual Memory Simulator — OS Simulator</title>
+    <meta name="description"
+        content="Interactive virtual memory page replacement simulator. Supports FIFO, Optimal, LRU, ARB, Clock, Enhanced Clock, LFU, and MFU algorithms." />
+    <link rel="stylesheet" href="../styles.css" />
+</head>
+
+<body>
+
+    <!-- Scroll progress bar -->
+    <div id="scrollProgress"></div>
+
+    <!-- Back to top -->
+    <button id="backToTop" aria-label="Back to top">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15" />
+        </svg>
+    </button>
+
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <div class="nav-logo">
+                <span class="dot"></span>
+                OS Simulator
+            </div>
+            <ul class="nav-links">
+                <li><a href="../index.html">Home</a></li>
+                <li><a href="cpu.html">CPU Scheduling</a></li>
+                <li><a href="memory.html">Memory</a></li>
+                <li><a href="virtual.html" class="active">Virtual Memory</a></li>
+                <li><a href="storage.html">Storage</a></li>
+            </ul>
+        </div>
+
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Page Header with Aurora -->
+    <div class="cpu-hero-wrapper">
+        <canvas id="auroraCanvas"></canvas>
+        <header class="cpu-page-header">
+            <div class="cpu-page-header-inner">
+                <div class="cpu-breadcrumb">
+                    <a href="../index.html">Home</a>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    <span>Virtual Memory</span>
+                </div>
+                <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
+                <p>Set a reference string, choose a replacement algorithm, and trace every page fault.</p>
+            </div>
+        </header>
+    </div>
+
+    <main class="cpu-main">
+
+        <!-- ─── Algorithm Selector ─────────────────────────────────── -->
+        <section class="cpu-section" id="algorithmSection">
+            <div class="section-label">Algorithm</div>
+            <div class="algo-selector" id="algoSelector">
+                <button class="algo-pill active" data-algo="fifo">FIFO</button>
+                <button class="algo-pill" data-algo="opt">Optimal</button>
+                <button class="algo-pill" data-algo="lru">LRU</button>
+                <button class="algo-pill" data-algo="arb">ARB</button>
+                <button class="algo-pill" data-algo="clock">Clock</button>
+                <button class="algo-pill" data-algo="enhanced">Enhanced Clock</button>
+                <button class="algo-pill" data-algo="lfu">LFU</button>
+                <button class="algo-pill" data-algo="mfu">MFU</button>
+            </div>
+
+            <!-- Algorithm description -->
+            <div class="algo-description" id="algoDescription">
+                <div class="algo-desc-icon">💡</div>
+                <p id="algoDescText">Pages are replaced in the order they were loaded into memory. Simple and
+                    non-preemptive — but prone to Bélády's anomaly with more frames sometimes causing more faults.</p>
+            </div>
+        </section>
+
+        <!-- ─── Configuration ──────────────────────────────────────── -->
+        <section class="cpu-section" id="configSection">
+            <div class="section-label">Configuration</div>
+
+            <div class="process-toolbar">
+                <button class="btn btn-ghost" id="btnLoadExample">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                    Load Example
+                </button>
+                <button class="btn btn-ghost btn-danger" id="btnReset">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="1 4 1 10 7 10" />
+                        <path d="M3.51 15a9 9 0 1 0 .49-4" />
+                    </svg>
+                    Reset
+                </button>
+            </div>
+
+            <div class="vm-config-grid">
+                <div class="vm-config-full">
+                    <label class="cpu-label">Reference String</label>
+
+                    <!-- Hidden input keeps the rest of the JS unchanged -->
+                    <input type="hidden" id="refString" value="7 0 1 2 0 3 0 4 2 3 0 3 2" />
+
+                    <!-- Chip tray -->
+                    <div class="ref-tray" id="refTray" role="list" aria-label="Reference string pages">
+                        <!-- chips injected by JS -->
+                    </div>
+
+                    <!-- Numpad -->
+                    <div class="ref-numpad" id="refNumpad">
+                        <button class="ref-num-btn" data-val="0">0</button>
+                        <button class="ref-num-btn" data-val="1">1</button>
+                        <button class="ref-num-btn" data-val="2">2</button>
+                        <button class="ref-num-btn" data-val="3">3</button>
+                        <button class="ref-num-btn" data-val="4">4</button>
+                        <button class="ref-num-btn" data-val="5">5</button>
+                        <button class="ref-num-btn" data-val="6">6</button>
+                        <button class="ref-num-btn" data-val="7">7</button>
+                        <button class="ref-num-btn" data-val="8">8</button>
+                        <button class="ref-num-btn" data-val="9">9</button>
+                        <button class="ref-num-btn ref-num-del" id="refDel" aria-label="Delete last page">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z" />
+                                <line x1="18" y1="9" x2="12" y2="15" />
+                                <line x1="12" y1="9" x2="18" y2="15" />
+                            </svg>
+                        </button>
+                        <button class="ref-num-btn ref-num-clear" id="refClearPages" aria-label="Clear all pages">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="vm-config-hint">Tap numbers to add pages · tap a chip to remove it · count: <span
+                            id="refCount">13</span></p>
+                </div>
+                <div>
+                    <label class="cpu-label" for="numFrames">Number of Frames</label>
+                    <input type="number" id="numFrames" class="cpu-input" value="3" min="1" max="20" />
+                </div>
+                <div>
+                    <label class="cpu-label" for="memAccessTime">Memory Access Time (ns)</label>
+                    <input type="number" id="memAccessTime" class="cpu-input" value="100" min="1" />
+                </div>
+                <div>
+                    <label class="cpu-label" for="pageFaultTime">Page Fault Service Time (ns)</label>
+                    <input type="number" id="pageFaultTime" class="cpu-input" value="8000000" min="1" />
+                </div>
+            </div>
+
+            <div class="process-actions">
+                <button class="btn btn-primary btn-run" id="btnRun">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                        fill="currentColor" stroke="none">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Run Simulation
+                </button>
+            </div>
+        </section>
+
+        <!-- ─── Output ─────────────────────────────────────────────── -->
+        <section class="cpu-section cpu-output-section" id="outputSection" style="display:none;">
+
+            <!-- Frame State Trace (visual timeline like Gantt) -->
+            <div class="section-label">Frame State Trace</div>
+            <div class="vm-trace-wrapper">
+                <div class="vm-trace" id="vmTrace">
+                    <!-- Step columns rendered by JS -->
+                </div>
+                <div class="vm-trace-labels" id="vmTraceLabels">
+                    <!-- Frame labels -->
+                </div>
+            </div>
+
+            <!-- Step-by-step Results Table -->
+            <div class="section-label" style="margin-top:2.5rem;">Step-by-Step Results</div>
+            <div class="results-table-wrap">
+                <table class="results-table" id="frameTable">
+                    <thead>
+                        <tr id="frameTableHead"></tr>
+                    </thead>
+                    <tbody id="frameTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Performance Metrics -->
+            <div class="section-label" style="margin-top:2.5rem;">Performance Metrics</div>
+            <div class="metrics-grid" id="metricsGrid"></div>
+
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        OS_final_project &nbsp;·&nbsp; Module — Virtual Memory Management
+    </footer>
+
+    <style>
+        /* ── VM-specific overrides (all other styles come from styles.css) ── */
+
+        .vm-config-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .vm-config-full {
+            grid-column: 1 / -1;
+        }
+
+        .vm-config-hint {
+            font-size: 0.78rem;
+            color: var(--muted);
+            margin-top: 0.35rem;
+        }
+
+        @media (max-width: 640px) {
+            .vm-config-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── Frame Trace (replaces step-timeline) ─────────────────── */
+        .vm-trace-wrapper {
+            display: flex;
+            gap: 0;
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface2);
+            padding: 0.75rem;
+        }
+
+        .vm-trace-labels {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding-right: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .vm-trace-label-ref {
+            height: 32px;
+            display: flex;
+            align-items: center;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .vm-trace-label-frame {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--muted);
+            font-family: 'Courier New', monospace;
+            white-space: nowrap;
+        }
+
+        .vm-trace {
+            display: flex;
+            gap: 2px;
+            overflow-x: auto;
+            flex: 1;
+            padding-bottom: 2px;
+        }
+
+        .vm-step-col {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            min-width: 42px;
+            opacity: 0;
+            transform: translateY(6px);
+            animation: stepFadeIn 0.25s forwards;
+        }
+
+        @keyframes stepFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .vm-step-ref {
+            height: 32px;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px 6px 0 0;
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .vm-step-ref.hit {
+            background: rgba(52, 199, 123, 0.18);
+            color: var(--green);
+        }
+
+        .vm-step-ref.fault {
+            background: rgba(224, 85, 85, 0.18);
+            color: var(--red);
+        }
+
+        .vm-step-frame {
+            width: 100%;
+            height: 36px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--muted);
+            transition: background 0.2s;
+        }
+
+        .vm-step-frame.occupied {
+            color: var(--text);
+        }
+
+        .vm-step-frame.new-page {
+            background: rgba(108, 99, 255, 0.22);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .vm-step-frame.empty-slot {
+            opacity: 0.35;
+        }
+
+        /* ── Chip Builder ──────────────────────────────────────────── */
+        .ref-tray {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 48px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface2);
+            margin-bottom: 10px;
+            align-content: flex-start;
+        }
+
+        .ref-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 9px;
+            border-radius: 99px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.15s, transform 0.1s;
+            animation: chipIn 0.15s ease;
+        }
+
+        @keyframes chipIn {
+            from {
+                opacity: 0;
+                transform: scale(0.7);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .ref-chip:hover {
+            opacity: 0.75;
+        }
+
+        .ref-chip:active {
+            transform: scale(0.9);
+        }
+
+        .ref-chip-x {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            line-height: 1;
+        }
+
+        .ref-numpad {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .ref-num-btn {
+            width: 42px;
+            height: 38px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ref-num-btn:hover {
+            background: var(--surface2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .ref-num-btn:active {
+            transform: scale(0.9);
+        }
+
+        .ref-num-del {
+            background: rgba(240, 165, 0, 0.1);
+            border-color: rgba(240, 165, 0, 0.35);
+            color: var(--amber);
+        }
+
+        .ref-num-del:hover {
+            background: rgba(240, 165, 0, 0.2);
+            border-color: var(--amber);
+            color: var(--amber);
+        }
+
+        .ref-num-clear {
+            background: rgba(224, 85, 85, 0.1);
+            border-color: rgba(224, 85, 85, 0.3);
+            color: var(--red);
+        }
+
+        .ref-num-clear:hover {
+            background: rgba(224, 85, 85, 0.2);
+            border-color: var(--red);
+            color: var(--red);
+        }
+
+        /* ── Reuse results-table for frame table ───────────────────── */
+        .cell-hit {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .cell-fault {
+            color: var(--red);
+            font-weight: 700;
+        }
+
+        .cell-page {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .cell-victim {
+            color: var(--amber);
+        }
+
+        .cell-empty {
+            color: var(--muted);
+            opacity: 0.4;
+        }
+
+        .fault-badge {
+            display: inline-block;
+            padding: 1px 8px;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+
+        .fault-badge.hit {
+            background: rgba(52, 199, 123, 0.18);
+            color: var(--green);
+        }
+
+        .fault-badge.fault {
+            background: rgba(224, 85, 85, 0.18);
+            color: var(--red);
+        }
+    </style>
+
+    <script>
+        (function () {
+            'use strict';
+
+            /* ── Theme toggle ────────────────────────────── */
+            const themeBtn = document.getElementById('themeToggle');
+            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+            themeBtn.addEventListener('click', () => {
+                document.body.classList.toggle('light');
+                localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+            });
+
+            /* ── Scroll progress + back-to-top ─────────── */
+            const progressBar = document.getElementById('scrollProgress');
+            const backToTop = document.getElementById('backToTop');
+            window.addEventListener('scroll', () => {
+                const s = window.scrollY;
+                const max = document.documentElement.scrollHeight - window.innerHeight;
+                progressBar.style.width = (s / max * 100) + '%';
+                backToTop.classList.toggle('visible', s > 300);
+            }, { passive: true });
+            backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+            /* ── Algorithm descriptions ──────────────────── */
+            const ALGO_DESC = {
+                fifo: "Pages are replaced in the order they were loaded into memory. Simple and non-preemptive — but prone to Bélády's anomaly where more frames can cause more page faults.",
+                opt: "Replaces the page that will not be used for the longest time in the future. Produces the lowest possible fault rate, but requires future knowledge — used as a theoretical benchmark.",
+                lru: "Replaces the page that has not been used for the longest time. Approximates optimal behaviour using timestamps or a stack — widely used in practice.",
+                arb: "LRU Approximation using Additional Reference Bits. A shift register byte is maintained per frame; periodically the R bit is shifted in. The frame with the smallest byte value is replaced.",
+                clock: "Second-Chance / Clock algorithm. A circular buffer with R bits. On a fault, the pointer advances, giving pages with R=1 a second chance by clearing R before evicting R=0 frames.",
+                enhanced: "Enhanced Second-Chance. Classifies frames into 4 classes using (R, M) pairs: (0,0) best → (1,1) worst. Prefers to evict the lowest class, keeping dirty pages in memory longer.",
+                lfu: "Least Frequently Used. Replaces the page with the smallest access count. Ties are broken by least-recently-used order. Old pages with high counts can linger — a known weakness.",
+                mfu: "Most Frequently Used. Replaces the most-accessed page, betting that recently loaded pages with low counts will be needed again soon. Works well on specific access patterns.",
+            };
+
+            /* ── Algorithm Selector ──────────────────────── */
+            let currentAlgo = 'fifo';
+            const pills = document.querySelectorAll('.algo-pill');
+            const algoDescText = document.getElementById('algoDescText');
+
+            pills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    pills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    currentAlgo = pill.dataset.algo;
+                    algoDescText.textContent = ALGO_DESC[currentAlgo] || '';
+                });
+            });
+
+            /* ── Helpers ─────────────────────────────────── */
+            function parseRefString(str) {
+                return str.trim().split(/\s+/).map(Number).filter(n => !isNaN(n));
+            }
+
+            function createFrames(n) {
+                return Array.from({ length: n }, () => ({
+                    page: null, R: 0, M: 0, refByte: 0, count: 0, lastUsed: 0
+                }));
+            }
+
+            function findPage(frames, page) { return frames.findIndex(f => f.page === page); }
+            function findEmpty(frames) { return frames.findIndex(f => f.page === null); }
+
+            function loadPage(frame, page, time) {
+                frame.page = page; frame.R = 1; frame.M = 0;
+                frame.refByte = 0; frame.count = 1; frame.lastUsed = time;
+            }
+
+            function processHit(frame, state) {
+                state.hits++;
+                frame.R = 1; frame.count++; frame.lastUsed = state.time;
+                if (Math.random() < 0.3) frame.M = 1;
+            }
+
+            /* ── Simulation Engines ──────────────────────── */
+            function simulate(algo, refs, numFrames) {
+                const frames = createFrames(numFrames);
+                const steps = [];
+                const state = { hits: 0, faults: 0, clockHand: 0, fifoQueue: [], time: 0 };
+
+                refs.forEach((page, i) => {
+                    state.time = i;
+                    let result;
+                    switch (algo) {
+                        case 'fifo': result = runFIFO(page, frames, state); break;
+                        case 'opt': result = runOPT(page, frames, state, refs, i); break;
+                        case 'lru': result = runLRU(page, frames, state); break;
+                        case 'arb': result = runARB(page, frames, state); break;
+                        case 'clock': result = runClock(page, frames, state); break;
+                        case 'enhanced': result = runEnhancedClock(page, frames, state); break;
+                        case 'lfu': result = runLFU(page, frames, state); break;
+                        case 'mfu': result = runMFU(page, frames, state); break;
+                        default: result = { status: 'HIT', victim: null };
+                    }
+                    steps.push({
+                        page, status: result.status, victim: result.victim,
+                        frameSnap: frames.map(f => ({ ...f }))
+                    });
+                });
+
+                return { steps, hits: state.hits, faults: state.faults };
+            }
+
+            function runFIFO(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); state.fifoQueue.push(empty); return { status: 'FAULT', victim: null }; }
+                const vf = state.fifoQueue.shift();
+                const vp = frames[vf].page;
+                loadPage(frames[vf], page, state.time); state.fifoQueue.push(vf);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runOPT(page, frames, state, refs, idx) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0, farthest = -1;
+                for (let i = 0; i < frames.length; i++) {
+                    let next = Infinity;
+                    for (let j = idx + 1; j < refs.length; j++) { if (refs[j] === frames[i].page) { next = j; break; } }
+                    if (next > farthest) { farthest = next; victim = i; }
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runLRU(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) { if (frames[i].lastUsed < frames[victim].lastUsed) victim = i; }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runARB(page, frames, state) {
+                const ARB_INTERVAL = 3;
+                if (state.time % ARB_INTERVAL === 0) {
+                    for (const f of frames) {
+                        f.refByte = (f.refByte >>> 1) | (f.R === 1 ? 0b10000000 : 0);
+                        f.R = 0;
+                    }
+                }
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); frames[hit].R = 1; return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); frames[empty].R = 1; return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) { if (frames[i].refByte < frames[victim].refByte) victim = i; }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time); frames[victim].R = 1;
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runClock(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); frames[hit].R = 1; return { status: 'HIT', victim: null }; }
+                state.faults++;
+                while (true) {
+                    const frame = frames[state.clockHand];
+                    if (frame.page === null || frame.R === 0) {
+                        const vp = frame.page;
+                        loadPage(frame, page, state.time);
+                        state.clockHand = (state.clockHand + 1) % frames.length;
+                        return { status: 'FAULT', victim: vp };
+                    }
+                    frame.R = 0;
+                    state.clockHand = (state.clockHand + 1) % frames.length;
+                }
+            }
+
+            function runEnhancedClock(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); frames[hit].R = 1; return { status: 'HIT', victim: null }; }
+                state.faults++;
+                let victim = -1, bestClass = Infinity;
+                for (let pass = 0; pass < frames.length; pass++) {
+                    const i = (state.clockHand + pass) % frames.length;
+                    const f = frames[i];
+                    if (f.page === null) { victim = i; break; }
+                    const cls = (f.R << 1) | f.M;
+                    if (cls < bestClass) { bestClass = cls; victim = i; if (cls === 0) break; }
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time); frames[victim].R = 1;
+                state.clockHand = (victim + 1) % frames.length;
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runLFU(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) {
+                    if (frames[i].count < frames[victim].count ||
+                        (frames[i].count === frames[victim].count && frames[i].lastUsed < frames[victim].lastUsed))
+                        victim = i;
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            function runMFU(page, frames, state) {
+                const hit = findPage(frames, page);
+                if (hit !== -1) { processHit(frames[hit], state); return { status: 'HIT', victim: null }; }
+                state.faults++;
+                const empty = findEmpty(frames);
+                if (empty !== -1) { loadPage(frames[empty], page, state.time); return { status: 'FAULT', victim: null }; }
+                let victim = 0;
+                for (let i = 1; i < frames.length; i++) {
+                    if (frames[i].count > frames[victim].count ||
+                        (frames[i].count === frames[victim].count && frames[i].lastUsed < frames[victim].lastUsed))
+                        victim = i;
+                }
+                const vp = frames[victim].page;
+                loadPage(frames[victim], page, state.time);
+                return { status: 'FAULT', victim: vp };
+            }
+
+            /* ── Render ──────────────────────────────────── */
+            function renderOutput({ steps, hits, faults }, refs, numFrames, mat, pfst) {
+                const outputSection = document.getElementById('outputSection');
+                outputSection.style.display = '';
+
+                renderTrace(steps, numFrames);
+                renderFrameTable(steps, numFrames);
+                renderMetrics(hits, faults, refs.length, mat, pfst);
+
+                setTimeout(() => outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+            }
+
+            function renderTrace(steps, numFrames) {
+                const trace = document.getElementById('vmTrace');
+                const labels = document.getElementById('vmTraceLabels');
+                trace.innerHTML = '';
+                labels.innerHTML = '';
+
+                // Labels column
+                const refLabel = document.createElement('div');
+                refLabel.className = 'vm-trace-label-ref';
+                refLabel.textContent = 'Page';
+                labels.appendChild(refLabel);
+
+                for (let f = 0; f < numFrames; f++) {
+                    const fl = document.createElement('div');
+                    fl.className = 'vm-trace-label-frame';
+                    fl.textContent = `F${f}`;
+                    labels.appendChild(fl);
+                }
+
+                // Step columns
+                steps.forEach((step, i) => {
+                    const col = document.createElement('div');
+                    col.className = 'vm-step-col';
+                    col.style.animationDelay = (i * 35) + 'ms';
+
+                    // Reference cell
+                    const ref = document.createElement('div');
+                    ref.className = `vm-step-ref ${step.status === 'HIT' ? 'hit' : 'fault'}`;
+                    ref.textContent = step.page;
+                    col.appendChild(ref);
+
+                    // Frame cells
+                    for (let f = 0; f < numFrames; f++) {
+                        const cell = document.createElement('div');
+                        const frame = step.frameSnap[f];
+                        cell.className = 'vm-step-frame';
+
+                        if (frame.page !== null) {
+                            cell.classList.add('occupied');
+                            cell.textContent = frame.page;
+                            if (step.status === 'FAULT' && frame.page === step.page) {
+                                cell.classList.add('new-page');
+                            }
+                        } else {
+                            cell.classList.add('empty-slot');
+                            cell.textContent = '—';
+                        }
+                        col.appendChild(cell);
+                    }
+
+                    trace.appendChild(col);
+                });
+            }
+
+            function renderFrameTable(steps, numFrames) {
+                const head = document.getElementById('frameTableHead');
+                const body = document.getElementById('frameTableBody');
+                head.innerHTML = '';
+                body.innerHTML = '';
+
+                // Headers
+                ['Step', 'Page', ...Array.from({ length: numFrames }, (_, i) => `F${i}`), 'Status', 'Victim']
+                    .forEach(label => {
+                        const th = document.createElement('th');
+                        th.textContent = label;
+                        head.appendChild(th);
+                    });
+
+                // Rows
+                steps.forEach((step, i) => {
+                    const tr = document.createElement('tr');
+                    tr.style.animationDelay = (i * 40) + 'ms';
+
+                    const tdStep = document.createElement('td');
+                    tdStep.textContent = i + 1;
+                    tr.appendChild(tdStep);
+
+                    const tdPage = document.createElement('td');
+                    tdPage.textContent = step.page;
+                    tdPage.className = 'cell-page';
+                    tr.appendChild(tdPage);
+
+                    for (let f = 0; f < numFrames; f++) {
+                        const td = document.createElement('td');
+                        const frame = step.frameSnap[f];
+                        if (frame.page !== null) {
+                            td.textContent = frame.page;
+                            if (step.status === 'FAULT' && frame.page === step.page) {
+                                td.style.color = 'var(--accent)';
+                                td.style.fontWeight = '700';
+                            }
+                        } else {
+                            td.textContent = '—';
+                            td.className = 'cell-empty';
+                        }
+                        tr.appendChild(td);
+                    }
+
+                    const tdStatus = document.createElement('td');
+                    tdStatus.innerHTML = `<span class="fault-badge ${step.status === 'HIT' ? 'hit' : 'fault'}">${step.status}</span>`;
+                    tr.appendChild(tdStatus);
+
+                    const tdVictim = document.createElement('td');
+                    tdVictim.textContent = step.victim !== null ? step.victim : '—';
+                    if (step.victim !== null) tdVictim.className = 'cell-victim';
+                    tr.appendChild(tdVictim);
+
+                    body.appendChild(tr);
+                });
+            }
+
+            function renderMetrics(hits, faults, total, mat, pfst) {
+                const grid = document.getElementById('metricsGrid');
+                grid.innerHTML = '';
+
+                const faultRate = total > 0 ? faults / total : 0;
+                const hitRate = total > 0 ? hits / total : 0;
+                const eat = mat + (faultRate * pfst);
+
+                const items = [
+                    { label: 'Page Faults', value: faults, unit: '', icon: '❌', accent: '--red' },
+                    { label: 'Page Hits', value: hits, unit: '', icon: '✅', accent: '--green' },
+                    { label: 'Fault Rate', value: (faultRate * 100).toFixed(1), unit: '%', icon: '📉', accent: '--amber' },
+                    { label: 'Hit Rate', value: (hitRate * 100).toFixed(1), unit: '%', icon: '📈', accent: '--cyan' },
+                    { label: 'Eff. Access Time', value: eat.toFixed(0), unit: 'ns', icon: '⚡', accent: '--accent' },
+                ];
+
+                items.forEach((item, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'metric-card';
+                    card.style.animationDelay = (i * 100) + 'ms';
+                    card.innerHTML = `
+                        <div class="metric-icon">${item.icon}</div>
+                        <div class="metric-value" style="color:var(${item.accent})">${item.value}<span class="metric-unit">${item.unit}</span></div>
+                        <div class="metric-label">${item.label}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }
+
+            /* ── Chip Builder ────────────────────────────── */
+            const EXAMPLE_STRING = [7, 0, 1, 2, 0, 3, 0, 4, 2, 3, 0, 3, 2];
+            let refPages = [...EXAMPLE_STRING];
+
+            const refTray = document.getElementById('refTray');
+            const refHidden = document.getElementById('refString');
+            const refCount = document.getElementById('refCount');
+
+            function syncHidden() {
+                refHidden.value = refPages.join(' ');
+                refCount.textContent = refPages.length;
+            }
+
+            function renderChips() {
+                refTray.innerHTML = '';
+                refPages.forEach((page, i) => {
+                    const chip = document.createElement('button');
+                    chip.className = 'ref-chip';
+                    chip.setAttribute('role', 'listitem');
+                    chip.title = 'Click to remove';
+                    chip.innerHTML = `${page}<span class="ref-chip-x">×</span>`;
+                    chip.addEventListener('click', () => {
+                        refPages.splice(i, 1);
+                        renderChips();
+                        syncHidden();
+                    });
+                    refTray.appendChild(chip);
+                });
+                syncHidden();
+            }
+
+            document.querySelectorAll('.ref-num-btn[data-val]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (refPages.length >= 50) return;
+                    refPages.push(parseInt(btn.dataset.val));
+                    renderChips();
+                });
+            });
+
+            document.getElementById('refDel').addEventListener('click', () => {
+                if (refPages.length > 0) { refPages.pop(); renderChips(); }
+            });
+
+            document.getElementById('refClearPages').addEventListener('click', () => {
+                refPages = []; renderChips();
+            });
+
+            renderChips();
+
+            /* ── Button Handlers ─────────────────────────── */
+            document.getElementById('btnRun').addEventListener('click', () => {
+                const refs = parseRefString(refHidden.value);
+                if (refs.length === 0) return;
+                const numFrames = parseInt(document.getElementById('numFrames').value) || 3;
+                const mat = parseInt(document.getElementById('memAccessTime').value) || 100;
+                const pfst = parseInt(document.getElementById('pageFaultTime').value) || 8000000;
+
+                const result = simulate(currentAlgo, refs, numFrames);
+                renderOutput(result, refs, numFrames, mat, pfst);
+            });
+
+            document.getElementById('btnLoadExample').addEventListener('click', () => {
+                refPages = [...EXAMPLE_STRING];
+                renderChips();
+                document.getElementById('numFrames').value = '3';
+                document.getElementById('memAccessTime').value = '100';
+                document.getElementById('pageFaultTime').value = '8000000';
+            });
+
+            document.getElementById('btnReset').addEventListener('click', () => {
+                refPages = []; renderChips();
+                document.getElementById('numFrames').value = '3';
+                document.getElementById('memAccessTime').value = '100';
+                document.getElementById('pageFaultTime').value = '8000000';
+                document.getElementById('outputSection').style.display = 'none';
+            });
+
+            /* ── Typewriter Effect ───────────────────────── */
+            const typeTarget = document.getElementById('typeTarget');
+            const cursor = document.getElementById('cursor');
+            const line1 = 'Virtual Memory';
+            const line2 = 'Simulator';
+            const full = line1 + '|' + line2;
+            let charIndex = 0, passedBreak = false;
+
+            const span1 = document.createElement('span');
+            const br = document.createElement('br');
+            const span2 = document.createElement('span');
+            span2.style.color = 'var(--cyan)';
+            typeTarget.insertBefore(span1, cursor);
+
+            function typeChar() {
+                if (charIndex < full.length) {
+                    const ch = full[charIndex];
+                    if (ch === '|') {
+                        typeTarget.insertBefore(br, cursor);
+                        typeTarget.insertBefore(span2, cursor);
+                        passedBreak = true;
+                    } else {
+                        if (passedBreak) span2.textContent += ch;
+                        else span1.textContent += ch;
+                    }
+                    charIndex++;
+                    setTimeout(typeChar, 70 + Math.random() * 35);
+                } else {
+                    cursor.classList.add('done');
+                }
+            }
+            setTimeout(typeChar, 400);
+
+            /* ── Aurora Canvas Setup ── */
+            const canvas = document.getElementById('auroraCanvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, auroraT = 0;
+
+            function hexToRgb(hex) {
+                hex = hex.replace('#', '');
+                const num = parseInt(hex, 16);
+                return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+            }
+
+            function resizeAurora() {
+                W = canvas.width = canvas.offsetWidth;
+                H = canvas.height = canvas.offsetHeight;
+            }
+            window.addEventListener('resize', resizeAurora);
+            resizeAurora();
+
+            const rgb = hexToRgb('#f0a500');
+
+            const vcols = 18, vrows = 7;
+            const vcells = [];
+            for (let r = 0; r < vrows; r++)
+                for (let c = 0; c < vcols; c++)
+                    vcells.push({ r, c, flash: 0 });
+
+            const orbs = [
+                { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 35 },
+                { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 45 },
+                { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 25 },
+            ];
+
+            function drawAurora() {
+                auroraT++;
+                ctx.clearRect(0, 0, W, H);
+                const light = document.body.classList.contains('light');
+
+                // Aurora orbs
+                orbs.forEach(o => {
+                    const angle = o.phase + auroraT * o.spd * Math.PI * 2;
+                    const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
+                    const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
+                    const radius = o.r * Math.min(W, H);
+                    const alpha = light ? 0.28 : 0.22;
+                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    grad.addColorStop(0, `hsla(${o.hue}, 90%, 65%, ${alpha})`);
+                    grad.addColorStop(0.5, `hsla(${o.hue + 10}, 80%, 60%, ${alpha * 0.4})`);
+                    grad.addColorStop(1, `hsla(${o.hue + 20}, 30%, 65%, 0)`);
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                });
+
+                // Page table grid
+                const vgap = W * 0.004;
+                const vcellW = (W - vgap * (vcols + 1)) / vcols;
+                const vcellH = (H - vgap * (vrows + 1)) / vrows;
+
+                if (Math.random() < 0.04)
+                    vcells[Math.floor(Math.random() * vcells.length)].flash = 1;
+
+                vcells.forEach(cell => {
+                    const alpha = 0.04 + cell.flash * 0.5;
+                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+                    ctx.fillRect(
+                        vgap + cell.c * (vcellW + vgap),
+                        vgap + cell.r * (vcellH + vgap),
+                        vcellW,
+                        vcellH
+                    );
+                    if (cell.flash > 0) {
+                        cell.flash *= 0.92;
+                        if (cell.flash < 0.01) cell.flash = 0;
+                    }
+                });
+
+                requestAnimationFrame(drawAurora);
+            }
+            drawAurora();
+        })();
+    </script>
+
+</body>
+
+</html>
