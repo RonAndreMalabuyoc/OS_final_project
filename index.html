@@ -37,25 +37,29 @@
             </ul>
         </div>
 
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-        </button>
+        <div class="nav-right">
+            <div class="nav-clock" id="navClock">00:00:00</div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+            </button>
+        </div>
     </nav>
+
 
     <!-- Hero -->
     <div class="hero-wrapper">
@@ -87,9 +91,18 @@
                     </div>
                 </div>
             </div>
+            <div class="scroll-hint" aria-label="Scroll down">
+                <span class="scroll-hint-text">scroll down</span>
+                <div class="scroll-hint-duck">🦆</div>
+                <div class="scroll-hint-arrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                </div>
+            </div>
         </section>
 
-        <!-- Wave transition to stats -->
         <div class="wave-divider" aria-hidden="true">
             <!-- back wave: slower, going opposite direction -->
             <svg class="wave-back" viewBox="0 0 2880 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
@@ -686,6 +699,71 @@
                 }
                 animateDuck();
             })();
+
+            /* ── Live clock ── */
+            function updateClock() {
+                const now = new Date();
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                document.getElementById('navClock').textContent = `${h}:${m}:${s}`;
+            }
+            updateClock();
+            setInterval(updateClock, 1000)
+
+                /* ── Particle system ── */
+                (function () {
+                    const particleCanvas = document.createElement('canvas');
+                    particleCanvas.style.cssText = `
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    `;
+                    document.querySelector('.hero-wrapper').appendChild(particleCanvas);
+
+                    const pc = particleCanvas.getContext('2d');
+                    let pW, pH;
+
+                    function resizeParticles() {
+                        pW = particleCanvas.width = particleCanvas.offsetWidth;
+                        pH = particleCanvas.height = particleCanvas.offsetHeight;
+                    }
+                    window.addEventListener('resize', resizeParticles);
+                    resizeParticles();
+
+                    const particles = Array.from({ length: 48 }, () => ({
+                        x: Math.random() * pW,
+                        y: Math.random() * pH,
+                        size: Math.random() * 1.5 + 0.5,
+                        speed: Math.random() * 0.4 + 0.1,
+                        opacity: Math.random() * 0.25 + 0.05,
+                        drift: (Math.random() - 0.5) * 0.3,
+                    }));
+
+                    function drawParticles() {
+                        pc.clearRect(0, 0, pW, pH);
+                        const light = document.body.classList.contains('light');
+                        particles.forEach(p => {
+                            p.y -= p.speed;
+                            p.x += p.drift;
+                            if (p.y < -4) { p.y = pH + 4; p.x = Math.random() * pW; }
+                            if (p.x < -4) p.x = pW + 4;
+                            if (p.x > pW + 4) p.x = -4;
+
+                            pc.beginPath();
+                            pc.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                            pc.fillStyle = light
+                                ? `rgba(0,0,0,${p.opacity * 0.5})`
+                                : `rgba(255,255,255,${p.opacity})`;
+                            pc.fill();
+                        });
+                        requestAnimationFrame(drawParticles);
+                    }
+                    drawParticles();
+                })();
 
 
         </script>
