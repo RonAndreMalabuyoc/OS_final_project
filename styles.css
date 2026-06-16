@@ -243,6 +243,19 @@ body.light .icon-sun {
     position: relative;
     overflow: hidden;
     isolation: isolate;
+    background: var(--bg-base);
+    /* matches the aurora bg */
+}
+
+.wave-divider {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    background: var(--bg-base);
+    /* same as hero, not transparent */
+    margin-bottom: -2px;
+    line-height: 0;
 }
 
 #auroraCanvas {
@@ -250,6 +263,7 @@ body.light .icon-sun {
     inset: 0;
     width: 100%;
     height: 100%;
+    /* stretches full hero-wrapper height including wave area */
     pointer-events: none;
     z-index: 0;
     will-change: transform;
@@ -570,77 +584,92 @@ body.light .hero p {
     border: 1px solid var(--border);
 }
 
-/* ── Wave Divider (animated, hero → stats) ──────────── */
+/* ── Wave Divider ───────────────────────────────── */
 .wave-divider {
     position: relative;
     width: 100%;
-    height: 120px;
+    height: 100px;
     overflow: hidden;
-    /* Hero background shows through at the top of this band */
-    background: var(--bg-base);
-    margin-top: -1px;
+    background: transparent;
+    margin-bottom: -2px;
+    line-height: 0;
 }
 
-.wave-divider .wave {
+.wave-divider .wave-back {
     position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-    width: 100%;
+    bottom: 0;
+    width: 200%;
     height: 100%;
-    transform-origin: center bottom;
+    animation: waveBack 14s linear infinite;
+    opacity: 0.4;
 }
 
-/* Back wave: subtle warm tint for depth */
-.wave-back {
+.wave-divider .wave-front {
+    position: absolute;
+    bottom: 0;
+    width: 200%;
+    height: 100%;
+    animation: waveFront 9s linear infinite;
+}
+
+.wave-divider .wave-back path,
+.wave-divider .wave-front path {
     fill: var(--bg-surface);
-    opacity: 0.55;
-    animation: waveScrollBack 22s linear infinite;
 }
 
-/* Front wave: solid stats-section color — carves the wavy edge */
+@keyframes waveFront {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes waveBack {
+    0% {
+        transform: translateX(-50%);
+    }
+
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* ── Stats bar ──────────────────────────────────── */
+.stats-bar {
+    position: relative;
+    display: flex;
+    gap: 0;
+    justify-content: center;
+    padding: 2.5rem 2rem 3rem;
+    margin: 0;
+    background: var(--bg-surface);
+    flex-wrap: wrap;
+}
+
+.wave-back {
+    display: none !important;
+}
+
 .wave-front {
     fill: var(--bg-surface);
     opacity: 1;
     animation: waveScrollFront 14s linear infinite reverse;
 }
 
-
-@keyframes waveScrollBack {
-    0% {
-        transform: scaleY(1) translateX(0);
-    }
-
-    50% {
-        transform: scaleY(1.08) translateX(1%);
-    }
-
-    100% {
-        transform: scaleY(1) translateX(0);
-    }
-}
-
 @keyframes waveScrollFront {
     0% {
-        transform: scaleY(1) translateX(0);
-    }
-
-    33% {
-        transform: scaleY(0.96) translateX(-1.5%);
-    }
-
-    66% {
-        transform: scaleY(1.04) translateX(1.5%);
+        transform: translateX(-50%);
     }
 
     100% {
-        transform: scaleY(1) translateX(0);
+        transform: translateX(0);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-    .wave-back,
     .wave-front {
         animation: none;
     }
@@ -652,16 +681,32 @@ body.light .hero p {
     }
 }
 
-
-/* ── Stats bar ──────────────────────────────────────── */
+/* ── Stats bar ──────────────────────────────────── */
 .stats-bar {
+    position: relative;
     display: flex;
     gap: 0;
     justify-content: center;
-    padding: 2.5rem 2rem 3rem;
+    padding: 3.5rem 2rem 3rem;
     margin: 0;
     background: var(--bg-surface);
     flex-wrap: wrap;
+}
+
+.stats-bar::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: var(--bg-surface);
+    -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 62' preserveAspectRatio='none'%3E%3Cpath d='M0,40 C360,0 720,62 1080,38 C1260,26 1360,50 1440,40 L1440,62 L0,62 Z'/%3E%3C/svg%3E");
+    mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 62' preserveAspectRatio='none'%3E%3Cpath d='M0,40 C360,0 720,62 1080,38 C1260,26 1360,50 1440,40 L1440,62 L0,62 Z'/%3E%3C/svg%3E");
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    pointer-events: none;
+    z-index: 0;
 }
 
 .stat-item {
@@ -2529,5 +2574,183 @@ body.light .mem-block-os .mem-block-label {
         color: var(--text-muted);
         text-transform: uppercase;
         margin-bottom: 4px;
+    }
+}
+
+
+/* ── Hero sticker layout ─────────────────────────── */
+.hero {
+    padding: 6rem 2rem 4rem;
+    text-align: left;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.hero-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4rem;
+}
+
+.hero-text {
+    flex: 1;
+    text-align: left;
+}
+
+.hero-stickers {
+    flex-shrink: 0;
+    position: relative;
+    width: 220px;
+    height: 320px;
+    order: -1;
+}
+
+.sticker {
+    position: absolute;
+    background: var(--bg-card);
+    border: 1.5px solid var(--border-light);
+    border-radius: 10px;
+    padding: 9px 15px;
+    font-size: 13px;
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+    box-shadow: 3px 3px 0 var(--border);
+    white-space: nowrap;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.sticker:hover {
+    box-shadow: 5px 5px 0 var(--border-light);
+    z-index: 10;
+}
+
+.sticker.s1 {
+    top: 0px;
+    left: 10px;
+    transform: rotate(-5deg);
+    color: var(--text-secondary);
+    font-weight: 500;
+    background: var(--bg-surface);
+    border-color: var(--border-light);
+}
+
+.sticker.s2 {
+    top: 52px;
+    left: 30px;
+    transform: rotate(3deg);
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.sticker.s3 {
+    top: 106px;
+    left: 8px;
+    transform: rotate(-4deg);
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+.sticker.s4 {
+    top: 158px;
+    left: 28px;
+    transform: rotate(2deg);
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--amber);
+}
+
+.sticker.s5 {
+    top: 210px;
+    left: 6px;
+    transform: rotate(-3deg);
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+}
+
+.sticker.s6 {
+    top: 262px;
+    left: 26px;
+    transform: rotate(4deg);
+    background: var(--bg-surface);
+}
+
+.sticker.s7 {
+    top: 108px;
+    right: -30px;
+    transform: rotate(-6deg);
+    font-size: 11px;
+    padding: 6px 10px;
+    background: var(--bg-card);
+    color: var(--text-muted);
+}
+
+body.light .sticker {
+    background: #fff;
+    border-color: #DDD4C0;
+    box-shadow: 3px 3px 0 #DDD4C0;
+    color: #5C4E38;
+}
+
+
+body.light .sticker.s1 {
+    background: #fff;
+    border-color: #DDD4C0;
+    color: #5C4E38;
+}
+
+body.light .sticker.s2 {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+body.light .sticker.s3 {
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+    color: var(--cyan);
+}
+
+body.light .sticker.s4 {
+    background: var(--amber-dim);
+    border-color: var(--amber);
+    color: var(--amber);
+}
+
+body.light .sticker.s5 {
+    background: var(--green-dim);
+    border-color: var(--green);
+    color: var(--green);
+}
+
+/* ── Hero responsive ─────────────────────────────── */
+@media (max-width: 640px) {
+    .hero-inner {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .hero-text {
+        text-align: center;
+    }
+
+    .hero-stickers {
+        order: 0;
+        width: 100%;
+        height: auto;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        position: static;
+        justify-content: center;
+    }
+
+    .sticker {
+        position: static !important;
+        transform: rotate(-2deg) !important;
     }
 }
