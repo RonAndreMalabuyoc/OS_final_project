@@ -1038,55 +1038,86 @@
             }
             setTimeout(typeChar, 400);
 
-            /* ── Aurora Canvas ───────────────────────────── */
+            /* ── Aurora Canvas Setup ── */
             const canvas = document.getElementById('auroraCanvas');
             const ctx = canvas.getContext('2d');
-            let W, H, t = 0;
+            let W, H, auroraT = 0;
 
-            function resizeCanvas() {
+            function hexToRgb(hex) {
+                hex = hex.replace('#', '');
+                const num = parseInt(hex, 16);
+                return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+            }
+
+            function resizeAurora() {
                 W = canvas.width = canvas.offsetWidth;
                 H = canvas.height = canvas.offsetHeight;
             }
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
+            window.addEventListener('resize', resizeAurora);
+            resizeAurora();
+
+            const rgb = hexToRgb('#f0a500');
+
+            const vcols = 18, vrows = 7;
+            const vcells = [];
+            for (let r = 0; r < vrows; r++)
+                for (let c = 0; c < vcols; c++)
+                    vcells.push({ r, c, flash: 0 });
 
             const orbs = [
-                { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 185 },
-                { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 220 },
-                { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 260 },
-                { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 195 },
-                { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 240 },
+                { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 35 },
+                { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 45 },
+                { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 25 },
             ];
 
-            function isLight() { return document.body.classList.contains('light'); }
-
             function drawAurora() {
-                t++;
+                auroraT++;
                 ctx.clearRect(0, 0, W, H);
-                const light = isLight();
+                const light = document.body.classList.contains('light');
 
+                // Aurora orbs
                 orbs.forEach(o => {
-                    const angle = o.phase + t * o.spd * Math.PI * 2;
+                    const angle = o.phase + auroraT * o.spd * Math.PI * 2;
                     const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
                     const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
                     const radius = o.r * Math.min(W, H);
-                    const alpha = light ? 0.13 : 0.22;
-
+                    const alpha = light ? 0.28 : 0.22;
                     const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                    grad.addColorStop(0, `hsla(${o.hue},      90%, ${light ? 55 : 65}%, ${alpha})`);
-                    grad.addColorStop(0.5, `hsla(${o.hue + 20}, 80%, ${light ? 50 : 60}%, ${alpha * 0.5})`);
-                    grad.addColorStop(1, `hsla(${o.hue + 40}, 70%, 50%, 0)`);
-
+                    grad.addColorStop(0, `hsla(${o.hue}, 90%, 65%, ${alpha})`);
+                    grad.addColorStop(0.5, `hsla(${o.hue + 10}, 80%, 60%, ${alpha * 0.4})`);
+                    grad.addColorStop(1, `hsla(${o.hue + 20}, 30%, 65%, 0)`);
                     ctx.beginPath();
                     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
                     ctx.fillStyle = grad;
                     ctx.fill();
                 });
 
+                // Page table grid
+                const vgap = W * 0.004;
+                const vcellW = (W - vgap * (vcols + 1)) / vcols;
+                const vcellH = (H - vgap * (vrows + 1)) / vrows;
+
+                if (Math.random() < 0.04)
+                    vcells[Math.floor(Math.random() * vcells.length)].flash = 1;
+
+                vcells.forEach(cell => {
+                    const alpha = 0.04 + cell.flash * 0.5;
+                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+                    ctx.fillRect(
+                        vgap + cell.c * (vcellW + vgap),
+                        vgap + cell.r * (vcellH + vgap),
+                        vcellW,
+                        vcellH
+                    );
+                    if (cell.flash > 0) {
+                        cell.flash *= 0.92;
+                        if (cell.flash < 0.01) cell.flash = 0;
+                    }
+                });
+
                 requestAnimationFrame(drawAurora);
             }
             drawAurora();
-
         })();
     </script>
 

@@ -23,11 +23,10 @@
         </svg>
     </button>
 
-    <!-- Navbar -->
     <nav class="navbar">
         <div class="nav-left">
             <div class="nav-logo">
-                <span class="dot"></span>
+                <span class="nav-duck-icon" aria-hidden="true">🦆</span>
                 OS Simulator
             </div>
             <ul class="nav-links">
@@ -39,24 +38,26 @@
             </ul>
         </div>
 
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-        </button>
+        <div class="nav-right">
+            <div class="nav-clock" id="navClock">00:00:00</div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5" />
+                    <line x1="12" y1="1" x2="12" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="23" />
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                    <line x1="1" y1="12" x2="3" y2="12" />
+                    <line x1="21" y1="12" x2="23" y2="12" />
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+            </button>
     </nav>
 
     <!-- Page Header with Aurora -->
@@ -93,7 +94,8 @@
             <!-- Algorithm description -->
             <div class="algo-description" id="algoDescription">
                 <div class="algo-desc-icon">💡</div>
-                <p id="algoDescText">Starts searching from where the last allocation was made, wrapping around. Distributes allocations more evenly across memory.</p>
+                <p id="algoDescText">Starts searching from where the last allocation was made, wrapping around.
+                    Distributes allocations more evenly across memory.</p>
             </div>
         </section>
 
@@ -279,250 +281,281 @@
 
     <!-- Page Logic -->
     <script>
-        (function () {
-            'use strict';
+        'use strict';
+        // Get nav clock element
+        const navClock = document.getElementById('navClock');
 
-            /* ══════════════════════════════════════════════════════════
-             *  MVT SIMULATION ENGINE (ported from memory.js)
-             * ══════════════════════════════════════════════════════════ */
+        // Initialize time display
+        function updateNavTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            navClock.textContent = `${hours}:${minutes}:${seconds}`;
+        }
 
-            const ALGORITHMS = {
-                first: 'First Fit',
-                next: 'Next Fit',
-                best: 'Best Fit',
-                worst: 'Worst Fit',
+        // Update time every second
+        setInterval(updateNavTime, 1000);
+
+        // Initial update
+        updateNavTime();
+        /* ══════════════════════════════════════════════════════════
+         *  MVT SIMULATION ENGINE (ported from memory.js)
+         * ══════════════════════════════════════════════════════════ */
+
+        const ALGORITHMS = {
+            first: 'First Fit',
+            next: 'Next Fit',
+            best: 'Best Fit',
+            worst: 'Worst Fit',
+        };
+
+        function createTaskStates(jobs) {
+            return jobs.map(job => ({
+                ...job,
+                remainingTime: job.duration,
+                status: 'Waiting',
+                startAddress: null,
+                startTime: null,
+                finishTime: null,
+            }));
+        }
+
+        function createMemoryBlocks(config) {
+            return [
+                { type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null },
+                { type: 'hole', start: config.osMemoryKb, sizeKb: config.userMemoryKb, task: null },
+            ];
+        }
+
+        function getHoleIndexes(blocks) {
+            return blocks
+                .map((block, index) => ({ block, index }))
+                .filter(item => item.block.type === 'hole')
+                .map(item => item.index);
+        }
+
+        function findFirstFit(blocks, task) {
+            return blocks.findIndex(block => block.type === 'hole' && block.sizeKb >= task.sizeKb);
+        }
+
+        function findNextFit(blocks, task, allocator) {
+            const holeIndexes = getHoleIndexes(blocks);
+            if (holeIndexes.length === 0) return -1;
+
+            for (let offset = 0; offset < holeIndexes.length; offset++) {
+                const pointer = (allocator.nextPointer + offset) % holeIndexes.length;
+                const blockIndex = holeIndexes[pointer];
+                const block = blocks[blockIndex];
+
+                if (block.sizeKb >= task.sizeKb) {
+                    allocator.nextPointer = (pointer + 1) % holeIndexes.length;
+                    return blockIndex;
+                }
+            }
+            return -1;
+        }
+
+        function findBestFit(blocks, task) {
+            let bestIndex = -1;
+            let smallestRemainder = Infinity;
+
+            blocks.forEach((block, index) => {
+                if (block.type !== 'hole' || block.sizeKb < task.sizeKb) return;
+                const remainder = block.sizeKb - task.sizeKb;
+                if (remainder < smallestRemainder) {
+                    bestIndex = index;
+                    smallestRemainder = remainder;
+                }
+            });
+            return bestIndex;
+        }
+
+        function findWorstFit(blocks, task) {
+            let worstIndex = -1;
+            let largestRemainder = -1;
+
+            blocks.forEach((block, index) => {
+                if (block.type !== 'hole' || block.sizeKb < task.sizeKb) return;
+                const remainder = block.sizeKb - task.sizeKb;
+                if (remainder > largestRemainder) {
+                    worstIndex = index;
+                    largestRemainder = remainder;
+                }
+            });
+            return worstIndex;
+        }
+
+        function findHole(blocks, task, allocator) {
+            if (allocator.algorithm === 'next') return findNextFit(blocks, task, allocator);
+            if (allocator.algorithm === 'best') return findBestFit(blocks, task);
+            if (allocator.algorithm === 'worst') return findWorstFit(blocks, task);
+            return findFirstFit(blocks, task);
+        }
+
+        function allocateTask(blocks, task, clock, allocator, log) {
+            const holeIndex = findHole(blocks, task, allocator);
+            if (holeIndex === -1) return false;
+
+            const hole = blocks[holeIndex];
+            const taskBlock = {
+                type: 'job',
+                start: hole.start,
+                sizeKb: task.sizeKb,
+                task,
             };
 
-            function createTaskStates(jobs) {
-                return jobs.map(job => ({
-                    ...job,
-                    remainingTime: job.duration,
-                    status: 'Waiting',
-                    startAddress: null,
-                    startTime: null,
-                    finishTime: null,
-                }));
+            task.status = 'Running';
+            task.startAddress = hole.start;
+            if (task.startTime === null) task.startTime = clock;
+
+            if (hole.sizeKb === task.sizeKb) {
+                blocks.splice(holeIndex, 1, taskBlock);
+            } else {
+                hole.start += task.sizeKb;
+                hole.sizeKb -= task.sizeKb;
+                blocks.splice(holeIndex, 0, taskBlock);
+                log.push({ t: clock, msg: `Hole split: ${task.id} used ${task.sizeKb} KB, left ${hole.sizeKb} KB free.`, type: 'info' });
             }
 
-            function createMemoryBlocks(config) {
-                return [
-                    { type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null },
-                    { type: 'hole', start: config.osMemoryKb, sizeKb: config.userMemoryKb, task: null },
-                ];
-            }
+            log.push({ t: clock, msg: `${task.id} loaded at address ${task.startAddress} KB by ${ALGORITHMS[allocator.algorithm]}.`, type: 'success' });
+            return true;
+        }
 
-            function getHoleIndexes(blocks) {
-                return blocks
-                    .map((block, index) => ({ block, index }))
-                    .filter(item => item.block.type === 'hole')
-                    .map(item => item.index);
-            }
-
-            function findFirstFit(blocks, task) {
-                return blocks.findIndex(block => block.type === 'hole' && block.sizeKb >= task.sizeKb);
-            }
-
-            function findNextFit(blocks, task, allocator) {
-                const holeIndexes = getHoleIndexes(blocks);
-                if (holeIndexes.length === 0) return -1;
-
-                for (let offset = 0; offset < holeIndexes.length; offset++) {
-                    const pointer = (allocator.nextPointer + offset) % holeIndexes.length;
-                    const blockIndex = holeIndexes[pointer];
-                    const block = blocks[blockIndex];
-
-                    if (block.sizeKb >= task.sizeKb) {
-                        allocator.nextPointer = (pointer + 1) % holeIndexes.length;
-                        return blockIndex;
-                    }
-                }
-                return -1;
-            }
-
-            function findBestFit(blocks, task) {
-                let bestIndex = -1;
-                let smallestRemainder = Infinity;
-
-                blocks.forEach((block, index) => {
-                    if (block.type !== 'hole' || block.sizeKb < task.sizeKb) return;
-                    const remainder = block.sizeKb - task.sizeKb;
-                    if (remainder < smallestRemainder) {
-                        bestIndex = index;
-                        smallestRemainder = remainder;
-                    }
-                });
-                return bestIndex;
-            }
-
-            function findWorstFit(blocks, task) {
-                let worstIndex = -1;
-                let largestRemainder = -1;
-
-                blocks.forEach((block, index) => {
-                    if (block.type !== 'hole' || block.sizeKb < task.sizeKb) return;
-                    const remainder = block.sizeKb - task.sizeKb;
-                    if (remainder > largestRemainder) {
-                        worstIndex = index;
-                        largestRemainder = remainder;
-                    }
-                });
-                return worstIndex;
-            }
-
-            function findHole(blocks, task, allocator) {
-                if (allocator.algorithm === 'next') return findNextFit(blocks, task, allocator);
-                if (allocator.algorithm === 'best') return findBestFit(blocks, task);
-                if (allocator.algorithm === 'worst') return findWorstFit(blocks, task);
-                return findFirstFit(blocks, task);
-            }
-
-            function allocateTask(blocks, task, clock, allocator, log) {
-                const holeIndex = findHole(blocks, task, allocator);
-                if (holeIndex === -1) return false;
-
-                const hole = blocks[holeIndex];
-                const taskBlock = {
-                    type: 'job',
-                    start: hole.start,
-                    sizeKb: task.sizeKb,
-                    task,
-                };
-
-                task.status = 'Running';
-                task.startAddress = hole.start;
-                if (task.startTime === null) task.startTime = clock;
-
-                if (hole.sizeKb === task.sizeKb) {
-                    blocks.splice(holeIndex, 1, taskBlock);
-                } else {
-                    hole.start += task.sizeKb;
-                    hole.sizeKb -= task.sizeKb;
-                    blocks.splice(holeIndex, 0, taskBlock);
-                    log.push({ t: clock, msg: `Hole split: ${task.id} used ${task.sizeKb} KB, left ${hole.sizeKb} KB free.`, type: 'info' });
-                }
-
-                log.push({ t: clock, msg: `${task.id} loaded at address ${task.startAddress} KB by ${ALGORITHMS[allocator.algorithm]}.`, type: 'success' });
-                return true;
-            }
-
-            function mergeAdjacentHoles(blocks) {
-                for (let index = 0; index < blocks.length - 1; index++) {
-                    const current = blocks[index];
-                    const next = blocks[index + 1];
-                    if (current.type === 'hole' && next.type === 'hole') {
-                        current.sizeKb += next.sizeKb;
-                        blocks.splice(index + 1, 1);
-                        index--;
-                    }
+        function mergeAdjacentHoles(blocks) {
+            for (let index = 0; index < blocks.length - 1; index++) {
+                const current = blocks[index];
+                const next = blocks[index + 1];
+                if (current.type === 'hole' && next.type === 'hole') {
+                    current.sizeKb += next.sizeKb;
+                    blocks.splice(index + 1, 1);
+                    index--;
                 }
             }
+        }
 
-            function compactMemory(blocks, config, clock, log) {
-                const jobBlocks = blocks.filter(block => block.type === 'job');
-                let nextStart = config.osMemoryKb;
+        function compactMemory(blocks, config, clock, log) {
+            const jobBlocks = blocks.filter(block => block.type === 'job');
+            let nextStart = config.osMemoryKb;
 
-                jobBlocks.forEach(block => {
-                    block.start = nextStart;
-                    block.task.startAddress = nextStart;
-                    nextStart += block.sizeKb;
-                });
+            jobBlocks.forEach(block => {
+                block.start = nextStart;
+                block.task.startAddress = nextStart;
+                nextStart += block.sizeKb;
+            });
 
-                blocks.length = 0;
-                blocks.push({ type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null });
-                blocks.push(...jobBlocks);
+            blocks.length = 0;
+            blocks.push({ type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null });
+            blocks.push(...jobBlocks);
 
-                const freeKb = config.totalMemoryKb - nextStart;
-                if (freeKb > 0) {
-                    blocks.push({ type: 'hole', start: nextStart, sizeKb: freeKb, task: null });
+            const freeKb = config.totalMemoryKb - nextStart;
+            if (freeKb > 0) {
+                blocks.push({ type: 'hole', start: nextStart, sizeKb: freeKb, task: null });
+            }
+
+            log.push({ t: clock, msg: `Compaction performed — all holes merged into one free block.`, type: 'warning' });
+        }
+
+        function getTotalFreeMemory(blocks) {
+            return blocks.reduce((total, block) => block.type === 'hole' ? total + block.sizeKb : total, 0);
+        }
+
+        function getLargestHole(blocks) {
+            return blocks.reduce((largest, block) => block.type === 'hole' ? Math.max(largest, block.sizeKb) : largest, 0);
+        }
+
+        function getUsedUserMemory(blocks) {
+            return blocks.reduce((total, block) => block.type === 'job' ? total + block.sizeKb : total, 0);
+        }
+
+        function getExternalFragmentation(blocks) {
+            return getTotalFreeMemory(blocks) - getLargestHole(blocks);
+        }
+
+        function allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator, log) {
+            const stillWaiting = [];
+
+            for (const task of waitingQueue) {
+                if (task.sizeKb > config.userMemoryKb) {
+                    task.status = 'Rejected';
+                    rejected.push(task);
+                    log.push({ t: clock, msg: `${task.id} rejected — larger than user memory.`, type: 'error' });
+                    continue;
                 }
 
-                log.push({ t: clock, msg: `Compaction performed — all holes merged into one free block.`, type: 'warning' });
-            }
+                if (allocateTask(blocks, task, clock, allocator, log)) continue;
 
-            function getTotalFreeMemory(blocks) {
-                return blocks.reduce((total, block) => block.type === 'hole' ? total + block.sizeKb : total, 0);
-            }
-
-            function getLargestHole(blocks) {
-                return blocks.reduce((largest, block) => block.type === 'hole' ? Math.max(largest, block.sizeKb) : largest, 0);
-            }
-
-            function getUsedUserMemory(blocks) {
-                return blocks.reduce((total, block) => block.type === 'job' ? total + block.sizeKb : total, 0);
-            }
-
-            function getExternalFragmentation(blocks) {
-                return getTotalFreeMemory(blocks) - getLargestHole(blocks);
-            }
-
-            function allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator, log) {
-                const stillWaiting = [];
-
-                for (const task of waitingQueue) {
-                    if (task.sizeKb > config.userMemoryKb) {
-                        task.status = 'Rejected';
-                        rejected.push(task);
-                        log.push({ t: clock, msg: `${task.id} rejected — larger than user memory.`, type: 'error' });
-                        continue;
-                    }
-
+                if (config.compactionEnabled && getTotalFreeMemory(blocks) >= task.sizeKb && getLargestHole(blocks) < task.sizeKb) {
+                    compactMemory(blocks, config, clock, log);
                     if (allocateTask(blocks, task, clock, allocator, log)) continue;
-
-                    if (config.compactionEnabled && getTotalFreeMemory(blocks) >= task.sizeKb && getLargestHole(blocks) < task.sizeKb) {
-                        compactMemory(blocks, config, clock, log);
-                        if (allocateTask(blocks, task, clock, allocator, log)) continue;
-                    }
-
-                    stillWaiting.push(task);
                 }
 
-                return stillWaiting;
+                stillWaiting.push(task);
             }
 
-            function tick(blocks, completed, clock, log) {
-                for (const block of [...blocks]) {
-                    if (block.type !== 'job') continue;
-                    block.task.remainingTime -= 1;
+            return stillWaiting;
+        }
 
-                    if (block.task.remainingTime === 0) {
-                        block.task.status = 'Completed';
-                        block.task.finishTime = clock + 1;
-                        completed.push(block.task);
-                        log.push({ t: clock + 1, msg: `${block.task.id} completed — released ${block.sizeKb} KB.`, type: 'complete' });
-                        block.type = 'hole';
-                        block.task = null;
-                    }
+        function tick(blocks, completed, clock, log) {
+            for (const block of [...blocks]) {
+                if (block.type !== 'job') continue;
+                block.task.remainingTime -= 1;
+
+                if (block.task.remainingTime === 0) {
+                    block.task.status = 'Completed';
+                    block.task.finishTime = clock + 1;
+                    completed.push(block.task);
+                    log.push({ t: clock + 1, msg: `${block.task.id} completed — released ${block.sizeKb} KB.`, type: 'complete' });
+                    block.type = 'hole';
+                    block.task = null;
                 }
-                mergeAdjacentHoles(blocks);
             }
+            mergeAdjacentHoles(blocks);
+        }
 
-            function isFinished(blocks, waitingQueue) {
-                return waitingQueue.length === 0 && blocks.every(block => block.type !== 'job');
-            }
+        function isFinished(blocks, waitingQueue) {
+            return waitingQueue.length === 0 && blocks.every(block => block.type !== 'job');
+        }
 
-            function deepCopyBlocks(blocks) {
-                return blocks.map(b => ({
-                    type: b.type,
-                    start: b.start,
-                    sizeKb: b.sizeKb,
-                    task: b.task ? { id: b.task.id, remainingTime: b.task.remainingTime, duration: b.task.duration } : null,
-                }));
-            }
+        function deepCopyBlocks(blocks) {
+            return blocks.map(b => ({
+                type: b.type,
+                start: b.start,
+                sizeKb: b.sizeKb,
+                task: b.task ? { id: b.task.id, remainingTime: b.task.remainingTime, duration: b.task.duration } : null,
+            }));
+        }
 
-            /* ── Run the full MVT simulation ─── */
-            function runMvtSimulation(config) {
-                const blocks = createMemoryBlocks(config);
-                const allTasks = createTaskStates(config.jobs);
-                const completed = [];
-                const rejected = [];
-                const log = [];
-                const allocator = { algorithm: config.algorithm, nextPointer: 0 };
-                let waitingQueue = [...allTasks];
-                let clock = 0;
+        /* ── Run the full MVT simulation ─── */
+        function runMvtSimulation(config) {
+            const blocks = createMemoryBlocks(config);
+            const allTasks = createTaskStates(config.jobs);
+            const completed = [];
+            const rejected = [];
+            const log = [];
+            const allocator = { algorithm: config.algorithm, nextPointer: 0 };
+            let waitingQueue = [...allTasks];
+            let clock = 0;
 
-                const snapshots = [];
+            const snapshots = [];
 
-                // t=0
+            // t=0
+            waitingQueue = allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator, log);
+            snapshots.push({
+                t: clock,
+                blocks: deepCopyBlocks(blocks),
+                waiting: waitingQueue.map(t => t.id),
+                completed: completed.map(t => t.id),
+                rejected: rejected.map(t => t.id),
+                usedMemory: getUsedUserMemory(blocks),
+                freeMemory: getTotalFreeMemory(blocks),
+                largestHole: getLargestHole(blocks),
+                extFrag: getExternalFragmentation(blocks),
+            });
+
+            while (!isFinished(blocks, waitingQueue)) {
+                tick(blocks, completed, clock, log);
+                clock += 1;
                 waitingQueue = allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator, log);
                 snapshots.push({
                     t: clock,
@@ -535,138 +568,122 @@
                     largestHole: getLargestHole(blocks),
                     extFrag: getExternalFragmentation(blocks),
                 });
-
-                while (!isFinished(blocks, waitingQueue)) {
-                    tick(blocks, completed, clock, log);
-                    clock += 1;
-                    waitingQueue = allocateWaitingTasks(blocks, waitingQueue, rejected, config, clock, allocator, log);
-                    snapshots.push({
-                        t: clock,
-                        blocks: deepCopyBlocks(blocks),
-                        waiting: waitingQueue.map(t => t.id),
-                        completed: completed.map(t => t.id),
-                        rejected: rejected.map(t => t.id),
-                        usedMemory: getUsedUserMemory(blocks),
-                        freeMemory: getTotalFreeMemory(blocks),
-                        largestHole: getLargestHole(blocks),
-                        extFrag: getExternalFragmentation(blocks),
-                    });
-                }
-
-                // Build per-job results
-                const jobResults = allTasks.map(task => ({
-                    id: task.id,
-                    sizeKb: task.sizeKb,
-                    arrivalOrder: task.arrivalOrder,
-                    duration: task.duration,
-                    status: task.status,
-                    startAddress: task.startAddress,
-                    startTime: task.startTime,
-                    finishTime: task.finishTime,
-                }));
-
-                const accepted = allTasks.filter(t => t.status !== 'Rejected');
-                const avgTurnaround = completed.length === 0
-                    ? 0
-                    : completed.reduce((s, t) => s + (t.finishTime - t.startTime), 0) / completed.length;
-
-                return {
-                    log,
-                    snapshots,
-                    jobResults,
-                    metrics: {
-                        totalTime: clock,
-                        jobsAccepted: accepted.length,
-                        jobsCompleted: completed.length,
-                        jobsRejected: rejected.length,
-                        avgTurnaround,
-                    },
-                    config,
-                };
             }
 
+            // Build per-job results
+            const jobResults = allTasks.map(task => ({
+                id: task.id,
+                sizeKb: task.sizeKb,
+                arrivalOrder: task.arrivalOrder,
+                duration: task.duration,
+                status: task.status,
+                startAddress: task.startAddress,
+                startTime: task.startTime,
+                finishTime: task.finishTime,
+            }));
 
-            /* ══════════════════════════════════════════════════════════
-             *  UI LOGIC
-             * ══════════════════════════════════════════════════════════ */
+            const accepted = allTasks.filter(t => t.status !== 'Rejected');
+            const avgTurnaround = completed.length === 0
+                ? 0
+                : completed.reduce((s, t) => s + (t.finishTime - t.startTime), 0) / completed.length;
 
-            /* ── Theme toggle ────────────────────────────── */
-            const themeBtn = document.getElementById('themeToggle');
-            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
-            themeBtn.addEventListener('click', () => {
-                document.body.classList.toggle('light');
-                localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
-            });
-
-            /* ── Scroll progress + back-to-top ────────────── */
-            const progressBar = document.getElementById('scrollProgress');
-            const backToTop = document.getElementById('backToTop');
-            window.addEventListener('scroll', () => {
-                const s = window.scrollY;
-                const max = document.documentElement.scrollHeight - window.innerHeight;
-                progressBar.style.width = (s / max * 100) + '%';
-                backToTop.classList.toggle('visible', s > 300);
-            }, { passive: true });
-            backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-            /* ── Algorithm descriptions ───────────────────── */
-            const ALGO_DESC = {
-                'first': 'Scans memory from the beginning and allocates the first hole that is large enough. Fast but can cause fragmentation at the start of memory.',
-                'next': 'Starts searching from where the last allocation was made, wrapping around. Distributes allocations more evenly across memory.',
-                'best': 'Finds the smallest hole that is large enough. Minimizes wasted space per allocation but can create many tiny unusable holes.',
-                'worst': 'Finds the largest available hole. Leaves the largest possible remaining hole, which may be more useful for future allocations.',
+            return {
+                log,
+                snapshots,
+                jobResults,
+                metrics: {
+                    totalTime: clock,
+                    jobsAccepted: accepted.length,
+                    jobsCompleted: completed.length,
+                    jobsRejected: rejected.length,
+                    avgTurnaround,
+                },
+                config,
             };
+        }
 
-            /* ── Algorithm Selector ───────────────────────── */
-            let currentAlgo = 'next';
-            const pills = document.querySelectorAll('.algo-pill');
-            const algoDescText = document.getElementById('algoDescText');
 
-            pills.forEach(pill => {
-                pill.addEventListener('click', () => {
-                    pills.forEach(p => p.classList.remove('active'));
-                    pill.classList.add('active');
-                    currentAlgo = pill.dataset.algo;
-                    algoDescText.textContent = ALGO_DESC[currentAlgo] || '';
-                });
+        /* ══════════════════════════════════════════════════════════
+         *  UI LOGIC
+         * ══════════════════════════════════════════════════════════ */
+
+        /* ── Theme toggle ────────────────────────────── */
+        const themeBtn = document.getElementById('themeToggle');
+        if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+        themeBtn.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+        });
+
+        /* ── Scroll progress + back-to-top ────────────── */
+        const progressBar = document.getElementById('scrollProgress');
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            const s = window.scrollY;
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            progressBar.style.width = (s / max * 100) + '%';
+            backToTop.classList.toggle('visible', s > 300);
+        }, { passive: true });
+        backToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        /* ── Algorithm descriptions ───────────────────── */
+        const ALGO_DESC = {
+            'first': 'Scans memory from the beginning and allocates the first hole that is large enough. Fast but can cause fragmentation at the start of memory.',
+            'next': 'Starts searching from where the last allocation was made, wrapping around. Distributes allocations more evenly across memory.',
+            'best': 'Finds the smallest hole that is large enough. Minimizes wasted space per allocation but can create many tiny unusable holes.',
+            'worst': 'Finds the largest available hole. Leaves the largest possible remaining hole, which may be more useful for future allocations.',
+        };
+
+        /* ── Algorithm Selector ───────────────────────── */
+        let currentAlgo = 'next';
+        const pills = document.querySelectorAll('.algo-pill');
+        const algoDescText = document.getElementById('algoDescText');
+
+        pills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                pills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                currentAlgo = pill.dataset.algo;
+                algoDescText.textContent = ALGO_DESC[currentAlgo] || '';
             });
+        });
 
-            /* ── Memory Configuration ───────────────────── */
-            const totalMemInput = document.getElementById('totalMemory');
-            const osMemInput = document.getElementById('osMemory');
-            const userMemDisplay = document.getElementById('userMemoryDisplay');
+        /* ── Memory Configuration ───────────────────── */
+        const totalMemInput = document.getElementById('totalMemory');
+        const osMemInput = document.getElementById('osMemory');
+        const userMemDisplay = document.getElementById('userMemoryDisplay');
 
-            function updateUserMemoryDisplay() {
-                const total = parseInt(totalMemInput.value) || 0;
-                const os = parseInt(osMemInput.value) || 0;
-                const user = Math.max(0, total - os);
-                userMemDisplay.textContent = user + ' KB';
-                userMemDisplay.style.color = user <= 0 ? 'var(--red)' : '';
-            }
+        function updateUserMemoryDisplay() {
+            const total = parseInt(totalMemInput.value) || 0;
+            const os = parseInt(osMemInput.value) || 0;
+            const user = Math.max(0, total - os);
+            userMemDisplay.textContent = user + ' KB';
+            userMemDisplay.style.color = user <= 0 ? 'var(--red)' : '';
+        }
 
-            totalMemInput.addEventListener('input', updateUserMemoryDisplay);
-            osMemInput.addEventListener('input', updateUserMemoryDisplay);
+        totalMemInput.addEventListener('input', updateUserMemoryDisplay);
+        osMemInput.addEventListener('input', updateUserMemoryDisplay);
 
-            /* ── Job Table ────────────────────────────── */
-            const jobTableBody = document.getElementById('jobTableBody');
-            let jobCount = 0;
+        /* ── Job Table ────────────────────────────── */
+        const jobTableBody = document.getElementById('jobTableBody');
+        let jobCount = 0;
 
-            const JOB_COLORS = [
-                '#00c8e0', '#6c63ff', '#f0a500', '#34c77b', '#e05555',
-                '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6',
-                '#06b6d4', '#84cc16', '#ef4444', '#3b82f6', '#eab308',
-            ];
+        const JOB_COLORS = [
+            '#00c8e0', '#6c63ff', '#f0a500', '#34c77b', '#e05555',
+            '#a855f7', '#ec4899', '#14b8a6', '#f97316', '#8b5cf6',
+            '#06b6d4', '#84cc16', '#ef4444', '#3b82f6', '#eab308',
+        ];
 
-            function getJobColor(index) {
-                return JOB_COLORS[index % JOB_COLORS.length];
-            }
+        function getJobColor(index) {
+            return JOB_COLORS[index % JOB_COLORS.length];
+        }
 
-            function addJobRow(id, size, arrival, duration) {
-                jobCount++;
-                const row = document.createElement('tr');
-                row.dataset.index = jobCount;
+        function addJobRow(id, size, arrival, duration) {
+            jobCount++;
+            const row = document.createElement('tr');
+            row.dataset.index = jobCount;
 
-                row.innerHTML = `
+            row.innerHTML = `
                     <td class="td-num">${jobCount}</td>
                     <td>
                         <div class="cell-label">Job ID</div>
@@ -691,424 +708,424 @@
                     </td>
                 `;
 
-                row.querySelector('.btn-remove').addEventListener('click', () => {
-                    row.classList.add('row-removing');
-                    setTimeout(() => {
-                        row.remove();
-                        renumberJobRows();
-                    }, 250);
-                });
-
-                jobTableBody.appendChild(row);
-                requestAnimationFrame(() => row.classList.add('row-visible'));
-            }
-
-            function renumberJobRows() {
-                const rows = jobTableBody.querySelectorAll('tr');
-                jobCount = rows.length;
-                rows.forEach((row, i) => {
-                    row.querySelector('.td-num').textContent = i + 1;
-                    row.dataset.index = i + 1;
-                });
-            }
-
-            function getJobs() {
-                const rows = jobTableBody.querySelectorAll('tr');
-                const jobs = [];
-                rows.forEach((row, i) => {
-                    const id = row.querySelector('.input-jid').value.trim() || `J${i + 1}`;
-                    const sizeKb = parseInt(row.querySelector('.input-size').value) || 64;
-                    const arrivalOrder = parseInt(row.querySelector('.input-arrival').value) || (i + 1);
-                    const duration = parseInt(row.querySelector('.input-duration').value) || 2;
-                    jobs.push({ id, sizeKb, arrivalOrder, duration });
-                });
-                return jobs;
-            }
-
-            document.getElementById('btnAddJob').addEventListener('click', () => addJobRow());
-
-            document.getElementById('btnLoadExample').addEventListener('click', () => {
-                jobTableBody.innerHTML = '';
-                jobCount = 0;
-                const examples = [
-                    { id: 'J1', size: 80, arrival: 1, duration: 2 },
-                    { id: 'J2', size: 60, arrival: 2, duration: 3 },
-                    { id: 'J3', size: 100, arrival: 3, duration: 2 },
-                    { id: 'J4', size: 70, arrival: 4, duration: 2 },
-                    { id: 'J5', size: 120, arrival: 5, duration: 2 },
-                ];
-                examples.forEach(e => addJobRow(e.id, e.size, e.arrival, e.duration));
-            });
-
-            document.getElementById('btnClearAll').addEventListener('click', () => {
-                jobTableBody.innerHTML = '';
-                jobCount = 0;
-                document.getElementById('outputSection').style.display = 'none';
-            });
-
-            // Start with example rows
-            addJobRow('J1', 80, 1, 2);
-            addJobRow('J2', 60, 2, 3);
-            addJobRow('J3', 100, 3, 2);
-            addJobRow('J4', 70, 4, 2);
-            addJobRow('J5', 120, 5, 2);
-
-            /* ── Run Simulation ──────────────────────────── */
-            document.getElementById('btnRun').addEventListener('click', runSimulation);
-
-            function runSimulation() {
-                const jobs = getJobs();
-                if (jobs.length === 0) return;
-
-                const totalMemoryKb = parseInt(totalMemInput.value) || 384;
-                const osMemoryKb = parseInt(osMemInput.value) || 64;
-
-                if (osMemoryKb >= totalMemoryKb) {
-                    alert('OS memory must be smaller than total memory.');
-                    return;
-                }
-
-                const config = {
-                    algorithm: currentAlgo,
-                    compactionEnabled: document.getElementById('compactionToggle').checked,
-                    totalMemoryKb,
-                    osMemoryKb,
-                    userMemoryKb: totalMemoryKb - osMemoryKb,
-                    jobs: jobs.sort((a, b) => {
-                        if (a.arrivalOrder !== b.arrivalOrder) return a.arrivalOrder - b.arrivalOrder;
-                        return a.id.localeCompare(b.id);
-                    }),
-                };
-
-                const result = runMvtSimulation(config);
-                renderOutput(result, jobs);
-            }
-
-            /* ══════════════════════════════════════════════════════════
-             *  RENDERING
-             * ══════════════════════════════════════════════════════════ */
-
-            let currentStep = 0;
-            let simResult = null;
-            let memWaterAnimId = null;
-            const memWaterCanvases = [];
-
-            function renderOutput(result, originalJobs) {
-                simResult = result;
-                currentStep = 0;
-
-                const outputSection = document.getElementById('outputSection');
-                outputSection.style.display = '';
-
-                // Build color map
-                const colorMap = {};
-                originalJobs.forEach((j, i) => {
-                    colorMap[j.id] = getJobColor(i);
-                });
-                simResult.colorMap = colorMap;
-
-                renderLog(result.log);
-                renderSnapshot(result.snapshots[0]);
-                updateStepControls();
-                renderResultsTable(result.jobResults);
-                renderMetrics(result.metrics, result.config);
-
+            row.querySelector('.btn-remove').addEventListener('click', () => {
+                row.classList.add('row-removing');
                 setTimeout(() => {
-                    outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }, 100);
+                    row.remove();
+                    renumberJobRows();
+                }, 250);
+            });
+
+            jobTableBody.appendChild(row);
+            requestAnimationFrame(() => row.classList.add('row-visible'));
+        }
+
+        function renumberJobRows() {
+            const rows = jobTableBody.querySelectorAll('tr');
+            jobCount = rows.length;
+            rows.forEach((row, i) => {
+                row.querySelector('.td-num').textContent = i + 1;
+                row.dataset.index = i + 1;
+            });
+        }
+
+        function getJobs() {
+            const rows = jobTableBody.querySelectorAll('tr');
+            const jobs = [];
+            rows.forEach((row, i) => {
+                const id = row.querySelector('.input-jid').value.trim() || `J${i + 1}`;
+                const sizeKb = parseInt(row.querySelector('.input-size').value) || 64;
+                const arrivalOrder = parseInt(row.querySelector('.input-arrival').value) || (i + 1);
+                const duration = parseInt(row.querySelector('.input-duration').value) || 2;
+                jobs.push({ id, sizeKb, arrivalOrder, duration });
+            });
+            return jobs;
+        }
+
+        document.getElementById('btnAddJob').addEventListener('click', () => addJobRow());
+
+        document.getElementById('btnLoadExample').addEventListener('click', () => {
+            jobTableBody.innerHTML = '';
+            jobCount = 0;
+            const examples = [
+                { id: 'J1', size: 80, arrival: 1, duration: 2 },
+                { id: 'J2', size: 60, arrival: 2, duration: 3 },
+                { id: 'J3', size: 100, arrival: 3, duration: 2 },
+                { id: 'J4', size: 70, arrival: 4, duration: 2 },
+                { id: 'J5', size: 120, arrival: 5, duration: 2 },
+            ];
+            examples.forEach(e => addJobRow(e.id, e.size, e.arrival, e.duration));
+        });
+
+        document.getElementById('btnClearAll').addEventListener('click', () => {
+            jobTableBody.innerHTML = '';
+            jobCount = 0;
+            document.getElementById('outputSection').style.display = 'none';
+        });
+
+        // Start with example rows
+        addJobRow('J1', 80, 1, 2);
+        addJobRow('J2', 60, 2, 3);
+        addJobRow('J3', 100, 3, 2);
+        addJobRow('J4', 70, 4, 2);
+        addJobRow('J5', 120, 5, 2);
+
+        /* ── Run Simulation ──────────────────────────── */
+        document.getElementById('btnRun').addEventListener('click', runSimulation);
+
+        function runSimulation() {
+            const jobs = getJobs();
+            if (jobs.length === 0) return;
+
+            const totalMemoryKb = parseInt(totalMemInput.value) || 384;
+            const osMemoryKb = parseInt(osMemInput.value) || 64;
+
+            if (osMemoryKb >= totalMemoryKb) {
+                alert('OS memory must be smaller than total memory.');
+                return;
             }
 
-            /* ── Simulation Log ─────────────────────────── */
-            function renderLog(log) {
-                const container = document.getElementById('simLog');
-                container.innerHTML = '';
+            const config = {
+                algorithm: currentAlgo,
+                compactionEnabled: document.getElementById('compactionToggle').checked,
+                totalMemoryKb,
+                osMemoryKb,
+                userMemoryKb: totalMemoryKb - osMemoryKb,
+                jobs: jobs.sort((a, b) => {
+                    if (a.arrivalOrder !== b.arrivalOrder) return a.arrivalOrder - b.arrivalOrder;
+                    return a.id.localeCompare(b.id);
+                }),
+            };
 
-                if (log.length === 0) {
-                    container.innerHTML = '<div class="mem-log-entry">No events.</div>';
-                    return;
-                }
+            const result = runMvtSimulation(config);
+            renderOutput(result, jobs);
+        }
 
-                log.forEach((entry, i) => {
-                    const el = document.createElement('div');
-                    el.className = `mem-log-entry mem-log-${entry.type}`;
-                    el.style.animationDelay = (i * 30) + 'ms';
-                    el.innerHTML = `<span class="mem-log-time">t=${entry.t}</span> ${entry.msg}`;
-                    container.appendChild(el);
-                });
+        /* ══════════════════════════════════════════════════════════
+         *  RENDERING
+         * ══════════════════════════════════════════════════════════ */
+
+        let currentStep = 0;
+        let simResult = null;
+        let memWaterAnimId = null;
+        const memWaterCanvases = [];
+
+        function renderOutput(result, originalJobs) {
+            simResult = result;
+            currentStep = 0;
+
+            const outputSection = document.getElementById('outputSection');
+            outputSection.style.display = '';
+
+            // Build color map
+            const colorMap = {};
+            originalJobs.forEach((j, i) => {
+                colorMap[j.id] = getJobColor(i);
+            });
+            simResult.colorMap = colorMap;
+
+            renderLog(result.log);
+            renderSnapshot(result.snapshots[0]);
+            updateStepControls();
+            renderResultsTable(result.jobResults);
+            renderMetrics(result.metrics, result.config);
+
+            setTimeout(() => {
+                outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+
+        /* ── Simulation Log ─────────────────────────── */
+        function renderLog(log) {
+            const container = document.getElementById('simLog');
+            container.innerHTML = '';
+
+            if (log.length === 0) {
+                container.innerHTML = '<div class="mem-log-entry">No events.</div>';
+                return;
             }
 
-            /* ── Memory Map Snapshot ─────────────────────── */
-            function renderSnapshot(snapshot) {
-                const bar = document.getElementById('memMapBar');
-                const addrContainer = document.getElementById('memMapAddresses');
-                bar.innerHTML = '';
-                addrContainer.innerHTML = '';
+            log.forEach((entry, i) => {
+                const el = document.createElement('div');
+                el.className = `mem-log-entry mem-log-${entry.type}`;
+                el.style.animationDelay = (i * 30) + 'ms';
+                el.innerHTML = `<span class="mem-log-time">t=${entry.t}</span> ${entry.msg}`;
+                container.appendChild(el);
+            });
+        }
 
-                // Stop previous water animation
-                if (memWaterAnimId) {
-                    cancelAnimationFrame(memWaterAnimId);
-                    memWaterAnimId = null;
-                }
-                memWaterCanvases.length = 0;
+        /* ── Memory Map Snapshot ─────────────────────── */
+        function renderSnapshot(snapshot) {
+            const bar = document.getElementById('memMapBar');
+            const addrContainer = document.getElementById('memMapAddresses');
+            bar.innerHTML = '';
+            addrContainer.innerHTML = '';
 
-                const totalMemory = simResult.config.totalMemoryKb;
+            // Stop previous water animation
+            if (memWaterAnimId) {
+                cancelAnimationFrame(memWaterAnimId);
+                memWaterAnimId = null;
+            }
+            memWaterCanvases.length = 0;
 
-                snapshot.blocks.forEach((block, i) => {
-                    const el = document.createElement('div');
-                    const widthPercent = (block.sizeKb / totalMemory) * 100;
+            const totalMemory = simResult.config.totalMemoryKb;
 
-                    el.className = 'mem-block';
-                    el.style.width = widthPercent + '%';
-                    el.style.animationDelay = (i * 60) + 'ms';
+            snapshot.blocks.forEach((block, i) => {
+                const el = document.createElement('div');
+                const widthPercent = (block.sizeKb / totalMemory) * 100;
 
-                    if (block.type === 'os') {
-                        el.classList.add('mem-block-os');
-                        el.innerHTML = `<span class="mem-block-label">OS</span><span class="mem-block-size">${block.sizeKb} KB</span>`;
-                    } else if (block.type === 'hole') {
-                        el.classList.add('mem-block-hole');
-                        el.innerHTML = `<span class="mem-block-label">FREE</span><span class="mem-block-size">${block.sizeKb} KB</span>`;
-                    } else {
-                        el.classList.add('mem-block-job');
-                        const color = simResult.colorMap[block.task.id] || '#6c63ff';
-                        el.style.setProperty('--job-color', color);
+                el.className = 'mem-block';
+                el.style.width = widthPercent + '%';
+                el.style.animationDelay = (i * 60) + 'ms';
 
-                        // Insert water canvas (same as CPU Gantt)
-                        const waterCanvas = document.createElement('canvas');
-                        waterCanvas.className = 'mem-water-canvas';
-                        el.appendChild(waterCanvas);
+                if (block.type === 'os') {
+                    el.classList.add('mem-block-os');
+                    el.innerHTML = `<span class="mem-block-label">OS</span><span class="mem-block-size">${block.sizeKb} KB</span>`;
+                } else if (block.type === 'hole') {
+                    el.classList.add('mem-block-hole');
+                    el.innerHTML = `<span class="mem-block-label">FREE</span><span class="mem-block-size">${block.sizeKb} KB</span>`;
+                } else {
+                    el.classList.add('mem-block-job');
+                    const color = simResult.colorMap[block.task.id] || '#6c63ff';
+                    el.style.setProperty('--job-color', color);
 
-                        memWaterCanvases.push({
-                            canvas: waterCanvas,
-                            color: color,
-                            phase: Math.random() * Math.PI * 2,
-                        });
+                    // Insert water canvas (same as CPU Gantt)
+                    const waterCanvas = document.createElement('canvas');
+                    waterCanvas.className = 'mem-water-canvas';
+                    el.appendChild(waterCanvas);
 
-                        // Labels go after canvas so they render on top
-                        const label = document.createElement('span');
-                        label.className = 'mem-block-label';
-                        label.textContent = block.task.id;
-                        el.appendChild(label);
+                    memWaterCanvases.push({
+                        canvas: waterCanvas,
+                        color: color,
+                        phase: Math.random() * Math.PI * 2,
+                    });
 
-                        const size = document.createElement('span');
-                        size.className = 'mem-block-size';
-                        size.textContent = block.sizeKb + ' KB';
-                        el.appendChild(size);
-                    }
-
-                    el.title = `${block.type === 'job' ? block.task.id : block.type.toUpperCase()}\nStart: ${block.start} KB\nSize: ${block.sizeKb} KB\nEnd: ${block.start + block.sizeKb - 1} KB`;
-                    bar.appendChild(el);
-                });
-
-                // Address labels
-                snapshot.blocks.forEach((block, i) => {
-                    const leftPercent = (block.start / totalMemory) * 100;
+                    // Labels go after canvas so they render on top
                     const label = document.createElement('span');
-                    label.className = 'mem-addr-label';
-                    label.style.left = leftPercent + '%';
-                    label.textContent = block.start;
-                    addrContainer.appendChild(label);
-                });
-                // End address
-                const endLabel = document.createElement('span');
-                endLabel.className = 'mem-addr-label';
-                endLabel.style.left = '100%';
-                endLabel.textContent = totalMemory;
-                addrContainer.appendChild(endLabel);
+                    label.className = 'mem-block-label';
+                    label.textContent = block.task.id;
+                    el.appendChild(label);
 
-                // Size water canvases after DOM layout, then start animation
-                if (memWaterCanvases.length > 0) {
-                    requestAnimationFrame(() => {
-                        memWaterCanvases.forEach(wc => {
-                            wc.canvas.width = wc.canvas.offsetWidth * 2;
-                            wc.canvas.height = wc.canvas.offsetHeight * 2;
-                            wc.ctx = wc.canvas.getContext('2d');
-                        });
-                        startMemWaterAnimation();
-                    });
+                    const size = document.createElement('span');
+                    size.className = 'mem-block-size';
+                    size.textContent = block.sizeKb + ' KB';
+                    el.appendChild(size);
                 }
 
-                // Stats cards
-                renderMemStats(snapshot);
+                el.title = `${block.type === 'job' ? block.task.id : block.type.toUpperCase()}\nStart: ${block.start} KB\nSize: ${block.sizeKb} KB\nEnd: ${block.start + block.sizeKb - 1} KB`;
+                bar.appendChild(el);
+            });
 
-                // Free space list
-                renderFreeList(snapshot);
+            // Address labels
+            snapshot.blocks.forEach((block, i) => {
+                const leftPercent = (block.start / totalMemory) * 100;
+                const label = document.createElement('span');
+                label.className = 'mem-addr-label';
+                label.style.left = leftPercent + '%';
+                label.textContent = block.start;
+                addrContainer.appendChild(label);
+            });
+            // End address
+            const endLabel = document.createElement('span');
+            endLabel.className = 'mem-addr-label';
+            endLabel.style.left = '100%';
+            endLabel.textContent = totalMemory;
+            addrContainer.appendChild(endLabel);
 
-                // Queues
-                renderQueues(snapshot);
+            // Size water canvases after DOM layout, then start animation
+            if (memWaterCanvases.length > 0) {
+                requestAnimationFrame(() => {
+                    memWaterCanvases.forEach(wc => {
+                        wc.canvas.width = wc.canvas.offsetWidth * 2;
+                        wc.canvas.height = wc.canvas.offsetHeight * 2;
+                        wc.ctx = wc.canvas.getContext('2d');
+                    });
+                    startMemWaterAnimation();
+                });
             }
 
-            /* ── Water Wave Animation (same as CPU Gantt) ─── */
-            function startMemWaterAnimation() {
-                let tick = 0;
+            // Stats cards
+            renderMemStats(snapshot);
 
-                // Seed rising bubbles for each block
+            // Free space list
+            renderFreeList(snapshot);
+
+            // Queues
+            renderQueues(snapshot);
+        }
+
+        /* ── Water Wave Animation (same as CPU Gantt) ─── */
+        function startMemWaterAnimation() {
+            let tick = 0;
+
+            // Seed rising bubbles for each block
+            memWaterCanvases.forEach(wc => {
+                wc.bubbles = [];
+                const count = 4 + Math.floor(Math.random() * 4);
+                for (let i = 0; i < count; i++) {
+                    wc.bubbles.push({
+                        x: Math.random(),
+                        y: Math.random(),
+                        r: 1.5 + Math.random() * 3,
+                        speed: 0.15 + Math.random() * 0.35,
+                        wobble: Math.random() * Math.PI * 2,
+                    });
+                }
+            });
+
+            function drawWater() {
+                tick++;
+                const t = tick * 0.04;
+
                 memWaterCanvases.forEach(wc => {
-                    wc.bubbles = [];
-                    const count = 4 + Math.floor(Math.random() * 4);
-                    for (let i = 0; i < count; i++) {
-                        wc.bubbles.push({
-                            x: Math.random(),
-                            y: Math.random(),
-                            r: 1.5 + Math.random() * 3,
-                            speed: 0.15 + Math.random() * 0.35,
-                            wobble: Math.random() * Math.PI * 2,
-                        });
+                    const ctx = wc.ctx;
+                    if (!ctx) return;
+                    const W = wc.canvas.width;
+                    const H = wc.canvas.height;
+                    const p = wc.phase;
+
+                    ctx.clearRect(0, 0, W, H);
+
+                    const r = parseInt(wc.color.slice(1, 3), 16);
+                    const g = parseInt(wc.color.slice(3, 5), 16);
+                    const b = parseInt(wc.color.slice(5, 7), 16);
+
+                    // Air gap at the top
+                    const fillLevel = H * 0.16;
+
+                    // Liquid body
+                    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
+                    ctx.fillRect(0, fillLevel, W, H - fillLevel);
+
+                    // Wavy surface layers
+                    for (let layer = 0; layer < 3; layer++) {
+                        const waterLevel = fillLevel + layer * H * 0.025;
+                        const amplitude = H * (0.05 - layer * 0.012);
+                        const frequency = 0.018 + layer * 0.01;
+                        const speed = t * (1 + layer * 0.4) + p + layer * 1.3;
+                        const lr = Math.min(255, r + layer * 35 + 20);
+                        const lg = Math.min(255, g + layer * 35 + 20);
+                        const lb = Math.min(255, b + layer * 35 + 20);
+                        const alpha = 0.5 - layer * 0.13;
+
+                        ctx.beginPath();
+                        ctx.moveTo(0, fillLevel + amplitude * 2);
+                        for (let x = 0; x <= W; x += 3) {
+                            const y = waterLevel
+                                + Math.sin(x * frequency + speed) * amplitude
+                                + Math.sin(x * frequency * 0.5 + speed * 1.4) * amplitude * 0.5;
+                            ctx.lineTo(x, y);
+                        }
+                        ctx.lineTo(W, H);
+                        ctx.lineTo(0, H);
+                        ctx.closePath();
+                        ctx.fillStyle = `rgba(${lr}, ${lg}, ${lb}, ${alpha})`;
+                        ctx.fill();
+                    }
+
+                    // Flowing horizontal shimmer
+                    const shimmerW = W * 0.5;
+                    const shimmerX = ((t * 60 + p * 80) % (W + shimmerW)) - shimmerW;
+                    const shimmer = ctx.createLinearGradient(shimmerX, 0, shimmerX + shimmerW, 0);
+                    shimmer.addColorStop(0, 'rgba(255,255,255,0)');
+                    shimmer.addColorStop(0.5, 'rgba(255,255,255,0.10)');
+                    shimmer.addColorStop(1, 'rgba(255,255,255,0)');
+                    ctx.fillStyle = shimmer;
+                    ctx.fillRect(0, fillLevel, W, H - fillLevel);
+
+                    // Rising bubbles
+                    wc.bubbles.forEach(bub => {
+                        bub.y -= bub.speed * 0.01;
+                        if (bub.y < 0) {
+                            bub.y = 1;
+                            bub.x = Math.random();
+                        }
+                        const bx = (bub.x + Math.sin(t + bub.wobble) * 0.04) * W;
+                        const by = fillLevel + bub.y * (H - fillLevel - 4);
+                        ctx.beginPath();
+                        ctx.arc(bx, by, bub.r, 0, Math.PI * 2);
+                        ctx.fillStyle = 'rgba(255,255,255,0.25)';
+                        ctx.fill();
+                    });
+
+                    // Surface light glints
+                    for (let i = 0; i < 2; i++) {
+                        const gx = (Math.sin(t * 0.3 + p + i * 2.1) * 0.35 + 0.5) * W;
+                        const gy = fillLevel + H * 0.06;
+                        const gr = H * 0.07;
+                        const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
+                        grad.addColorStop(0, 'rgba(255,255,255,0.22)');
+                        grad.addColorStop(1, 'rgba(255,255,255,0)');
+                        ctx.beginPath();
+                        ctx.arc(gx, gy, gr, 0, Math.PI * 2);
+                        ctx.fillStyle = grad;
+                        ctx.fill();
                     }
                 });
 
-                function drawWater() {
-                    tick++;
-                    const t = tick * 0.04;
-
-                    memWaterCanvases.forEach(wc => {
-                        const ctx = wc.ctx;
-                        if (!ctx) return;
-                        const W = wc.canvas.width;
-                        const H = wc.canvas.height;
-                        const p = wc.phase;
-
-                        ctx.clearRect(0, 0, W, H);
-
-                        const r = parseInt(wc.color.slice(1, 3), 16);
-                        const g = parseInt(wc.color.slice(3, 5), 16);
-                        const b = parseInt(wc.color.slice(5, 7), 16);
-
-                        // Air gap at the top
-                        const fillLevel = H * 0.16;
-
-                        // Liquid body
-                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.9)`;
-                        ctx.fillRect(0, fillLevel, W, H - fillLevel);
-
-                        // Wavy surface layers
-                        for (let layer = 0; layer < 3; layer++) {
-                            const waterLevel = fillLevel + layer * H * 0.025;
-                            const amplitude = H * (0.05 - layer * 0.012);
-                            const frequency = 0.018 + layer * 0.01;
-                            const speed = t * (1 + layer * 0.4) + p + layer * 1.3;
-                            const lr = Math.min(255, r + layer * 35 + 20);
-                            const lg = Math.min(255, g + layer * 35 + 20);
-                            const lb = Math.min(255, b + layer * 35 + 20);
-                            const alpha = 0.5 - layer * 0.13;
-
-                            ctx.beginPath();
-                            ctx.moveTo(0, fillLevel + amplitude * 2);
-                            for (let x = 0; x <= W; x += 3) {
-                                const y = waterLevel
-                                    + Math.sin(x * frequency + speed) * amplitude
-                                    + Math.sin(x * frequency * 0.5 + speed * 1.4) * amplitude * 0.5;
-                                ctx.lineTo(x, y);
-                            }
-                            ctx.lineTo(W, H);
-                            ctx.lineTo(0, H);
-                            ctx.closePath();
-                            ctx.fillStyle = `rgba(${lr}, ${lg}, ${lb}, ${alpha})`;
-                            ctx.fill();
-                        }
-
-                        // Flowing horizontal shimmer
-                        const shimmerW = W * 0.5;
-                        const shimmerX = ((t * 60 + p * 80) % (W + shimmerW)) - shimmerW;
-                        const shimmer = ctx.createLinearGradient(shimmerX, 0, shimmerX + shimmerW, 0);
-                        shimmer.addColorStop(0, 'rgba(255,255,255,0)');
-                        shimmer.addColorStop(0.5, 'rgba(255,255,255,0.10)');
-                        shimmer.addColorStop(1, 'rgba(255,255,255,0)');
-                        ctx.fillStyle = shimmer;
-                        ctx.fillRect(0, fillLevel, W, H - fillLevel);
-
-                        // Rising bubbles
-                        wc.bubbles.forEach(bub => {
-                            bub.y -= bub.speed * 0.01;
-                            if (bub.y < 0) {
-                                bub.y = 1;
-                                bub.x = Math.random();
-                            }
-                            const bx = (bub.x + Math.sin(t + bub.wobble) * 0.04) * W;
-                            const by = fillLevel + bub.y * (H - fillLevel - 4);
-                            ctx.beginPath();
-                            ctx.arc(bx, by, bub.r, 0, Math.PI * 2);
-                            ctx.fillStyle = 'rgba(255,255,255,0.25)';
-                            ctx.fill();
-                        });
-
-                        // Surface light glints
-                        for (let i = 0; i < 2; i++) {
-                            const gx = (Math.sin(t * 0.3 + p + i * 2.1) * 0.35 + 0.5) * W;
-                            const gy = fillLevel + H * 0.06;
-                            const gr = H * 0.07;
-                            const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr);
-                            grad.addColorStop(0, 'rgba(255,255,255,0.22)');
-                            grad.addColorStop(1, 'rgba(255,255,255,0)');
-                            ctx.beginPath();
-                            ctx.arc(gx, gy, gr, 0, Math.PI * 2);
-                            ctx.fillStyle = grad;
-                            ctx.fill();
-                        }
-                    });
-
-                    memWaterAnimId = requestAnimationFrame(drawWater);
-                }
-
-                drawWater();
+                memWaterAnimId = requestAnimationFrame(drawWater);
             }
 
-            function renderMemStats(snapshot) {
-                const row = document.getElementById('memStatsRow');
-                row.innerHTML = '';
+            drawWater();
+        }
 
-                const items = [
-                    { label: 'Jobs in Memory', value: snapshot.blocks.filter(b => b.type === 'job').length, icon: '📦' },
-                    { label: 'Used Memory', value: snapshot.usedMemory + ' KB', icon: '💾' },
-                    { label: 'Free Memory', value: snapshot.freeMemory + ' KB', icon: '🕳️' },
-                    { label: 'Largest Hole', value: snapshot.largestHole + ' KB', icon: '📐' },
-                    { label: 'Ext. Fragmentation', value: snapshot.extFrag + ' KB', icon: '🧩' },
-                ];
+        function renderMemStats(snapshot) {
+            const row = document.getElementById('memStatsRow');
+            row.innerHTML = '';
 
-                items.forEach((item, i) => {
-                    const card = document.createElement('div');
-                    card.className = 'mem-stat-card';
-                    card.style.animationDelay = (i * 80) + 'ms';
-                    card.innerHTML = `
+            const items = [
+                { label: 'Jobs in Memory', value: snapshot.blocks.filter(b => b.type === 'job').length, icon: '📦' },
+                { label: 'Used Memory', value: snapshot.usedMemory + ' KB', icon: '💾' },
+                { label: 'Free Memory', value: snapshot.freeMemory + ' KB', icon: '🕳️' },
+                { label: 'Largest Hole', value: snapshot.largestHole + ' KB', icon: '📐' },
+                { label: 'Ext. Fragmentation', value: snapshot.extFrag + ' KB', icon: '🧩' },
+            ];
+
+            items.forEach((item, i) => {
+                const card = document.createElement('div');
+                card.className = 'mem-stat-card';
+                card.style.animationDelay = (i * 80) + 'ms';
+                card.innerHTML = `
                         <div class="mem-stat-icon">${item.icon}</div>
                         <div class="mem-stat-value">${item.value}</div>
                         <div class="mem-stat-label">${item.label}</div>
                     `;
-                    row.appendChild(card);
-                });
+                row.appendChild(card);
+            });
+        }
+
+        function renderFreeList(snapshot) {
+            const container = document.getElementById('freeList');
+            container.innerHTML = '';
+
+            const holes = snapshot.blocks.filter(b => b.type === 'hole');
+            if (holes.length === 0) {
+                container.innerHTML = '<div class="mem-free-item mem-free-none">No free blocks</div>';
+                return;
             }
 
-            function renderFreeList(snapshot) {
-                const container = document.getElementById('freeList');
-                container.innerHTML = '';
+            holes.forEach((hole, i) => {
+                const el = document.createElement('div');
+                el.className = 'mem-free-item';
+                el.innerHTML = `<span class="mem-free-num">Hole ${i + 1}</span> Start: ${hole.start} KB &nbsp;|&nbsp; Size: ${hole.sizeKb} KB`;
+                container.appendChild(el);
+            });
+        }
 
-                const holes = snapshot.blocks.filter(b => b.type === 'hole');
-                if (holes.length === 0) {
-                    container.innerHTML = '<div class="mem-free-item mem-free-none">No free blocks</div>';
-                    return;
-                }
+        function renderQueues(snapshot) {
+            const grid = document.getElementById('queuesGrid');
+            grid.innerHTML = '';
 
-                holes.forEach((hole, i) => {
-                    const el = document.createElement('div');
-                    el.className = 'mem-free-item';
-                    el.innerHTML = `<span class="mem-free-num">Hole ${i + 1}</span> Start: ${hole.start} KB &nbsp;|&nbsp; Size: ${hole.sizeKb} KB`;
-                    container.appendChild(el);
-                });
-            }
+            const queues = [
+                { label: 'Waiting', items: snapshot.waiting, accent: 'var(--amber)', icon: '⏳' },
+                { label: 'Completed', items: snapshot.completed, accent: 'var(--green)', icon: '✅' },
+                { label: 'Rejected', items: snapshot.rejected, accent: 'var(--red)', icon: '❌' },
+            ];
 
-            function renderQueues(snapshot) {
-                const grid = document.getElementById('queuesGrid');
-                grid.innerHTML = '';
-
-                const queues = [
-                    { label: 'Waiting', items: snapshot.waiting, accent: 'var(--amber)', icon: '⏳' },
-                    { label: 'Completed', items: snapshot.completed, accent: 'var(--green)', icon: '✅' },
-                    { label: 'Rejected', items: snapshot.rejected, accent: 'var(--red)', icon: '❌' },
-                ];
-
-                queues.forEach(q => {
-                    const card = document.createElement('div');
-                    card.className = 'mem-queue-card';
-                    card.innerHTML = `
+            queues.forEach(q => {
+                const card = document.createElement('div');
+                card.className = 'mem-queue-card';
+                card.innerHTML = `
                         <div class="mem-queue-header">
                             <span class="mem-queue-icon">${q.icon}</span>
                             <span class="mem-queue-title">${q.label}</span>
@@ -1116,193 +1133,225 @@
                         </div>
                         <div class="mem-queue-items">${q.items.length > 0 ? q.items.map(id => `<span class="mem-queue-tag">${id}</span>`).join('') : '<span class="mem-queue-empty">none</span>'}</div>
                     `;
-                    grid.appendChild(card);
-                });
-            }
+                grid.appendChild(card);
+            });
+        }
 
-            /* ── Step Navigation ─────────────────────────── */
-            const btnPrev = document.getElementById('btnPrevStep');
-            const btnNext = document.getElementById('btnNextStep');
-            const stepIndicator = document.getElementById('stepIndicator');
+        /* ── Step Navigation ─────────────────────────── */
+        const btnPrev = document.getElementById('btnPrevStep');
+        const btnNext = document.getElementById('btnNextStep');
+        const stepIndicator = document.getElementById('stepIndicator');
 
-            btnPrev.addEventListener('click', () => {
-                if (!simResult || currentStep <= 0) return;
-                currentStep--;
-                renderSnapshot(simResult.snapshots[currentStep]);
-                updateStepControls();
+        btnPrev.addEventListener('click', () => {
+            if (!simResult || currentStep <= 0) return;
+            currentStep--;
+            renderSnapshot(simResult.snapshots[currentStep]);
+            updateStepControls();
+        });
+
+        btnNext.addEventListener('click', () => {
+            if (!simResult || currentStep >= simResult.snapshots.length - 1) return;
+            currentStep++;
+            renderSnapshot(simResult.snapshots[currentStep]);
+            updateStepControls();
+        });
+
+        function updateStepControls() {
+            if (!simResult) return;
+            const total = simResult.snapshots.length;
+            stepIndicator.textContent = `t = ${simResult.snapshots[currentStep].t}  (Step ${currentStep + 1} / ${total})`;
+            btnPrev.disabled = currentStep <= 0;
+            btnNext.disabled = currentStep >= total - 1;
+        }
+
+        /* ── Results Table ────────────────────────────── */
+        function renderResultsTable(jobResults) {
+            const head = document.getElementById('resultsHead');
+            const body = document.getElementById('resultsBody');
+            head.innerHTML = '';
+            body.innerHTML = '';
+
+            const columns = [
+                { key: 'id', label: 'Job' },
+                { key: 'sizeKb', label: 'Size' },
+                { key: 'arrivalOrder', label: 'Arrival' },
+                { key: 'duration', label: 'Duration' },
+                { key: 'status', label: 'Status' },
+                { key: 'startAddress', label: 'Start Addr' },
+                { key: 'startTime', label: 'Start Time' },
+                { key: 'finishTime', label: 'Finish Time' },
+            ];
+
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col.label;
+                head.appendChild(th);
             });
 
-            btnNext.addEventListener('click', () => {
-                if (!simResult || currentStep >= simResult.snapshots.length - 1) return;
-                currentStep++;
-                renderSnapshot(simResult.snapshots[currentStep]);
-                updateStepControls();
-            });
-
-            function updateStepControls() {
-                if (!simResult) return;
-                const total = simResult.snapshots.length;
-                stepIndicator.textContent = `t = ${simResult.snapshots[currentStep].t}  (Step ${currentStep + 1} / ${total})`;
-                btnPrev.disabled = currentStep <= 0;
-                btnNext.disabled = currentStep >= total - 1;
-            }
-
-            /* ── Results Table ────────────────────────────── */
-            function renderResultsTable(jobResults) {
-                const head = document.getElementById('resultsHead');
-                const body = document.getElementById('resultsBody');
-                head.innerHTML = '';
-                body.innerHTML = '';
-
-                const columns = [
-                    { key: 'id', label: 'Job' },
-                    { key: 'sizeKb', label: 'Size' },
-                    { key: 'arrivalOrder', label: 'Arrival' },
-                    { key: 'duration', label: 'Duration' },
-                    { key: 'status', label: 'Status' },
-                    { key: 'startAddress', label: 'Start Addr' },
-                    { key: 'startTime', label: 'Start Time' },
-                    { key: 'finishTime', label: 'Finish Time' },
-                ];
+            jobResults.forEach((r, i) => {
+                const tr = document.createElement('tr');
+                tr.style.animationDelay = (i * 50) + 'ms';
 
                 columns.forEach(col => {
-                    const th = document.createElement('th');
-                    th.textContent = col.label;
-                    head.appendChild(th);
+                    const td = document.createElement('td');
+                    let val = r[col.key];
+                    if (val === null) val = '—';
+                    if (col.key === 'startAddress' && val !== '—') val += ' KB';
+                    td.textContent = val;
+                    if (col.key === 'id') td.classList.add('td-process-name');
+                    if (col.key === 'status') {
+                        td.classList.add('mem-status-' + r.status.toLowerCase());
+                    }
+                    tr.appendChild(td);
                 });
 
-                jobResults.forEach((r, i) => {
-                    const tr = document.createElement('tr');
-                    tr.style.animationDelay = (i * 50) + 'ms';
+                body.appendChild(tr);
+            });
+        }
 
-                    columns.forEach(col => {
-                        const td = document.createElement('td');
-                        let val = r[col.key];
-                        if (val === null) val = '—';
-                        if (col.key === 'startAddress' && val !== '—') val += ' KB';
-                        td.textContent = val;
-                        if (col.key === 'id') td.classList.add('td-process-name');
-                        if (col.key === 'status') {
-                            td.classList.add('mem-status-' + r.status.toLowerCase());
-                        }
-                        tr.appendChild(td);
-                    });
+        /* ── Metrics Cards ────────────────────────────── */
+        function renderMetrics(metrics, config) {
+            const grid = document.getElementById('metricsGrid');
+            grid.innerHTML = '';
 
-                    body.appendChild(tr);
-                });
-            }
+            const items = [
+                { label: 'Total Time', value: metrics.totalTime, unit: 'ticks', icon: '⏱️' },
+                { label: 'Jobs Accepted', value: metrics.jobsAccepted, unit: '', icon: '✅' },
+                { label: 'Jobs Completed', value: metrics.jobsCompleted, unit: '', icon: '🏁' },
+                { label: 'Jobs Rejected', value: metrics.jobsRejected, unit: '', icon: '❌' },
+                { label: 'Avg Turnaround', value: metrics.avgTurnaround.toFixed(2), unit: 'ticks', icon: '🔄' },
+            ];
 
-            /* ── Metrics Cards ────────────────────────────── */
-            function renderMetrics(metrics, config) {
-                const grid = document.getElementById('metricsGrid');
-                grid.innerHTML = '';
-
-                const items = [
-                    { label: 'Total Time', value: metrics.totalTime, unit: 'ticks', icon: '⏱️' },
-                    { label: 'Jobs Accepted', value: metrics.jobsAccepted, unit: '', icon: '✅' },
-                    { label: 'Jobs Completed', value: metrics.jobsCompleted, unit: '', icon: '🏁' },
-                    { label: 'Jobs Rejected', value: metrics.jobsRejected, unit: '', icon: '❌' },
-                    { label: 'Avg Turnaround', value: metrics.avgTurnaround.toFixed(2), unit: 'ticks', icon: '🔄' },
-                ];
-
-                items.forEach((item, i) => {
-                    const card = document.createElement('div');
-                    card.className = 'metric-card';
-                    card.style.animationDelay = (i * 100) + 'ms';
-                    card.innerHTML = `
+            items.forEach((item, i) => {
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                card.style.animationDelay = (i * 100) + 'ms';
+                card.innerHTML = `
                         <div class="metric-icon">${item.icon}</div>
                         <div class="metric-value">${item.value}<span class="metric-unit">${item.unit}</span></div>
                         <div class="metric-label">${item.label}</div>
                     `;
-                    grid.appendChild(card);
-                });
-            }
+                grid.appendChild(card);
+            });
+        }
 
-            /* ── Typewriter Effect ──────────────────────────── */
-            const typeTarget = document.getElementById('typeTarget');
-            const cursor = document.getElementById('cursor');
+        /* ── Typewriter Effect ──────────────────────────── */
+        const typeTarget = document.getElementById('typeTarget');
+        const cursor = document.getElementById('cursor');
 
-            const line1 = 'Memory Management';
-            const line2 = 'Simulator';
-            const full = line1 + '|' + line2;
-            let charIndex = 0;
-            let passedBreak = false;
+        const line1 = 'Memory Management';
+        const line2 = 'Simulator';
+        const full = line1 + '|' + line2;
+        let charIndex = 0;
+        let passedBreak = false;
 
-            const span1 = document.createElement('span');
-            const br = document.createElement('br');
-            const span2 = document.createElement('span');
-            span2.style.color = 'var(--accent)';
-            typeTarget.insertBefore(span1, cursor);
+        const span1 = document.createElement('span');
+        const br = document.createElement('br');
+        const span2 = document.createElement('span');
+        span2.style.color = 'var(--accent)';
+        typeTarget.insertBefore(span1, cursor);
 
-            function typeChar() {
-                if (charIndex < full.length) {
-                    const ch = full[charIndex];
-                    if (ch === '|') {
-                        typeTarget.insertBefore(br, cursor);
-                        typeTarget.insertBefore(span2, cursor);
-                        passedBreak = true;
-                    } else {
-                        if (passedBreak) span2.textContent += ch;
-                        else span1.textContent += ch;
-                    }
-                    charIndex++;
-                    setTimeout(typeChar, 75 + Math.random() * 35);
+        function typeChar() {
+            if (charIndex < full.length) {
+                const ch = full[charIndex];
+                if (ch === '|') {
+                    typeTarget.insertBefore(br, cursor);
+                    typeTarget.insertBefore(span2, cursor);
+                    passedBreak = true;
                 } else {
-                    cursor.classList.add('done');
+                    if (passedBreak) span2.textContent += ch;
+                    else span1.textContent += ch;
                 }
+                charIndex++;
+                setTimeout(typeChar, 75 + Math.random() * 35);
+            } else {
+                cursor.classList.add('done');
             }
-            setTimeout(typeChar, 400);
+        }
+        setTimeout(typeChar, 400);
 
-            /* ── Aurora Canvas ─────────────────────────────── */
-            const canvas = document.getElementById('auroraCanvas');
-            const ctx = canvas.getContext('2d');
-            let W, H, t = 0;
+        /* ── Aurora Canvas + Memory ambient animation ── */
+        const canvas = document.getElementById('auroraCanvas');
+        const ctx = canvas.getContext('2d');
+        let W, H, t = 0;
 
-            function resizeCanvas() {
-                W = canvas.width = canvas.offsetWidth;
-                H = canvas.height = canvas.offsetHeight;
-            }
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas();
+        function resizeCanvas() {
+            W = canvas.width = canvas.offsetWidth;
+            H = canvas.height = canvas.offsetHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-            const orbs = [
-                { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 185 },
-                { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 },
-                { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 170 },
-                { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 210 },
-                { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 160 },
-            ];
+        function hexToRgb(hex) {
+            hex = hex.replace('#', '');
+            const num = parseInt(hex, 16);
+            return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        }
 
-            function isLight() { return document.body.classList.contains('light'); }
+        const rgb = hexToRgb('#00c8e0');
 
-            function drawAurora() {
-                t++;
-                ctx.clearRect(0, 0, W, H);
-                const light = isLight();
+        const orbs = [
+            { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 185 },
+            { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 },
+            { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 170 },
+            { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 210 },
+            { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 160 },
+        ];
 
-                orbs.forEach(o => {
-                    const angle = o.phase + t * o.spd * Math.PI * 2;
-                    const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
-                    const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
-                    const radius = o.r * Math.min(W, H);
-                    const alpha = light ? 0.13 : 0.22;
-
-                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
-                    grad.addColorStop(0, `hsla(${o.hue}, 90%, ${light ? 55 : 65}%, ${alpha})`);
-                    grad.addColorStop(0.5, `hsla(${o.hue + 20}, 80%, ${light ? 50 : 60}%, ${alpha * 0.5})`);
-                    grad.addColorStop(1, `hsla(${o.hue + 40}, 70%, 50%, 0)`);
-
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-                    ctx.fillStyle = grad;
-                    ctx.fill();
+        /* init memory cells once */
+        const MEM_COLS = 14, MEM_ROWS = 5;
+        const memoryCells = [];
+        for (let r = 0; r < MEM_ROWS; r++) {
+            for (let c = 0; c < MEM_COLS; c++) {
+                memoryCells.push({
+                    r, c,
+                    phase: Math.random() * Math.PI * 2,
+                    speed: 0.008 + Math.random() * 0.015,
+                    max: 0.10 + Math.random() * 0.22,
                 });
-
-                requestAnimationFrame(drawAurora);
             }
-            drawAurora();
+        }
 
-        })();
+        function isLight() { return document.body.classList.contains('light'); }
+
+        function drawFrame() {
+            t++;
+            ctx.clearRect(0, 0, W, H);
+            const light = isLight();
+
+            /* ── Aurora orbs ── */
+            orbs.forEach(o => {
+                const angle = o.phase + t * o.spd * Math.PI * 2;
+                const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
+                const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
+                const radius = o.r * Math.min(W, H);
+                const alpha = light ? 0.13 : 0.22;
+                const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                grad.addColorStop(0, `hsla(${o.hue}, 90%, ${light ? 55 : 65}%, ${alpha})`);
+                grad.addColorStop(0.5, `hsla(${o.hue + 20}, 80%, ${light ? 50 : 60}%, ${alpha * 0.5})`);
+                grad.addColorStop(1, `hsla(${o.hue + 40}, 70%, 50%, 0)`);
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.fillStyle = grad;
+                ctx.fill();
+            });
+
+            /* ── Memory cell grid ── */
+            const gap = W * 0.006;
+            const cellW = (W - gap * (MEM_COLS + 1)) / MEM_COLS;
+            const cellH = (H - gap * (MEM_ROWS + 1)) / MEM_ROWS;
+
+            memoryCells.forEach(cell => {
+                const alpha = Math.max(0, Math.sin(t * cell.speed + cell.phase)) * cell.max;
+                const x = gap + cell.c * (cellW + gap);
+                const y = gap + cell.r * (cellH + gap);
+                ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
+                ctx.fillRect(x, y, cellW, cellH);
+            });
+
+            requestAnimationFrame(drawFrame);
+        }
+        drawFrame();
     </script>
 
 </body>
