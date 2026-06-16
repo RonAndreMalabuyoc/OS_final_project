@@ -238,7 +238,7 @@ body.light .icon-sun {
     display: block;
 }
 
-/* ── Hero wrapper + aurora canvas ───────────────── */
+/* ── Hero wrapper + aurora canvas ─────────────────── */
 .hero-wrapper {
     position: relative;
     overflow: hidden;
@@ -247,19 +247,76 @@ body.light .icon-sun {
 
 #auroraCanvas {
     position: absolute;
-    left: 0;
-    right: 0;
-    top: -30%;
-    width: 100%;
-    height: 160%;
-    pointer-events: none;
-    z-index: 0;
-    will-change: transform;
     inset: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
     z-index: 0;
+    will-change: transform;
+}
+
+/* ── Nav duck icon ── */
+.nav-duck-icon {
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    animation: navDuckBob 3s ease-in-out infinite;
+    transform-origin: center bottom;
+}
+
+@keyframes navDuckBob {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-3deg);
+    }
+
+    50% {
+        transform: translateY(-3px) rotate(3deg);
+    }
+}
+
+/* ── Hero ghost duck decoration ── */
+.hero-duck-deco {
+    position: absolute;
+    right: 6%;
+    bottom: 12%;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.55;
+}
+
+.hero-duck-float {
+    animation: heroDuckBob 4s ease-in-out infinite;
+    filter: blur(0.5px);
+}
+
+.hero-duck-svg {
+    width: 200px;
+    height: auto;
+    display: block;
+}
+
+@keyframes heroDuckBob {
+
+    0%,
+    100% {
+        transform: translateY(0) rotate(-2deg);
+    }
+
+    35% {
+        transform: translateY(-12px) rotate(1.5deg);
+    }
+
+    65% {
+        transform: translateY(-6px) rotate(-1deg);
+    }
+}
+
+body:not(.light) .hero-duck-deco {
+    opacity: 0.18;
+    filter: brightness(1.6) saturate(1.2);
 }
 
 /* ── Hero ───────────────────────────────────────── */
@@ -513,35 +570,174 @@ body.light .hero p {
     border: 1px solid var(--border);
 }
 
-/* ── Stats bar ──────────────────────────────────── */
+/* ── Wave Divider (animated, hero → stats) ──────────── */
+.wave-divider {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    overflow: hidden;
+    /* Hero background shows through at the top of this band */
+    background: var(--bg-base);
+    margin-top: -1px;
+}
+
+.wave-divider .wave {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform-origin: center bottom;
+}
+
+/* Back wave: subtle warm tint for depth */
+.wave-back {
+    fill: var(--bg-surface);
+    opacity: 0.55;
+    animation: waveScrollBack 22s linear infinite;
+}
+
+/* Front wave: solid stats-section color — carves the wavy edge */
+.wave-front {
+    fill: var(--bg-surface);
+    opacity: 1;
+    animation: waveScrollFront 14s linear infinite reverse;
+}
+
+
+@keyframes waveScrollBack {
+    0% {
+        transform: scaleY(1) translateX(0);
+    }
+
+    50% {
+        transform: scaleY(1.08) translateX(1%);
+    }
+
+    100% {
+        transform: scaleY(1) translateX(0);
+    }
+}
+
+@keyframes waveScrollFront {
+    0% {
+        transform: scaleY(1) translateX(0);
+    }
+
+    33% {
+        transform: scaleY(0.96) translateX(-1.5%);
+    }
+
+    66% {
+        transform: scaleY(1.04) translateX(1.5%);
+    }
+
+    100% {
+        transform: scaleY(1) translateX(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .wave-back,
+    .wave-front {
+        animation: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .wave-divider {
+        height: 60px;
+    }
+}
+
+
+/* ── Stats bar ──────────────────────────────────────── */
 .stats-bar {
     display: flex;
-    gap: 2rem;
+    gap: 0;
     justify-content: center;
-    padding: 2rem;
-    margin: 0 2rem;
-    border-radius: var(--radius-lg);
+    padding: 2.5rem 2rem 3rem;
+    margin: 0;
     background: var(--bg-surface);
-    border: 1px solid var(--border);
     flex-wrap: wrap;
 }
 
 .stat-item {
     text-align: center;
+    padding: 0 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    border-right: 1px solid var(--border);
+}
+
+.stat-item:last-child {
+    border-right: none;
+}
+
+/* Icon above the number */
+.stat-icon {
+    color: var(--amber);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.1rem;
+}
+
+.stat-icon svg {
+    width: 22px;
+    height: 22px;
+    stroke: currentColor;
+    stroke-width: 2;
 }
 
 .stat-num {
-    font-family: var(--font-mono);
-    font-size: 24px;
-    font-weight: 500;
+    font-family: var(--font-ui);
+    font-size: 2rem;
+    font-weight: 700;
     color: var(--text-primary);
+    line-height: 1;
+    letter-spacing: -0.02em;
+}
+
+/* "Live" gets amber colour */
+.stat-item:last-child .stat-num {
+    color: var(--amber);
+    font-style: italic;
 }
 
 .stat-label {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 13px;
+    color: var(--text-secondary);
     margin-top: 2px;
+    font-weight: 400;
 }
+
+/* Light mode adjustments */
+body.light .stat-icon {
+    color: #b06000;
+}
+
+body.light .stat-item:last-child .stat-num {
+    color: #b06000;
+}
+
+@media (max-width: 640px) {
+    .stat-item {
+        padding: 0.75rem 1.5rem;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        width: 50%;
+    }
+
+    .stat-item:last-child {
+        border-bottom: none;
+    }
+}
+
 
 /* ── Footer ─────────────────────────────────────── */
 .footer {
@@ -1842,12 +2038,12 @@ body.light .btn-primary:hover {
     transition: all 0.25s ease;
 }
 
-.toggle-switch input:checked + .toggle-slider {
+.toggle-switch input:checked+.toggle-slider {
     background: var(--accent);
     border-color: var(--accent);
 }
 
-.toggle-switch input:checked + .toggle-slider::after {
+.toggle-switch input:checked+.toggle-slider::after {
     left: 23px;
     background: #fff;
 }
@@ -1915,6 +2111,7 @@ body.light .btn-primary:hover {
         opacity: 0;
         transform: scaleX(0.7);
     }
+
     to {
         opacity: 1;
         transform: scaleX(1);
@@ -1931,24 +2128,20 @@ body.light .mem-block-os {
 }
 
 .mem-block-hole {
-    background: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 4px,
-        rgba(255, 255, 255, 0.03) 4px,
-        rgba(255, 255, 255, 0.03) 8px
-    ), var(--bg-surface);
+    background: repeating-linear-gradient(45deg,
+            transparent,
+            transparent 4px,
+            rgba(255, 255, 255, 0.03) 4px,
+            rgba(255, 255, 255, 0.03) 8px), var(--bg-surface);
     border-right-color: rgba(255, 255, 255, 0.04);
 }
 
 body.light .mem-block-hole {
-    background: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 4px,
-        rgba(0, 0, 0, 0.04) 4px,
-        rgba(0, 0, 0, 0.04) 8px
-    ), var(--bg-surface);
+    background: repeating-linear-gradient(45deg,
+            transparent,
+            transparent 4px,
+            rgba(0, 0, 0, 0.04) 4px,
+            rgba(0, 0, 0, 0.04) 8px), var(--bg-surface);
 }
 
 .mem-block-job {
@@ -1967,9 +2160,9 @@ body.light .mem-block-hole {
     position: absolute;
     inset: 0;
     background: linear-gradient(135deg,
-        rgba(255, 255, 255, 0.16) 0%,
-        rgba(255, 255, 255, 0) 40%,
-        rgba(0, 0, 0, 0.10) 100%);
+            rgba(255, 255, 255, 0.16) 0%,
+            rgba(255, 255, 255, 0) 40%,
+            rgba(0, 0, 0, 0.10) 100%);
     pointer-events: none;
     z-index: 2;
     border-radius: inherit;
