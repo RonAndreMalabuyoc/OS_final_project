@@ -2012,7 +2012,10 @@ body.light .btn-primary:hover {
 /* ── Memory Config Grid ──────────────────────────── */
 .mem-config-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+        "total os user user"
+        "include-os compact user user";
     gap: 1rem;
     margin-bottom: 0.5rem;
 }
@@ -2029,6 +2032,31 @@ body.light .btn-primary:hover {
 
 .mem-config-card .cpu-input {
     max-width: 100%;
+}
+
+.mem-total-card {
+    grid-area: total;
+}
+
+.mem-os-card {
+    grid-area: os;
+}
+
+.mem-include-os-card {
+    grid-area: include-os;
+}
+
+.mem-compaction-card {
+    grid-area: compact;
+}
+
+.mem-user-card {
+    grid-area: user;
+    justify-content: center;
+}
+
+.mem-user-card .mem-computed-value {
+    font-size: clamp(26px, 4vw, 42px);
 }
 
 .mem-computed-value {
@@ -2533,6 +2561,10 @@ body.light .mem-block-os .mem-block-label {
 @media (max-width: 768px) {
     .mem-config-grid {
         grid-template-columns: repeat(2, 1fr);
+        grid-template-areas:
+            "total os"
+            "include-os compact"
+            "user user";
     }
 
     .mem-stats-row {
@@ -2563,6 +2595,12 @@ body.light .mem-block-os .mem-block-label {
 @media (max-width: 480px) {
     .mem-config-grid {
         grid-template-columns: 1fr;
+        grid-template-areas:
+            "total"
+            "os"
+            "include-os"
+            "compact"
+            "user";
     }
 
     .mem-stats-row {

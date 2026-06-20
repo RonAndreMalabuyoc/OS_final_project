@@ -103,15 +103,15 @@
         <section class="cpu-section" id="memoryConfigSection">
             <div class="section-label">Memory Configuration</div>
             <div class="mem-config-grid">
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-total-card">
                     <label class="cpu-label" for="totalMemory">Total Memory (KB)</label>
                     <input type="number" id="totalMemory" class="cpu-input" value="384" min="1" />
                 </div>
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-os-card">
                     <label class="cpu-label" for="osMemory">OS Reserved (KB)</label>
                     <input type="number" id="osMemory" class="cpu-input" value="64" min="1" />
                 </div>
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-include-os-card">
                     <label class="cpu-label mem-toggle-label" for="includeOsMemoryToggle">
                         <span>Include OS Memory</span>
                         <div class="toggle-switch">
@@ -120,11 +120,11 @@
                         </div>
                     </label>
                 </div>
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-user-card">
                     <div class="cpu-label">User Memory</div>
                     <div class="mem-computed-value" id="userMemoryDisplay">320 KB</div>
                 </div>
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-compaction-card">
                     <label class="cpu-label mem-toggle-label" for="compactionToggle">
                         <span>Compaction</span>
                         <div class="toggle-switch">
