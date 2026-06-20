@@ -2043,11 +2043,11 @@ body.light .btn-primary:hover {
 }
 
 .mem-include-os-card {
-    grid-area: include-os;
+    grid-area: compact;
 }
 
 .mem-compaction-card {
-    grid-area: compact;
+    grid-area: include-os;
 }
 
 .mem-user-card {
