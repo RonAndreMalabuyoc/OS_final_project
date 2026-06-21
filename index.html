@@ -4,770 +4,932 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OS Simulator</title>
-    <link rel="stylesheet" href="styles.css" />
+    <title>OS Simulator — Interactive OS Concepts</title>
+    <meta name="description" content="Step-by-step interactive simulations for CPU scheduling, memory management, virtual memory, and mass storage — built to make OS concepts click." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ── Reset ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        /* ── CSS Variables ── */
+        :root {
+            --bg-base: #0d1117;
+            --bg-surface: #161b22;
+            --bg-card: #21262d;
+            --border: rgba(255,255,255,0.08);
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #6c63ff;
+            --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        body.light {
+            --bg-base: #f0f0f5;
+            --bg-surface: #e4e4eb;
+            --bg-card: #ffffff;
+            --border: rgba(0,0,0,0.08);
+            --text-primary: #111114;
+            --text-secondary: #4a4a56;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-ui);
+            background: var(--bg-base);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        body {
+            padding-top: 28px;
+            padding-bottom: 96px;
+            user-select: none;
+        }
+
+        /* ══ macOS Top Menu Bar ══ */
+        .navbar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 28px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            background: rgba(22, 22, 26, 0.88);
+            backdrop-filter: blur(24px) saturate(1.8);
+            -webkit-backdrop-filter: blur(24px) saturate(1.8);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.88);
+        }
+        body.light .navbar {
+            background: rgba(236, 236, 240, 0.88);
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            color: rgba(0,0,0,0.85);
+        }
+        .nav-left { display: flex; align-items: center; gap: 2px; }
+        .nav-logo {
+            font-size: 16px; padding: 2px 8px;
+            border-radius: 4px; cursor: default;
+            transition: background 0.15s;
+        }
+        .nav-logo:hover { background: rgba(255,255,255,0.1); }
+        body.light .nav-logo:hover { background: rgba(0,0,0,0.07); }
+        .nav-links { display: flex; list-style: none; margin: 0; padding: 0; gap: 0; }
+        .nav-links li a {
+            display: block; padding: 3px 10px; border-radius: 4px;
+            text-decoration: none; color: inherit; font-size: 13px;
+            transition: background 0.15s; white-space: nowrap;
+        }
+        .nav-links li a:hover, .nav-links li a.active {
+            background: rgba(255,255,255,0.12);
+        }
+        body.light .nav-links li a:hover, body.light .nav-links li a.active {
+            background: rgba(0,0,0,0.07);
+        }
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+        .mac-status-group { display: flex; align-items: center; gap: 8px; }
+        .mac-status-icon {
+            display: flex; align-items: center; color: inherit;
+            opacity: 0.8; padding: 2px 4px; border-radius: 3px;
+            transition: background 0.15s, opacity 0.15s; cursor: default;
+        }
+        .mac-status-icon:hover { background: rgba(255,255,255,0.1); opacity: 1; }
+        body.light .mac-status-icon:hover { background: rgba(0,0,0,0.07); }
+        .mac-theme-toggle {
+            display: flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 4px; cursor: pointer;
+            border: none; background: none; color: inherit;
+            font-size: 12px; font-family: inherit; transition: background 0.15s;
+        }
+        .mac-theme-toggle:hover { background: rgba(255,255,255,0.1); }
+        body.light .mac-theme-toggle:hover { background: rgba(0,0,0,0.07); }
+        .mac-theme-toggle svg { width: 13px; height: 13px; }
+        .nav-clock {
+            font-size: 12px; font-weight: 500; letter-spacing: 0.02em;
+            opacity: 0.88; min-width: 60px; text-align: right;
+        }
+
+        /* ══ Scroll Progress ══ */
+        #scrollProgress {
+            position: fixed; top: 28px; left: 0; height: 2px;
+            background: linear-gradient(90deg, #4285f4, #34a853);
+            z-index: 9997; width: 0%; transition: width 0.1s;
+            pointer-events: none;
+        }
+
+        /* ══ Desktop Stage ══ */
+        .desktop-stage {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 28px - 96px);
+            overflow: hidden;
+            background: var(--bg-base);
+        }
+
+        /* Aurora canvas fills stage */
+        #auroraCanvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* particle canvas sits above aurora */
+        .particle-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ══ Floating OS Windows ══ */
+        .os-window {
+            position: absolute;
+            z-index: 10;
+            min-width: 220px;
+            background: rgba(22, 22, 26, 0.82);
+            backdrop-filter: blur(20px) saturate(1.6);
+            -webkit-backdrop-filter: blur(20px) saturate(1.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
+            transition: box-shadow 0.2s, opacity 0.3s, transform 0.3s;
+            overflow: hidden;
+        }
+        body.light .os-window {
+            background: rgba(255,255,255,0.82);
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .os-window.focused {
+            box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
+            z-index: 20;
+            border-color: rgba(255,255,255,0.18);
+        }
+        body.light .os-window.focused {
+            box-shadow: 0 16px 48px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .os-window.minimized {
+            opacity: 0;
+            transform: scale(0.85) translateY(20px);
+            pointer-events: none;
+        }
+
+        /* Title bar */
+        .win-titlebar {
+            height: 32px;
+            background: rgba(30,30,36,0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            cursor: move;
+            position: relative;
+        }
+        body.light .win-titlebar {
+            background: rgba(235,235,242,0.9);
+            border-bottom: 1px solid rgba(0,0,0,0.07);
+        }
+        .traffic-lights { display: flex; gap: 6px; align-items: center; }
+        .tl {
+            width: 12px; height: 12px; border-radius: 50%;
+            cursor: pointer; transition: filter 0.15s, transform 0.1s;
+            position: relative;
+        }
+        .tl:hover { filter: brightness(1.2); transform: scale(1.1); }
+        .tl-red   { background: #ff5f57; }
+        .tl-yellow{ background: #febc2e; }
+        .tl-green { background: #28c840; }
+        .win-title {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-size: 12px; font-weight: 600;
+            color: rgba(255,255,255,0.55);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            pointer-events: none; white-space: nowrap;
+        }
+        body.light .win-title { color: rgba(0,0,0,0.5); }
+
+        /* Window body */
+        .win-body {
+            padding: 24px 22px 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .win-module-icon { font-size: 36px; line-height: 1; }
+        .win-module-name {
+            font-size: 16px; font-weight: 700;
+            color: var(--text-primary); letter-spacing: -0.01em;
+        }
+        .win-module-desc {
+            font-size: 12px; color: var(--text-secondary);
+            line-height: 1.6; max-width: 260px;
+        }
+        .win-algo-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+        .win-algo-tag {
+            font-size: 10px; padding: 2px 7px;
+            border-radius: 99px;
+            background: rgba(108,99,255,0.15);
+            border: 1px solid rgba(108,99,255,0.3);
+            color: rgba(255,255,255,0.65);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        body.light .win-algo-tag {
+            background: rgba(108,99,255,0.1);
+            color: rgba(0,0,0,0.6);
+        }
+        .win-launch-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin-top: 6px; padding: 7px 14px; border-radius: 8px;
+            font-size: 12px; font-weight: 600; text-decoration: none;
+            color: #fff; transition: filter 0.15s, transform 0.1s;
+            cursor: pointer;
+        }
+        .win-launch-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+        /* Welcome window wider */
+        #win-welcome .win-body { align-items: center; text-align: center; padding: 32px 28px 28px; }
+        #win-welcome .win-title-big {
+            font-size: 26px; font-weight: 800; letter-spacing: -0.03em;
+            color: var(--text-primary); line-height: 1.2;
+        }
+        #win-welcome .win-subtitle {
+            font-size: 13px; color: var(--text-secondary);
+            line-height: 1.65; max-width: 320px;
+        }
+        .win-badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 99px; font-size: 11px;
+            font-weight: 500;
+            background: rgba(108,99,255,0.15);
+            border: 1px solid rgba(108,99,255,0.3);
+            color: rgba(108,99,255,0.9);
+        }
+        .win-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #6c63ff; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.6;transform:scale(0.9)} }
+
+        /* ══ macOS Taskbar (Dock) ══ */
+        .taskbar {
+            position: fixed;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 76px;
+            z-index: 9998;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            gap: 16px;
+            background: rgba(22, 22, 26, 0.45);
+            backdrop-filter: blur(28px) saturate(1.8);
+            -webkit-backdrop-filter: blur(28px) saturate(1.8);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        body.light .taskbar {
+            background: rgba(255, 255, 255, 0.45);
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.15);
+        }
+        .taskbar:hover {
+            height: 82px;
+            padding: 0 24px;
+            gap: 20px;
+        }
+        .taskbar-tab {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        body.light .taskbar-tab {
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .taskbar-tab:hover {
+            transform: scale(1.18) translateY(-8px);
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        }
+        body.light .taskbar-tab:hover {
+            background: rgba(0, 0, 0, 0.06);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        .dock-icon {
+            font-size: 32px;
+            line-height: 1;
+            transition: transform 0.2s;
+        }
+        .taskbar-tab:hover .dock-icon {
+            transform: scale(1.05);
+        }
+        .dock-dot {
+            width: 4px;
+            height: 4px;
+            background: transparent;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 5px;
+            transition: all 0.2s;
+        }
+        /* Active window shows primary color dot */
+        .taskbar-tab.active-tab .dock-dot {
+            background: #6c63ff;
+            box-shadow: 0 0 6px rgba(108, 99, 255, 0.8);
+        }
+        body.light .taskbar-tab.active-tab .dock-dot {
+            background: #111114;
+            box-shadow: none;
+        }
+        /* Running but not active tab gets a dimmer dot */
+        .taskbar-tab.running-tab:not(.active-tab) .dock-dot {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        body.light .taskbar-tab.running-tab:not(.active-tab) .dock-dot {
+            background: rgba(0, 0, 0, 0.35);
+        }
+        /* Tooltip above dock item */
+        .taskbar-tab::after {
+            content: attr(data-title);
+            position: absolute;
+            bottom: 72px;
+            background: rgba(22, 22, 26, 0.9);
+            color: #fff;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 6px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(6px);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 9999;
+        }
+        body.light .taskbar-tab::after {
+            background: rgba(255, 255, 255, 0.95);
+            color: #111114;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .taskbar-tab:hover::after {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- Scroll progress bar -->
+    <!-- Scroll progress -->
     <div id="scrollProgress"></div>
 
-    <!-- Back to top -->
-    <button id="backToTop" aria-label="Back to top">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="18 15 12 9 6 15" />
-        </svg>
-    </button>
-
-    <!-- Navbar -->
+    <!-- ══ macOS Menu Bar ══ -->
     <nav class="navbar">
         <div class="nav-left">
-            <div class="nav-logo">
-                <span class="nav-duck-icon" aria-hidden="true">🦆</span>
-                OS Simulator
-            </div>
+            <div class="nav-logo" title="System Menu">🦆</div>
             <ul class="nav-links">
-                <li><a href="index.html" class="active">Home</a></li>
-                <li><a href="pages/cpu.html">CPU Scheduling</a></li>
+                <li><a href="index.html" class="active">Simulator</a></li>
+                <li><a href="pages/cpu.html">CPU</a></li>
                 <li><a href="pages/memory.html">Memory</a></li>
-                <li><a href="pages/virtual.html">Virtual Memory</a></li>
+                <li><a href="pages/virtual.html">Virtual</a></li>
                 <li><a href="pages/storage.html">Storage</a></li>
             </ul>
         </div>
 
         <div class="nav-right">
+            <div class="mac-status-group">
+                <!-- Wi-Fi Icon -->
+                <span class="mac-status-icon" title="Wi-Fi (Connected)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.5" fill="currentColor"/>
+                    </svg>
+                </span>
+                <!-- Sound Icon -->
+                <span class="mac-status-icon" title="Sound (100%)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                </span>
+                <!-- Battery Icon -->
+                <span class="mac-status-icon" title="Battery (Charged)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <rect x="2" y="7" width="16" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/>
+                        <rect x="4" y="9" width="10" height="6" rx="1" fill="currentColor" opacity="0.5"/>
+                    </svg>
+                </span>
+                <!-- Theme Toggle (Control Center) -->
+                <button class="mac-theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+            </div>
             <div class="nav-clock" id="navClock">00:00:00</div>
-            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-                <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-                </svg>
-                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="5" />
-                    <line x1="12" y1="1" x2="12" y2="3" />
-                    <line x1="12" y1="21" x2="12" y2="23" />
-                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                    <line x1="1" y1="12" x2="3" y2="12" />
-                    <line x1="21" y1="12" x2="23" y2="12" />
-                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                </svg>
-            </button>
         </div>
     </nav>
 
+    <!-- ══ Desktop Stage ══ -->
+    <div class="desktop-stage" id="desktopStage">
 
-    <!-- Hero -->
-    <div class="hero-wrapper">
+        <!-- Aurora background canvas -->
         <canvas id="auroraCanvas"></canvas>
 
-        <section class="hero">
-            <div class="hero-inner">
-                <div class="hero-stickers" aria-hidden="true">
-                    <div class="sticker s1">🦆 OS Visualized</div>
-                    <div class="sticker s2">⚙️ CPU Scheduling</div>
-                    <div class="sticker s3">🧠 Memory</div>
-                    <div class="sticker s4">📄 Virtual Memory</div>
-                    <div class="sticker s5">💾 Storage</div>
-                    <div class="sticker s6">📊 Live Gantt</div>
-                    <div class="sticker s7">13+ Algorithms</div>
+        <!-- ── Welcome / Home Window ── -->
+        <div class="os-window focused" id="win-welcome"
+            style="top: 55px; left: calc(50% - 200px); width: 400px;">
+            <div class="win-titlebar" data-window="win-welcome">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-welcome" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-welcome" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-welcome" title="Maximize"></div>
                 </div>
-                <div class="hero-text">
-                    <div class="hero-badge">
-                        <span>●</span> Interactive Simulations
-                    </div>
-                    <h1 id="typeTarget"><span class="typewriter-cursor" id="cursor"></span></h1>
-                    <p>
-                        Step-by-step simulations for CPU scheduling, memory management,
-                        virtual memory, and mass storage — built to make OS concepts click.
-                    </p>
-                    <div class="hero-actions">
-                        <a href="pages/cpu.html" class="btn btn-primary">Start Simulating →</a>
-                        <a href="#modules" class="btn btn-ghost">Browse Modules</a>
-                    </div>
-                </div>
+                <div class="win-title">OS Simulator</div>
             </div>
-            <div class="scroll-hint" aria-label="Scroll down">
-                <span class="scroll-hint-text">scroll down</span>
-                <div class="scroll-hint-duck">🦆</div>
-                <div class="scroll-hint-arrow">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="6 9 12 15 18 9" />
-                    </svg>
+            <div class="win-body">
+                <div class="win-badge"><span class="win-badge-dot"></span> Interactive Simulations</div>
+                <div class="win-title-big">OS Concepts<br>Visualized 🦆</div>
+                <div class="win-subtitle">
+                    Step-by-step simulations for CPU scheduling, memory management, virtual memory, and mass storage — built to make OS concepts click.
                 </div>
-            </div>
-        </section>
-
-        <div class="wave-divider" aria-hidden="true">
-            <!-- back wave: slower, going opposite direction -->
-            <svg class="wave-back" viewBox="0 0 2880 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M0,50 C180,10 360,90 540,50 C720,10 900,90 1080,50 C1260,10 1440,90 1620,50 C1800,10 1980,90 2160,50 C2340,10 2520,90 2700,50 C2790,30 2840,60 2880,50 L2880,100 L0,100 Z" />
-            </svg>
-            <!-- front wave: faster -->
-            <svg class="wave-front" viewBox="0 0 2880 100" preserveAspectRatio="none"
-                xmlns="http://www.w3.org/2000/svg">
-                <path
-                    d="M0,60 C180,20 360,95 540,55 C720,15 900,95 1080,60 C1260,20 1440,95 1620,60 C1800,20 1980,95 2160,60 C2340,20 2520,95 2700,60 C2790,35 2840,75 2880,60 L2880,100 L0,100 Z" />
-            </svg>
-        </div>
-
-
-        <!-- Stats -->
-        <div class="stats-bar">
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <rect x="3" y="3" width="7" height="7" />
-                        <rect x="14" y="3" width="7" height="7" />
-                        <rect x="3" y="14" width="7" height="7" />
-                        <rect x="14" y="14" width="7" height="7" />
-                    </svg>
-                </div>
-                <div class="stat-num">4</div>
-                <div class="stat-label">Modules</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <line x1="8" y1="6" x2="21" y2="6" />
-                        <line x1="8" y1="12" x2="21" y2="12" />
-                        <line x1="8" y1="18" x2="21" y2="18" />
-                        <line x1="3" y1="6" x2="3.01" y2="6" />
-                        <line x1="3" y1="12" x2="3.01" y2="12" />
-                        <line x1="3" y1="18" x2="3.01" y2="18" />
-                    </svg>
-                </div>
-                <div class="stat-num">13+</div>
-                <div class="stat-label">Algorithms</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <rect x="4" y="4" width="16" height="16" rx="2" />
-                        <rect x="9" y="9" width="6" height="6" />
-                        <line x1="9" y1="2" x2="9" y2="4" />
-                        <line x1="15" y1="2" x2="15" y2="4" />
-                        <line x1="9" y1="20" x2="9" y2="22" />
-                        <line x1="15" y1="20" x2="15" y2="22" />
-                        <line x1="2" y1="9" x2="4" y2="9" />
-                        <line x1="2" y1="15" x2="4" y2="15" />
-                        <line x1="20" y1="9" x2="22" y2="9" />
-                        <line x1="20" y1="15" x2="22" y2="15" />
-                    </svg>
-                </div>
-                <div class="stat-num">5</div>
-                <div class="stat-label">CPU Schedulers</div>
-            </div>
-            <div class="stat-item">
-                <div class="stat-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-                    </svg>
-                </div>
-                <div class="stat-num">Live</div>
-                <div class="stat-label">Gantt Animation</div>
+                <a href="pages/cpu.html" class="win-launch-btn" style="background: linear-gradient(135deg,#6c63ff,#4285f4);">
+                    Start Simulating →
+                </a>
             </div>
         </div>
 
-        <!-- Modules Showcase -->
-        <section class="modules-showcase" id="modules">
-
-            <!-- Module 04: CPU -->
-            <div class="module-panel" data-module="cpu" style="--panel-accent:#6c63ff;">
-                <div class="panel-bg">
-                    <canvas class="panel-canvas" data-anim="cpu"></canvas>
+        <!-- ── CPU Scheduling Window ── -->
+        <div class="os-window" id="win-cpu"
+            style="top: 55px; left: calc(50% + 230px); width: 300px;">
+            <div class="win-titlebar" data-window="win-cpu">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-cpu"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-cpu"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-cpu"></div>
                 </div>
-                <div class="panel-overlay"></div>
-                <div class="panel-content">
-                    <div class="panel-meta">
-                        <span class="panel-num">Module 04</span>
-                        <span class="panel-status status-ready">Ready</span>
-                    </div>
-                    <div class="panel-icon">⚙️</div>
-                    <h2 class="panel-title">CPU Scheduling</h2>
-                    <p class="panel-desc">
-                        Simulate process scheduling with animated Gantt charts and
-                        real-time waiting &amp; turnaround time stats.
-                    </p>
-                    <div class="panel-algorithms">
-                        <span class="algo-tag">FCFS</span>
-                        <span class="algo-tag">SJF</span>
-                        <span class="algo-tag">SRTF</span>
-                        <span class="algo-tag">Round Robin</span>
-                        <span class="algo-tag">Priority</span>
-                    </div>
-                    <a href="pages/cpu.html" class="btn btn-primary panel-btn">Open Module →</a>
-                </div>
+                <div class="win-title">CPU Scheduling</div>
             </div>
-
-            <!-- Module 05: Memory -->
-            <div class="module-panel" data-module="memory" style="--panel-accent:#00c8e0;">
-                <div class="panel-bg">
-                    <canvas class="panel-canvas" data-anim="memory"></canvas>
+            <div class="win-body">
+                <div class="win-module-icon">⚙️</div>
+                <div class="win-module-name">CPU Scheduling</div>
+                <div class="win-module-desc">Animated Gantt charts and real-time waiting &amp; turnaround time stats.</div>
+                <div class="win-algo-tags">
+                    <span class="win-algo-tag">FCFS</span>
+                    <span class="win-algo-tag">SJF</span>
+                    <span class="win-algo-tag">SRTF</span>
+                    <span class="win-algo-tag">RR</span>
+                    <span class="win-algo-tag">Priority</span>
                 </div>
-                <div class="panel-overlay"></div>
-                <div class="panel-content">
-                    <div class="panel-meta">
-                        <span class="panel-num">Module 05</span>
-                        <span class="panel-status status-ready">Ready</span>
-                    </div>
-                    <div class="panel-icon">🧠</div>
-                    <h2 class="panel-title">Memory Management</h2>
-                    <p class="panel-desc">
-                        Explore contiguous allocation with MVT variable partitions and
-                        visual memory maps — First Fit, Next Fit, Best Fit, Worst Fit.
-                    </p>
-                    <div class="panel-algorithms">
-                        <span class="algo-tag">First Fit</span>
-                        <span class="algo-tag">Next Fit</span>
-                        <span class="algo-tag">Best Fit</span>
-                        <span class="algo-tag">Worst Fit</span>
-                    </div>
-                    <a href="pages/memory.html" class="btn btn-primary panel-btn">Open Module →</a>
-                </div>
+                <a href="pages/cpu.html" class="win-launch-btn" style="background:rgba(108,99,255,0.85);">
+                    Open →
+                </a>
             </div>
+        </div>
 
-
-            <!-- Module 06: Virtual -->
-            <div class="module-panel" data-module="virtual" style="--panel-accent:#f0a500;">
-                <div class="panel-bg">
-                    <canvas class="panel-canvas" data-anim="virtual"></canvas>
+        <!-- ── Memory Management Window ── -->
+        <div class="os-window" id="win-memory"
+            style="top: 55px; left: calc(50% - 560px); width: 300px;">
+            <div class="win-titlebar" data-window="win-memory">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-memory"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-memory"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-memory"></div>
                 </div>
-                <div class="panel-overlay"></div>
-                <div class="panel-content">
-                    <div class="panel-meta">
-                        <span class="panel-num">Module 06</span>
-                        <span class="panel-status status-ready">Ready</span>
-                    </div>
-                    <div class="panel-icon">📄</div>
-                    <h2 class="panel-title">Virtual Memory</h2>
-                    <p class="panel-desc">
-                        Visualize page tables, page faults, and replacement policies
-                        like FIFO, LRU, and Optimal.
-                    </p>
-                    <div class="panel-algorithms">
-                        <span class="algo-tag">FIFO</span>
-                        <span class="algo-tag">LRU</span>
-                        <span class="algo-tag">Optimal</span>
-                        <span class="algo-tag">Clock</span>
-                    </div>
-                    <a href="pages/virtual.html" class="btn btn-primary panel-btn">Open Module →</a>
-                </div>
+                <div class="win-title">Memory Management</div>
             </div>
-
-            <!-- Module 07: Storage -->
-            <div class="module-panel" data-module="storage" style="--panel-accent:#34c77b;">
-                <div class="panel-bg">
-                    <canvas class="panel-canvas" data-anim="storage"></canvas>
+            <div class="win-body">
+                <div class="win-module-icon">🧠</div>
+                <div class="win-module-name">Memory Management</div>
+                <div class="win-module-desc">MVT variable partitions and visual memory maps with allocation policies.</div>
+                <div class="win-algo-tags">
+                    <span class="win-algo-tag">First Fit</span>
+                    <span class="win-algo-tag">Best Fit</span>
+                    <span class="win-algo-tag">Worst Fit</span>
                 </div>
-                <div class="panel-overlay"></div>
-                <div class="panel-content">
-                    <div class="panel-meta">
-                        <span class="panel-num">Module 07</span>
-                        <span class="panel-status status-ready">Ready</span>
-                    </div>
-                    <div class="panel-icon">💾</div>
-                    <h2 class="panel-title">Mass Storage</h2>
-                    <p class="panel-desc">
-                        Simulate disk scheduling with seek time visualization across
-                        SSTF, SCAN, and C-SCAN algorithms.
-                    </p>
-                    <div class="panel-algorithms">
-                        <span class="algo-tag">FCFS</span>
-                        <span class="algo-tag">SSTF</span>
-                        <span class="algo-tag">SCAN</span>
-                        <span class="algo-tag">C-SCAN</span>
-                    </div>
-                    <a href="pages/storage.html" class="btn btn-primary panel-btn">Open Module →</a>
-                </div>
+                <a href="pages/memory.html" class="win-launch-btn" style="background:rgba(234,67,53,0.85);">
+                    Open →
+                </a>
             </div>
+        </div>
 
-        </section>
+        <!-- ── Virtual Memory Window ── -->
+        <div class="os-window" id="win-virtual"
+            style="top: 370px; left: calc(50% - 560px); width: 300px;">
+            <div class="win-titlebar" data-window="win-virtual">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-virtual"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-virtual"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-virtual"></div>
+                </div>
+                <div class="win-title">Virtual Memory</div>
+            </div>
+            <div class="win-body">
+                <div class="win-module-icon">📄</div>
+                <div class="win-module-name">Virtual Memory</div>
+                <div class="win-module-desc">Page tables, page faults, and replacement policies visualization.</div>
+                <div class="win-algo-tags">
+                    <span class="win-algo-tag">FIFO</span>
+                    <span class="win-algo-tag">LRU</span>
+                    <span class="win-algo-tag">Optimal</span>
+                    <span class="win-algo-tag">Clock</span>
+                </div>
+                <a href="pages/virtual.html" class="win-launch-btn" style="background:rgba(251,188,5,0.85);color:#000;">
+                    Open →
+                </a>
+            </div>
+        </div>
 
-        <footer class="footer">
-            OS_final_project &nbsp;·&nbsp; Module 04–07 Simulations
-        </footer>
+        <!-- ── Mass Storage Window ── -->
+        <div class="os-window" id="win-storage"
+            style="top: 370px; left: calc(50% + 230px); width: 300px;">
+            <div class="win-titlebar" data-window="win-storage">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-storage"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-storage"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-storage"></div>
+                </div>
+                <div class="win-title">Mass Storage</div>
+            </div>
+            <div class="win-body">
+                <div class="win-module-icon">💾</div>
+                <div class="win-module-name">Mass Storage</div>
+                <div class="win-module-desc">Disk scheduling with seek-track visualization across multiple algorithms.</div>
+                <div class="win-algo-tags">
+                    <span class="win-algo-tag">FCFS</span>
+                    <span class="win-algo-tag">SSTF</span>
+                    <span class="win-algo-tag">SCAN</span>
+                    <span class="win-algo-tag">C-SCAN</span>
+                </div>
+                <a href="pages/storage.html" class="win-launch-btn" style="background:rgba(52,168,83,0.85);">
+                    Open →
+                </a>
+            </div>
+        </div>
 
-        <script>
-            /* ── Scroll progress bar + back to top ── */
-            const progressBar = document.getElementById('scrollProgress');
-            const backToTop = document.getElementById('backToTop');
-            window.addEventListener('scroll', () => {
-                const scrolled = window.scrollY;
-                const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-                progressBar.style.width = (scrolled / maxScroll * 100) + '%';
-                backToTop.classList.toggle('visible', scrolled > 300);
+    </div>
 
-                // Parallax: aurora drifts at 30% of scroll speed
-                canvas.style.transform = `translateY(${scrolled * 0.3}px)`;
-            }, { passive: true });
+    <!-- ══ macOS Taskbar (Dock) ══ -->
+    <div class="taskbar" id="taskbar">
+        <div class="taskbar-tab active-tab running-tab" data-target="win-welcome" id="tab-win-welcome" data-title="OS Simulator">
+            <span class="dock-icon">🦆</span>
+            <span class="dock-dot"></span>
+        </div>
+        <a class="taskbar-tab running-tab" href="pages/cpu.html" data-target="win-cpu" id="tab-win-cpu" data-title="CPU Scheduling">
+            <span class="dock-icon">⚙️</span>
+            <span class="dock-dot"></span>
+        </a>
+        <a class="taskbar-tab running-tab" href="pages/memory.html" data-target="win-memory" id="tab-win-memory" data-title="Memory Management">
+            <span class="dock-icon">🧠</span>
+            <span class="dock-dot"></span>
+        </a>
+        <a class="taskbar-tab running-tab" href="pages/virtual.html" data-target="win-virtual" id="tab-win-virtual" data-title="Virtual Memory">
+            <span class="dock-icon">📄</span>
+            <span class="dock-dot"></span>
+        </a>
+        <a class="taskbar-tab running-tab" href="pages/storage.html" data-target="win-storage" id="tab-win-storage" data-title="Mass Storage">
+            <span class="dock-icon">💾</span>
+            <span class="dock-dot"></span>
+        </a>
+    </div>
 
-            backToTop.addEventListener('click', () => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+    <script>
+        /* ══ Clock ══ */
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('navClock').textContent = `${h}:${m}:${s}`;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        /* ══ Theme Toggle ══ */
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') document.body.classList.add('light');
+
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+        });
+
+        /* ══ Window Dragging ══ */
+        let dragWin = null, dragOffX = 0, dragOffY = 0;
+
+        document.querySelectorAll('.win-titlebar').forEach(bar => {
+            bar.addEventListener('mousedown', e => {
+                if (e.target.classList.contains('tl')) return;
+                const win = document.getElementById(bar.dataset.window);
+                if (!win) return;
+                // Focus
+                document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
+                win.classList.add('focused');
+                // Bring to front
+                document.querySelectorAll('.os-window').forEach(w => w.style.zIndex = '10');
+                win.style.zIndex = '20';
+                // Start drag
+                dragWin = win;
+                dragOffX = e.clientX - win.getBoundingClientRect().left;
+                dragOffY = e.clientY - win.getBoundingClientRect().top;
+                e.preventDefault();
             });
+        });
 
-            /* ── Theme toggle ── */
-            const btn = document.getElementById('themeToggle');
-            const body = document.body;
-            if (localStorage.getItem('theme') === 'light') body.classList.add('light');
-            btn.addEventListener('click', () => {
-                body.classList.toggle('light');
-                localStorage.setItem('theme', body.classList.contains('light') ? 'light' : 'dark');
+        document.addEventListener('mousemove', e => {
+            if (!dragWin) return;
+            const stage = document.getElementById('desktopStage');
+            const stageRect = stage.getBoundingClientRect();
+            let newLeft = e.clientX - stageRect.left - dragOffX;
+            let newTop  = e.clientY - stageRect.top  - dragOffY;
+            // Clamp within stage
+            newLeft = Math.max(0, Math.min(newLeft, stageRect.width  - dragWin.offsetWidth));
+            newTop  = Math.max(0, Math.min(newTop,  stageRect.height - dragWin.offsetHeight));
+            dragWin.style.left = newLeft + 'px';
+            dragWin.style.top  = newTop  + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { dragWin = null; });
+
+        /* ══ Traffic Light Buttons ══ */
+        document.querySelectorAll('.tl').forEach(tl => {
+            tl.addEventListener('click', e => {
+                e.stopPropagation();
+                const target = tl.dataset.target;
+                const action = tl.dataset.action;
+                const win = document.getElementById(target);
+                const tab = document.getElementById('tab-' + target);
+                if (!win) return;
+
+                if (action === 'close' || action === 'minimize') {
+                    win.classList.add('minimized');
+                    win.classList.remove('focused');
+                    if (tab) {
+                        tab.classList.remove('active-tab');
+                        tab.classList.remove('running-tab');
+                    }
+                } else if (action === 'maximize') {
+                    const stage = document.getElementById('desktopStage');
+                    win.style.left  = '8px';
+                    win.style.top   = '8px';
+                    win.style.width = (stage.offsetWidth - 16) + 'px';
+                }
             });
+        });
 
-            /* ── Scroll animations ── */
-            const panels = document.querySelectorAll('.module-panel');
-
-            const panelObserver = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    // toggle so the animation replays on every enter/exit, both directions
-                    entry.target.classList.toggle('in-view', entry.isIntersecting);
-                });
-            }, {
-                threshold: 0.35
-            });
-
-            panels.forEach(panel => panelObserver.observe(panel));
-
-            /* ── Panel background animations ─────────────────── */
-            (function () {
-
-                function hexToRgb(hex) {
-                    hex = hex.trim().replace('#', '');
-                    if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
-                    const num = parseInt(hex, 16);
-                    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+        /* ══ Taskbar Tabs — Minimize / Restore ══ */
+        document.querySelectorAll('.taskbar-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                // If it is a redirection link, allow default anchor behavior
+                if (tab.tagName.toLowerCase() === 'a') {
+                    return;
                 }
 
-                /* CPU: scrolling Gantt-style lanes */
-                function drawCPU(state) {
-                    const { ctx, canvas, t, rgb } = state;
-                    const W = canvas.width, H = canvas.height;
-                    ctx.clearRect(0, 0, W, H);
+                const win = document.getElementById(tab.dataset.target);
+                if (!win) return;
 
-                    const lanes = 3;
-                    const laneH = H / (lanes + 1);
-                    const seq = [120, 80, 160, 60, 100, 140, 70];
-
-                    for (let lane = 0; lane < lanes; lane++) {
-                        const y = laneH * (lane + 0.7);
-                        const blockH = laneH * 0.6;
-                        const speed = (0.4 + lane * 0.25) * (W / 800);
-                        const offset = (t * speed) % (W + 300);
-
-                        let x = -offset;
-                        let i = 0;
-                        while (x < W + 300) {
-                            const w = seq[(i + lane * 2) % seq.length] * (W / 800);
-                            const alpha = 0.10 + ((i + lane) % 3) * 0.07;
-                            ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
-                            ctx.fillRect(x, y, w - 6, blockH);
-                            x += w;
-                            i++;
-                        }
-                    }
-                }
-
-                /* Memory: cells fading in and out */
-                function initMemoryCells(state) {
-                    const cols = 14, rows = 6;
-                    state.cells = [];
-                    for (let r = 0; r < rows; r++) {
-                        for (let c = 0; c < cols; c++) {
-                            state.cells.push({
-                                r, c,
-                                phase: Math.random() * Math.PI * 2,
-                                speed: 0.01 + Math.random() * 0.02,
-                                max: 0.15 + Math.random() * 0.3,
-                            });
-                        }
-                    }
-                    state.cols = cols; state.rows = rows;
-                }
-
-                function drawMemory(state) {
-                    const { ctx, canvas, t, rgb } = state;
-                    const W = canvas.width, H = canvas.height;
-                    ctx.clearRect(0, 0, W, H);
-                    if (!state.cells) initMemoryCells(state);
-
-                    const gap = W * 0.006;
-                    const cellW = (W - gap * (state.cols + 1)) / state.cols;
-                    const cellH = (H - gap * (state.rows + 1)) / state.rows;
-
-                    state.cells.forEach(cell => {
-                        const alpha = Math.max(0, Math.sin(t * cell.speed + cell.phase)) * cell.max;
-                        const x = gap + cell.c * (cellW + gap);
-                        const y = gap + cell.r * (cellH + gap);
-                        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
-                        ctx.fillRect(x, y, cellW, cellH);
-                    });
-                }
-
-                /* Virtual Memory: page table grid with occasional "page fault" flashes */
-                function initVirtualCells(state) {
-                    const cols = 18, rows = 8;
-                    state.vcells = [];
-                    for (let r = 0; r < rows; r++) {
-                        for (let c = 0; c < cols; c++) {
-                            state.vcells.push({ r, c, flash: 0 });
-                        }
-                    }
-                    state.vcols = cols; state.vrows = rows;
-                }
-
-                function drawVirtual(state) {
-                    const { ctx, canvas, rgb } = state;
-                    const W = canvas.width, H = canvas.height;
-                    ctx.clearRect(0, 0, W, H);
-                    if (!state.vcells) initVirtualCells(state);
-
-                    const gap = W * 0.004;
-                    const cellW = (W - gap * (state.vcols + 1)) / state.vcols;
-                    const cellH = (H - gap * (state.vrows + 1)) / state.vrows;
-
-                    if (Math.random() < 0.04) {
-                        const cell = state.vcells[Math.floor(Math.random() * state.vcells.length)];
-                        cell.flash = 1;
-                    }
-
-                    state.vcells.forEach(cell => {
-                        const alpha = 0.05 + cell.flash * 0.55;
-                        ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha})`;
-                        const x = gap + cell.c * (cellW + gap);
-                        const y = gap + cell.r * (cellH + gap);
-                        ctx.fillRect(x, y, cellW, cellH);
-
-                        if (cell.flash > 0) {
-                            cell.flash *= 0.92;
-                            if (cell.flash < 0.01) cell.flash = 0;
-                        }
-                    });
-                }
-
-                /* Storage: disk platter with sweeping seek arm */
-                function drawStorage(state) {
-                    const { ctx, canvas, t, rgb } = state;
-                    const W = canvas.width, H = canvas.height;
-                    ctx.clearRect(0, 0, W, H);
-
-                    const cx = W * 0.5, cy = H * 0.5;
-                    const maxR = Math.min(W, H) * 0.42;
-                    const tracks = 6;
-
-                    for (let i = 1; i <= tracks; i++) {
-                        const r = (maxR / tracks) * i;
-                        ctx.beginPath();
-                        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-                        ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${0.08 + i * 0.01})`;
-                        ctx.lineWidth = Math.max(1, W * 0.0015);
-                        ctx.stroke();
-                    }
-
-                    const sweep = Math.sin(t * 0.02) * (Math.PI * 0.6);
-                    const angle = -Math.PI / 2 + sweep;
-
-                    ctx.beginPath();
-                    ctx.moveTo(cx, cy);
-                    ctx.lineTo(cx + Math.cos(angle) * maxR, cy + Math.sin(angle) * maxR);
-                    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.55)`;
-                    ctx.lineWidth = Math.max(1.5, W * 0.002);
-                    ctx.stroke();
-
-                    const trackIndex = Math.floor((Math.sin(t * 0.02) * 0.5 + 0.5) * (tracks - 1)) + 1;
-                    const headR = (maxR / tracks) * trackIndex;
-                    ctx.beginPath();
-                    ctx.arc(cx + Math.cos(angle) * headR, cy + Math.sin(angle) * headR, W * 0.006, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.9)`;
-                    ctx.fill();
-
-                    ctx.beginPath();
-                    ctx.arc(cx, cy, W * 0.01, 0, Math.PI * 2);
-                    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.5)`;
-                    ctx.fill();
-                }
-
-                const ANIMATIONS = {
-                    cpu: drawCPU,
-                    memory: drawMemory,
-                    virtual: drawVirtual,
-                    storage: drawStorage,
-                };
-
-                const states = [];
-
-                document.querySelectorAll('.panel-canvas').forEach(canvasEl => {
-                    const type = canvasEl.dataset.anim;
-                    const fn = ANIMATIONS[type];
-                    if (!fn) return;
-
-                    const panel = canvasEl.closest('.module-panel');
-                    const accent = getComputedStyle(panel).getPropertyValue('--panel-accent').trim() || '#6c63ff';
-
-                    const state = {
-                        canvas: canvasEl,
-                        ctx: canvasEl.getContext('2d'),
-                        panel,
-                        type,
-                        rgb: hexToRgb(accent),
-                        t: 0,
-                    };
-
-                    function resizeCanvas() {
-                        const rect = canvasEl.getBoundingClientRect();
-                        canvasEl.width = rect.width * 2;
-                        canvasEl.height = rect.height * 2;
-                    }
-                    resizeCanvas();
-                    window.addEventListener('resize', resizeCanvas);
-
-                    states.push(state);
-                });
-
-                function loop() {
-                    states.forEach(state => {
-                        if (!state.panel.classList.contains('in-view')) return;
-                        state.t += 1;
-                        ANIMATIONS[state.type](state);
-                    });
-                    requestAnimationFrame(loop);
-                }
-                loop();
-
-            })();
-            const cards = document.querySelectorAll('.module-card');
-
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    const card = entry.target;
-                    if (entry.isIntersecting) {
-                        card.classList.remove('animate-out');
-                        card.classList.add('animate-in');
-                    } else {
-                        card.classList.remove('animate-in');
-                        card.classList.add('animate-out');
-                    }
-                });
-            }, {
-                threshold: 0.15,      /* card must be 15% visible to trigger */
-                rootMargin: '0px 0px -40px 0px'
-            });
-
-            /* stagger the in-animation per card index */
-            cards.forEach((card, i) => {
-                card.style.animationDelay = `${i * 120}ms`;
-                observer.observe(card);
-            });
-
-            /* ── Typewriter ── */
-            const typeTarget = document.getElementById('typeTarget');
-            const cursor = document.getElementById('cursor');
-
-            // Split into two lines; second line gets accent color
-            const line1 = 'Operating Systems';
-            const line2 = 'Visualized';
-            const full = line1 + '|' + line2; // '|' = line break marker
-            let charIndex = 0;
-            let passedBreak = false;
-
-            // Build h1 structure: span for line1, br, span.accent for line2, cursor
-            const span1 = document.createElement('span');
-            const br = document.createElement('br');
-            const span2 = document.createElement('span');
-            span2.classList.add('typewriter-accent');
-            span2.style.color = 'var(--accent)';
-            typeTarget.appendChild(span1);
-            typeTarget.appendChild(cursor);
-
-            function type() {
-                if (charIndex < full.length) {
-                    const ch = full[charIndex];
-                    if (ch === '|') {
-                        // insert line break and swap cursor into span2
-                        typeTarget.insertBefore(br, cursor);
-                        typeTarget.insertBefore(span2, cursor);
-                        passedBreak = true;
-                    } else {
-                        if (passedBreak) span2.textContent += ch;
-                        else span1.textContent += ch;
-                    }
-                    charIndex++;
-                    setTimeout(type, 75 + Math.random() * 35);
+                if (win.classList.contains('minimized')) {
+                    // Restore
+                    win.classList.remove('minimized');
+                    document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
+                    win.classList.add('focused');
+                    document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
+                    tab.classList.add('active-tab');
+                    tab.classList.add('running-tab');
                 } else {
-                    cursor.classList.add('done');
+                    // Minimize
+                    win.classList.add('minimized');
+                    win.classList.remove('focused');
+                    tab.classList.remove('active-tab');
+                    tab.classList.remove('running-tab');
                 }
-            }
+            });
+        });
 
-            setTimeout(type, 500);
+        /* ══ Window Focus on Click ══ */
+        document.querySelectorAll('.os-window').forEach(win => {
+            win.addEventListener('mousedown', () => {
+                document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
+                win.classList.add('focused');
+                // Update taskbar active tab
+                const tabId = 'tab-' + win.id;
+                document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
+                const tab = document.getElementById(tabId);
+                if (tab && !win.classList.contains('minimized')) {
+                    tab.classList.add('active-tab');
+                    tab.classList.add('running-tab');
+                }
+            });
+        });
 
-            /* ── Aurora canvas ── */
+        /* ══ Aurora Canvas ══ */
+        (function () {
             const canvas = document.getElementById('auroraCanvas');
             const ctx = canvas.getContext('2d');
-            let W, H, t = 0;
+            let W, H;
 
             function resize() {
-                W = canvas.width = canvas.offsetWidth;
-                H = canvas.height = canvas.offsetHeight;
+                const stage = document.getElementById('desktopStage');
+                W = canvas.width  = stage.offsetWidth;
+                H = canvas.height = stage.offsetHeight;
             }
             window.addEventListener('resize', resize);
             resize();
 
             const orbs = [
-                { x: 0.20, y: 0.40, r: 0.55, spd: 0.00018, phase: 0.00, hue: 260 },
-                { x: 0.75, y: 0.55, r: 0.50, spd: 0.00022, phase: 2.10, hue: 195 },
-                { x: 0.50, y: 0.20, r: 0.45, spd: 0.00015, phase: 4.20, hue: 230 },
-                { x: 0.85, y: 0.25, r: 0.38, spd: 0.00028, phase: 1.05, hue: 280 },
-                { x: 0.10, y: 0.75, r: 0.42, spd: 0.00020, phase: 3.30, hue: 185 },
+                { x: 0.25, y: 0.35, r: 0.38, hue: 215, spd: 0.00018, phase: 0.00 },
+                { x: 0.72, y: 0.55, r: 0.34, hue: 265, spd: 0.00023, phase: 2.10 },
+                { x: 0.50, y: 0.75, r: 0.30, hue: 180, spd: 0.00020, phase: 4.20 },
+                { x: 0.15, y: 0.70, r: 0.28, hue: 300, spd: 0.00015, phase: 1.05 },
             ];
 
-            function isLight() { return body.classList.contains('light'); }
+            let t = 0;
 
             function draw() {
                 t++;
                 ctx.clearRect(0, 0, W, H);
-                const light = isLight();
+                const light = document.body.classList.contains('light');
+
+                // Background fill
+                ctx.fillStyle = light ? '#f0f0f5' : '#0d1117';
+                ctx.fillRect(0, 0, W, H);
+
+                // Subtle grid
+                ctx.strokeStyle = light ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.025)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < W; x += 40) {
+                    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+                }
+                for (let y = 0; y < H; y += 40) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+                }
+
+                // Aurora orbs
                 orbs.forEach(o => {
                     const angle = o.phase + t * o.spd * Math.PI * 2;
                     const cx = (o.x + Math.sin(angle * 1.3) * 0.18) * W;
                     const cy = (o.y + Math.cos(angle * 0.9) * 0.14) * H;
-                    const radius = o.r * Math.min(W, H);
-                    const alpha = light ? 0.28 : 0.22;
-                    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+                    const r  = o.r * Math.min(W, H);
+                    const alpha = light ? 0.07 : 0.18;
                     const hue = light ? o.hue * 0.15 + 28 : o.hue;
-                    grad.addColorStop(0, `hsla(${hue}, ${light ? 45 : 90}%, ${light ? 72 : 65}%, ${alpha})`);
-                    grad.addColorStop(0.5, `hsla(${hue + 10}, ${light ? 35 : 80}%, ${light ? 68 : 60}%, ${alpha * 0.4})`);
-                    grad.addColorStop(1, `hsla(${hue + 20}, 30%, 65%, 0)`);
+                    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                    g.addColorStop(0, `hsla(${hue}, ${light?45:85}%, ${light?72:65}%, ${alpha})`);
+                    g.addColorStop(0.5, `hsla(${hue+10}, ${light?35:75}%, ${light?68:60}%, ${alpha*0.4})`);
+                    g.addColorStop(1, `hsla(${hue+20}, 30%, 65%, 0)`);
                     ctx.beginPath();
-                    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-                    ctx.fillStyle = grad;
+                    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                    ctx.fillStyle = g;
                     ctx.fill();
                 });
+
                 requestAnimationFrame(draw);
             }
             draw();
-            /* ── Duck wave riders ── */
-            (function () {
-                const waveDivider = document.querySelector('.wave-divider');
+        })();
 
-                const duckSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 32" width="36" height="28">
-                        <ellipse cx="20" cy="22" rx="13" ry="8" fill="#f0a500"/>
-                        <ellipse cx="20" cy="21" rx="11" ry="6.5" fill="#f5bc30"/>
-                        <circle cx="28" cy="13" r="7" fill="#f5bc30"/>
-                        <circle cx="30.5" cy="11.5" r="1.5" fill="#1a1a1a"/>
-                        <path d="M34 13 Q39 12 38 15 Q36 14 34 14 Z" fill="#e07800"/>
-                        <path d="M10 22 Q7 20 5 23 Q8 24 10 23 Z" fill="#e07800"/>
-                    </svg>`;
+        /* ══ Google Antigravity Particle System ══ */
+        (function () {
+            const particleCanvas = document.createElement('canvas');
+            particleCanvas.className = 'particle-canvas';
+            document.getElementById('desktopStage').appendChild(particleCanvas);
 
-                const wrapper = document.createElement('div');
-                wrapper.style.cssText = `
-                        position: absolute;
-                        bottom: 52%;
-                        left: -10%;
-                        transform: translateX(-50%);
-                        pointer-events: none;
-                        z-index: 10;
-                        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-                    `;
-                wrapper.innerHTML = duckSVG;
-                waveDivider.appendChild(wrapper);
+            const pc = particleCanvas.getContext('2d');
+            let pW, pH;
+            let mouseX = -9999, mouseY = -9999;
 
-                let x = -0.1;
-                let t = 0;
-
-                function animateDuck() {
-                    t += 0.03;
-                    x += 0.0003; // slow crawl right
-                    if (x > 1.1) x = -0.1; // wrap around
-
-                    const waveY = Math.sin(t - x * Math.PI * 4) * 10;
-                    const tilt = Math.cos(t - x * Math.PI * 4) * 8;
-
-                    wrapper.style.left = `${x * 100}%`;
-                    wrapper.style.transform = `translateX(-50%) translateY(${waveY}px) rotate(${tilt}deg)`;
-
-                    requestAnimationFrame(animateDuck);
-                }
-                animateDuck();
-            })();
-
-            /* ── Live clock ── */
-            function updateClock() {
-                const now = new Date();
-                const h = String(now.getHours()).padStart(2, '0');
-                const m = String(now.getMinutes()).padStart(2, '0');
-                const s = String(now.getSeconds()).padStart(2, '0');
-                document.getElementById('navClock').textContent = `${h}:${m}:${s}`;
+            function resize() {
+                const stage = document.getElementById('desktopStage');
+                pW = particleCanvas.width  = stage.offsetWidth;
+                pH = particleCanvas.height = stage.offsetHeight;
             }
-            updateClock();
-            setInterval(updateClock, 1000)
+            window.addEventListener('resize', resize);
+            resize();
 
-                /* ── Particle system ── */
-                (function () {
-                    const particleCanvas = document.createElement('canvas');
-                    particleCanvas.style.cssText = `
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 0;
-    `;
-                    document.querySelector('.hero-wrapper').appendChild(particleCanvas);
+            window.addEventListener('mousemove', e => {
+                const rect = particleCanvas.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
+            });
 
-                    const pc = particleCanvas.getContext('2d');
-                    let pW, pH;
+            const GOOGLE_COLORS = ['#4285f4', '#ea4335', '#fbbc05', '#34a853'];
 
-                    function resizeParticles() {
-                        pW = particleCanvas.width = particleCanvas.offsetWidth;
-                        pH = particleCanvas.height = particleCanvas.offsetHeight;
+            const particles = Array.from({ length: 55 }, () => ({
+                x: Math.random() * (pW || 1200),
+                y: Math.random() * (pH || 700),
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: (Math.random() - 0.5) * 0.8,
+                size: Math.random() * 3 + 2,
+                color: GOOGLE_COLORS[Math.floor(Math.random() * GOOGLE_COLORS.length)],
+                shape: Math.random() < 0.5 ? 'circle' : 'triangle',
+                angle: Math.random() * Math.PI * 2,
+            }));
+
+            function drawParticles() {
+                pc.clearRect(0, 0, pW, pH);
+                const light = document.body.classList.contains('light');
+
+                /* Physics */
+                particles.forEach(p => {
+                    const dx = mouseX - p.x, dy = mouseY - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 220 && dist > 0) {
+                        const force = (220 - dist) / 220;
+                        if (dist < 50) {
+                            p.vx -= (dx / dist) * force * 0.6;
+                            p.vy -= (dy / dist) * force * 0.6;
+                        } else {
+                            p.vx += (dx / dist) * force * 0.08;
+                            p.vy += (dy / dist) * force * 0.08;
+                            p.vx += (-dy / dist) * force * 0.04;
+                            p.vy += (dx / dist) * force * 0.04;
+                        }
                     }
-                    window.addEventListener('resize', resizeParticles);
-                    resizeParticles();
+                    p.vx *= 0.97; p.vy *= 0.97;
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < -10) p.x = pW + 10;
+                    if (p.x > pW + 10) p.x = -10;
+                    if (p.y < -10) p.y = pH + 10;
+                    if (p.y > pH + 10) p.y = -10;
+                    if (Math.abs(p.vx) > 0.01 || Math.abs(p.vy) > 0.01)
+                        p.angle = Math.atan2(p.vy, p.vx);
+                });
 
-                    const particles = Array.from({ length: 48 }, () => ({
-                        x: Math.random() * pW,
-                        y: Math.random() * pH,
-                        size: Math.random() * 1.5 + 0.5,
-                        speed: Math.random() * 0.4 + 0.1,
-                        opacity: Math.random() * 0.25 + 0.05,
-                        drift: (Math.random() - 0.5) * 0.3,
-                    }));
-
-                    function drawParticles() {
-                        pc.clearRect(0, 0, pW, pH);
-                        const light = document.body.classList.contains('light');
-                        particles.forEach(p => {
-                            p.y -= p.speed;
-                            p.x += p.drift;
-                            if (p.y < -4) { p.y = pH + 4; p.x = Math.random() * pW; }
-                            if (p.x < -4) p.x = pW + 4;
-                            if (p.x > pW + 4) p.x = -4;
-
+                /* Constellation lines */
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const d  = Math.sqrt(dx * dx + dy * dy);
+                        if (d < 100) {
+                            const alpha = (1 - d / 100) * (light ? 0.12 : 0.18);
                             pc.beginPath();
-                            pc.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                            pc.fillStyle = light
-                                ? `rgba(0,0,0,${p.opacity * 0.5})`
-                                : `rgba(255,255,255,${p.opacity})`;
-                            pc.fill();
-                        });
-                        requestAnimationFrame(drawParticles);
+                            pc.moveTo(particles[i].x, particles[i].y);
+                            pc.lineTo(particles[j].x, particles[j].y);
+                            pc.strokeStyle = `rgba(${light ? '0,0,0' : '255,255,255'},${alpha})`;
+                            pc.lineWidth = 0.8;
+                            pc.stroke();
+                        }
                     }
-                    drawParticles();
-                })();
+                }
 
-
-        </script>
-
+                /* Draw */
+                particles.forEach(p => {
+                    pc.save();
+                    pc.globalAlpha = light ? 0.55 : 0.82;
+                    pc.fillStyle = p.color;
+                    if (p.shape === 'circle') {
+                        pc.beginPath();
+                        pc.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        pc.fill();
+                    } else {
+                        pc.translate(p.x, p.y);
+                        pc.rotate(p.angle);
+                        const s = p.size * 1.6;
+                        pc.beginPath();
+                        pc.moveTo(s, 0);
+                        pc.lineTo(-s * 0.65, -s * 0.65);
+                        pc.lineTo(-s * 0.65,  s * 0.65);
+                        pc.closePath();
+                        pc.fill();
+                    }
+                    pc.restore();
+                });
+                requestAnimationFrame(drawParticles);
+            }
+            drawParticles();
+        })();
+    </script>
 </body>
 
 </html>
