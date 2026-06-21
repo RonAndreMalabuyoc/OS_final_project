@@ -162,8 +162,12 @@
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 2px 8px rgba(0,0,0,0.3);
-            transition: box-shadow 0.2s, opacity 0.3s, transform 0.3s;
+            transition: box-shadow 0.25s ease, opacity 0.3s ease, transform 0.25s ease, border-color 0.25s ease;
             overflow: hidden;
+        }
+        .os-window.win-entering {
+            opacity: 0;
+            animation: macOS-app-open 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
         body.light .os-window {
             background: rgba(255,255,255,0.82);
@@ -177,6 +181,17 @@
         }
         body.light .os-window.focused {
             box-shadow: 0 16px 48px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15);
+        }
+        /* Window Hover Pop-up Effect */
+        .os-window:not(.minimized):not(.dragging):hover {
+            transform: scale(1.025) translateY(-4px);
+            box-shadow: 0 24px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.4);
+            border-color: rgba(255, 255, 255, 0.25);
+            z-index: 25;
+        }
+        body.light .os-window:not(.minimized):not(.dragging):hover {
+            box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
+            border-color: rgba(0, 0, 0, 0.18);
         }
         .os-window.minimized {
             opacity: 0;
@@ -258,14 +273,15 @@
         .win-launch-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
 
         /* Welcome window wider */
-        #win-welcome .win-body { align-items: center; text-align: center; padding: 32px 28px 28px; }
+        #win-welcome .win-body { align-items: center; text-align: center; padding: 38px 36px 36px; }
         #win-welcome .win-title-big {
-            font-size: 26px; font-weight: 800; letter-spacing: -0.03em;
-            color: var(--text-primary); line-height: 1.2;
+            font-size: 32px; font-weight: 800; letter-spacing: -0.03em;
+            color: var(--text-primary); line-height: 1.25;
         }
         #win-welcome .win-subtitle {
-            font-size: 13px; color: var(--text-secondary);
-            line-height: 1.65; max-width: 320px;
+            font-size: 14px; color: var(--text-secondary);
+            line-height: 1.65; max-width: 480px;
+            margin: 6px 0 10px;
         }
         .win-badge {
             display: inline-flex; align-items: center; gap: 5px;
@@ -402,6 +418,23 @@
             opacity: 1;
             transform: translateY(0);
         }
+
+        /* ══ macOS App Open Keyframe Animation ══ */
+        @keyframes macOS-app-open {
+            0% {
+                opacity: 0;
+                transform: scale(0.65) translateY(50px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+        #win-welcome.win-entering { animation-delay: 0.15s; }
+        #win-cpu.win-entering     { animation-delay: 0.35s; }
+        #win-memory.win-entering  { animation-delay: 0.55s; }
+        #win-virtual.win-entering { animation-delay: 0.75s; }
+        #win-storage.win-entering { animation-delay: 0.95s; }
     </style>
 </head>
 
@@ -469,7 +502,7 @@
 
         <!-- ── Welcome / Home Window ── -->
         <div class="os-window focused" id="win-welcome"
-            style="top: 55px; left: calc(50% - 200px); width: 400px;">
+            style="top: 60px; left: calc(50% - 310px); width: 620px;">
             <div class="win-titlebar" data-window="win-welcome">
                 <div class="traffic-lights">
                     <div class="tl tl-red"    data-action="close"    data-target="win-welcome" title="Close"></div>
@@ -484,7 +517,7 @@
                 <div class="win-subtitle">
                     Step-by-step simulations for CPU scheduling, memory management, virtual memory, and mass storage — built to make OS concepts click.
                 </div>
-                <a href="pages/cpu.html" class="win-launch-btn" style="background: linear-gradient(135deg,#6c63ff,#4285f4);">
+                <a href="pages/cpu.html" class="win-launch-btn" style="background: linear-gradient(135deg,#6c63ff,#4285f4); padding: 10px 22px; font-size: 13px; border-radius: 10px; margin-top: 10px;">
                     Start Simulating →
                 </a>
             </div>
@@ -492,7 +525,7 @@
 
         <!-- ── CPU Scheduling Window ── -->
         <div class="os-window" id="win-cpu"
-            style="top: 55px; left: calc(50% + 230px); width: 300px;">
+            style="top: 60px; left: calc(50% + 350px); width: 330px;">
             <div class="win-titlebar" data-window="win-cpu">
                 <div class="traffic-lights">
                     <div class="tl tl-red"    data-action="close"    data-target="win-cpu"></div>
@@ -520,7 +553,7 @@
 
         <!-- ── Memory Management Window ── -->
         <div class="os-window" id="win-memory"
-            style="top: 55px; left: calc(50% - 560px); width: 300px;">
+            style="top: 60px; left: calc(50% - 680px); width: 330px;">
             <div class="win-titlebar" data-window="win-memory">
                 <div class="traffic-lights">
                     <div class="tl tl-red"    data-action="close"    data-target="win-memory"></div>
@@ -546,7 +579,7 @@
 
         <!-- ── Virtual Memory Window ── -->
         <div class="os-window" id="win-virtual"
-            style="top: 370px; left: calc(50% - 560px); width: 300px;">
+            style="top: 370px; left: calc(50% - 680px); width: 330px;">
             <div class="win-titlebar" data-window="win-virtual">
                 <div class="traffic-lights">
                     <div class="tl tl-red"    data-action="close"    data-target="win-virtual"></div>
@@ -573,7 +606,7 @@
 
         <!-- ── Mass Storage Window ── -->
         <div class="os-window" id="win-storage"
-            style="top: 370px; left: calc(50% + 230px); width: 300px;">
+            style="top: 370px; left: calc(50% + 350px); width: 330px;">
             <div class="win-titlebar" data-window="win-storage">
                 <div class="traffic-lights">
                     <div class="tl tl-red"    data-action="close"    data-target="win-storage"></div>
@@ -595,6 +628,69 @@
                 <a href="pages/storage.html" class="win-launch-btn" style="background:rgba(52,168,83,0.85);">
                     Open →
                 </a>
+            </div>
+        </div>
+
+        <!-- ── Activity Monitor Window ── -->
+        <div class="os-window minimized" id="win-performance"
+            style="top: 200px; left: calc(50% - 370px); width: 330px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-performance">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-performance" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-performance" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-performance" title="Maximize"></div>
+                </div>
+                <div class="win-title">Activity Monitor</div>
+            </div>
+            <div class="win-body" style="gap: 12px; width: 100%;">
+                <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing:0.05em;">System Utilization</div>
+                <!-- CPU Bar -->
+                <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+                        <span>CPU Usage</span>
+                        <span id="monitor-cpu-txt">12%</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
+                        <div id="monitor-cpu-bar" style="width: 12%; height: 100%; background: #6c63ff; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                <!-- RAM Bar -->
+                <div style="width: 100%;">
+                    <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px;">
+                        <span>RAM Usage</span>
+                        <span id="monitor-ram-txt">48%</span>
+                    </div>
+                    <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;">
+                        <div id="monitor-ram-bar" style="width: 48%; height: 100%; background: #34a853; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+                <!-- Live Canvas Graph -->
+                <div style="width: 100%; height: 80px; background: rgba(0,0,0,0.25); border: 1px solid var(--border); border-radius: 6px; margin-top: 4px; overflow: hidden; position: relative;">
+                    <canvas id="performanceGraph" style="width: 100%; height: 100%; display: block;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── System Terminal Window ── -->
+        <div class="os-window minimized" id="win-terminal"
+            style="top: 200px; left: calc(50% + 40px); width: 350px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-terminal">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-terminal" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-terminal" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-terminal" title="Maximize"></div>
+                </div>
+                <div class="win-title">Terminal — bash</div>
+            </div>
+            <div class="win-body" style="padding: 12px; gap: 4px; background: #0b0e14; font-family: 'JetBrains Mono', monospace; width: 100%;">
+                <div style="font-size: 11px; color: #8b949e; line-height: 1.4; height: 140px; overflow-y: auto; width: 100%; word-break: break-all; text-align:left;" id="terminal-history">
+                    Last login: Mon Jun 22 04:58:00 on ttys001<br>
+                    Type 'help' to see available commands.
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px; width: 100%; font-size: 11px; color: #34a853; font-weight: bold; margin-top: 4px;">
+                    <span>guest@os-sim:~$</span>
+                    <input type="text" id="terminal-input" style="flex: 1; background: none; border: none; outline: none; color: #e6edf3; font-family: inherit; font-size: inherit; padding: 0;" autocomplete="off" autofocus>
+                </div>
             </div>
         </div>
 
@@ -622,9 +718,33 @@
             <span class="dock-icon">💾</span>
             <span class="dock-dot"></span>
         </a>
+        <div class="taskbar-tab" data-target="win-performance" id="tab-win-performance" data-title="Activity Monitor">
+            <span class="dock-icon">📊</span>
+            <span class="dock-dot"></span>
+        </div>
+        <div class="taskbar-tab" data-target="win-terminal" id="tab-win-terminal" data-title="Terminal">
+            <span class="dock-icon">🐚</span>
+            <span class="dock-dot"></span>
+        </div>
     </div>
 
     <script>
+        // Add entering class only to the 5 main windows (not minimized decorative ones)
+        ['win-welcome','win-cpu','win-memory','win-virtual','win-storage'].forEach(id => {
+            const w = document.getElementById(id);
+            if (w) w.classList.add('win-entering');
+        });
+
+        // After all entry animations finish, remove the class and lock opacity
+        setTimeout(() => {
+            document.querySelectorAll('.os-window').forEach(w => {
+                w.classList.remove('win-entering');
+                if (!w.classList.contains('minimized')) {
+                    w.style.opacity = '1';
+                }
+            });
+        }, 2000);
+
         /* ══ Clock ══ */
         function updateClock() {
             const now = new Date();
@@ -661,6 +781,7 @@
                 win.style.zIndex = '20';
                 // Start drag
                 dragWin = win;
+                dragWin.classList.add('dragging');
                 dragOffX = e.clientX - win.getBoundingClientRect().left;
                 dragOffY = e.clientY - win.getBoundingClientRect().top;
                 e.preventDefault();
@@ -680,7 +801,12 @@
             dragWin.style.top  = newTop  + 'px';
         });
 
-        document.addEventListener('mouseup', () => { dragWin = null; });
+        document.addEventListener('mouseup', () => {
+            if (dragWin) {
+                dragWin.classList.remove('dragging');
+                dragWin = null;
+            }
+        });
 
         /* ══ Traffic Light Buttons ══ */
         document.querySelectorAll('.tl').forEach(tl => {
@@ -695,6 +821,7 @@
                 if (action === 'close' || action === 'minimize') {
                     win.classList.add('minimized');
                     win.classList.remove('focused');
+                    win.style.opacity = '0';
                     if (tab) {
                         tab.classList.remove('active-tab');
                         tab.classList.remove('running-tab');
@@ -724,6 +851,7 @@
                     win.classList.remove('minimized');
                     document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
                     win.classList.add('focused');
+                    win.style.opacity = '1';
                     document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
                     tab.classList.add('active-tab');
                     tab.classList.add('running-tab');
@@ -731,6 +859,7 @@
                     // Minimize
                     win.classList.add('minimized');
                     win.classList.remove('focused');
+                    win.style.opacity = '0';
                     tab.classList.remove('active-tab');
                     tab.classList.remove('running-tab');
                 }
@@ -928,6 +1057,116 @@
                 requestAnimationFrame(drawParticles);
             }
             drawParticles();
+        })();
+
+        /* ══ Activity Monitor Live Graph ══ */
+        (function() {
+            const canvas = document.getElementById('performanceGraph');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const dataPoints = [];
+            const maxPoints = 40;
+            
+            function setupCanvas() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
+            setupCanvas();
+            window.addEventListener('resize', setupCanvas);
+
+            setInterval(() => {
+                const cpuVal = Math.floor(Math.random() * 40) + 10;
+                const ramVal = Math.floor(Math.random() * 5) + 45;
+                
+                const cpuTxt = document.getElementById('monitor-cpu-txt');
+                const cpuBar = document.getElementById('monitor-cpu-bar');
+                const ramTxt = document.getElementById('monitor-ram-txt');
+                const ramBar = document.getElementById('monitor-ram-bar');
+                
+                if (cpuTxt) cpuTxt.textContent = cpuVal + '%';
+                if (cpuBar) cpuBar.style.width = cpuVal + '%';
+                if (ramTxt) ramTxt.textContent = ramVal + '%';
+                if (ramBar) ramBar.style.width = ramVal + '%';
+                
+                dataPoints.push(cpuVal);
+                if (dataPoints.length > maxPoints) dataPoints.shift();
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+                ctx.lineWidth = 1;
+                for (let y = 20; y < canvas.height; y += 20) {
+                    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+                }
+                
+                if (dataPoints.length > 1) {
+                    ctx.beginPath();
+                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = '#6c63ff';
+                    const step = canvas.width / (maxPoints - 1);
+                    for (let i = 0; i < dataPoints.length; i++) {
+                        const x = i * step;
+                        const y = canvas.height - (dataPoints[i] / 100) * canvas.height;
+                        if (i === 0) ctx.moveTo(x, y);
+                        else ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                    
+                    ctx.lineTo((dataPoints.length - 1) * step, canvas.height);
+                    ctx.lineTo(0, canvas.height);
+                    ctx.closePath();
+                    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                    grad.addColorStop(0, 'rgba(108, 99, 255, 0.15)');
+                    grad.addColorStop(1, 'rgba(108, 99, 255, 0)');
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                }
+            }, 800);
+        })();
+
+        /* ══ Interactive Terminal ══ */
+        (function() {
+            const input = document.getElementById('terminal-input');
+            const history = document.getElementById('terminal-history');
+            if (!input || !history) return;
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = input.value.trim();
+                    input.value = '';
+                    if (!cmd) return;
+
+                    let response = '';
+                    const lowerCmd = cmd.toLowerCase();
+
+                    if (lowerCmd === 'help') {
+                        response = 'Available commands:<br> - <b>help</b>: show this menu<br> - <b>ls</b>: list simulator subpages<br> - <b>neofetch</b>: print system info<br> - <b>cpu</b>: info on CPU scheduling<br> - <b>memory</b>: info on memory management<br> - <b>clear</b>: clear terminal';
+                    } else if (lowerCmd === 'ls') {
+                        response = 'pages/<br>├── cpu.html<br>├── memory.html<br>├── virtual.html<br>└── storage.html';
+                    } else if (lowerCmd === 'clear') {
+                        history.innerHTML = '';
+                        return;
+                    } else if (lowerCmd === 'neofetch') {
+                        response = '<pre style="margin:0; font-family:inherit; color:#fbbc05; line-height:1.2;">' +
+                                   '  /\\_/\\      <b>Antigravity OS</b><br>' +
+                                   ' ( o.o )     Kernel: OS-Sim-2026.06.22<br>' +
+                                   '  > ^ <      Shell: custom-sh<br>' +
+                                   '             Host: RonAndre/OS_final_project<br>' +
+                                   '             CPU: Gemini 3.5 Flash<br>' +
+                                   '             Memory: 100% Optimized' +
+                                   '</pre>';
+                    } else if (lowerCmd === 'cpu') {
+                        response = 'CPU Scheduling Simulator:<br>Simulates Scheduling Algorithms like FCFS, SJF, SRTF, Round Robin, and Priority (Preemptive and Non-preemptive).';
+                    } else if (lowerCmd === 'memory') {
+                        response = 'Memory Management Simulator:<br>Simulates partitioning policies like First Fit, Best Fit, and Worst Fit.';
+                    } else {
+                        response = `sh: command not found: ${cmd}`;
+                    }
+
+                    history.innerHTML += `<br><span style="color:#8b949e;">$ ${cmd}</span><br>${response}`;
+                    history.scrollTop = history.scrollHeight;
+                }
+            });
         })();
     </script>
 </body>
