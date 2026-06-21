@@ -454,6 +454,26 @@
         .cpu-sim-metric-val { font-size: 18px; font-weight: 700; color: var(--text-primary); }
         .cpu-sim-metric-lbl { font-size: 10px; color: var(--text-secondary); font-weight: 500; }
 
+        /* ── About Us ── */
+        .about-card {
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .about-card:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        body.light .about-card {
+            background: rgba(0,0,0,0.02) !important;
+            border: 1px solid rgba(0,0,0,0.06) !important;
+        }
+        body.light .about-card:hover {
+            background: rgba(0,0,0,0.06) !important;
+            border-color: rgba(0,0,0,0.12) !important;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
         /* ══ macOS Taskbar (Dock) ══ */
         .taskbar {
             position: fixed;
@@ -613,6 +633,7 @@
                 <li><a href="pages/memory.html">Memory</a></li>
                 <li><a href="pages/virtual.html">Virtual</a></li>
                 <li><a href="pages/storage.html">Storage</a></li>
+                <li><a href="#" id="navbarAboutLink">About</a></li>
             </ul>
         </div>
 
@@ -944,6 +965,69 @@
             </div>
         </div>
 
+        <!-- ── About Us Window ── -->
+        <div class="os-window minimized" id="win-about"
+            style="top: 100px; left: calc(50% - 250px); width: 500px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-about">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-about" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-about" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-about" title="Maximize"></div>
+                </div>
+                <div class="win-title">👥 About the Developers</div>
+            </div>
+            <div class="win-body" style="width: 100%; gap: 16px; padding: 20px;">
+                <div style="text-align: center; width: 100%; margin-bottom: 8px;">
+                    <div style="font-size: 24px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-primary);">Creative Minds 💻</div>
+                    <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">The development team behind the Interactive OS Simulator.</div>
+                </div>
+                
+                <div class="about-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%;">
+                    
+                    <!-- JD Angelo Soon -->
+                    <div class="about-card" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s ease;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #4285f4, #6c63ff); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(108,99,255,0.25);">👨‍💻</div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">JD Angelo Soon</div>
+                            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">Full-Stack Developer</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ron Andre Malabuyoc -->
+                    <div class="about-card" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s ease;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #34a853, #00c8e0); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(52,168,83,0.25);">🛠️</div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Ron Andre Malabuyoc</div>
+                            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">Full-Stack Developer</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Maria Teresa Mae De Jesus -->
+                    <div class="about-card" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s ease;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #ea4335, #ec4899); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(234,67,53,0.25);">⚙️</div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Maria Teresa Mae De Jesus</div>
+                            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">Backend Developer</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Kirsten Caryl Boncales -->
+                    <div class="about-card" style="display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); transition: all 0.2s ease;">
+                        <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #fbbc05, #f97316); display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 4px 10px rgba(251,188,5,0.25);">🎨</div>
+                        <div>
+                            <div style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Kirsten Caryl Boncales</div>
+                            <div style="font-size: 10px; color: var(--text-secondary); margin-top: 2px;">Frontend Developer</div>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <div style="margin-top: 6px; font-size: 11px; text-align: center; color: var(--text-secondary); width: 100%; border-top: 1px solid var(--border); padding-top: 12px;">
+                    Built with HTML5, CSS3, &amp; Javascript. All rights reserved &copy; 2026.
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- ══ macOS Taskbar (Dock) ══ -->
@@ -976,6 +1060,10 @@
             <span class="dock-icon">🐚</span>
             <span class="dock-dot"></span>
         </div>
+        <div class="taskbar-tab" data-target="win-about" id="tab-win-about" data-title="About Us">
+            <span class="dock-icon">👥</span>
+            <span class="dock-dot"></span>
+        </div>
     </div>
 
     <script src="js/cpu.js"></script>
@@ -995,6 +1083,14 @@
                 }
             });
         }, 2000);
+
+        // Check if "about=true" parameter is present to auto-open the About Us window
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('about') === 'true') {
+            setTimeout(() => {
+                openWindow('win-about', true);
+            }, 800);
+        }
 
         /* ══ Clock ══ */
         function updateClock() {
@@ -1518,6 +1614,11 @@
         document.getElementById('navbarCpuLink').addEventListener('click', (e) => {
             e.preventDefault();
             openWindow('win-cpu');
+        });
+
+        document.getElementById('navbarAboutLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            openWindow('win-about', true);
         });
 
         document.getElementById('welcomeCpuStartBtn').addEventListener('click', () => {
