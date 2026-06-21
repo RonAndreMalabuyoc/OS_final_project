@@ -8,6 +8,58 @@
     <meta name="description"
         content="Interactive CPU scheduling simulator with animated Gantt charts. Supports FCFS, SJF, SRTF, Priority, and Round Robin algorithms." />
     <link rel="stylesheet" href="../styles.css" />
+    <style>
+        /* ── macOS Top Menu Bar (subpage) ── */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 28px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            background: rgba(30, 30, 30, 0.82);
+            backdrop-filter: blur(20px) saturate(1.8);
+            -webkit-backdrop-filter: blur(20px) saturate(1.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.88);
+            user-select: none;
+        }
+        body.light .navbar {
+            background: rgba(240, 240, 240, 0.82);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.85);
+        }
+        .nav-left { display: flex; align-items: center; gap: 2px; }
+        .nav-logo { font-size: 16px; padding: 2px 8px; border-radius: 4px; cursor: default; }
+        .nav-links { display: flex; list-style: none; margin: 0; padding: 0; gap: 0; }
+        .nav-links li a {
+            display: block; padding: 3px 10px; border-radius: 4px; text-decoration: none;
+            color: inherit; font-size: 13px; transition: background 0.15s; white-space: nowrap;
+        }
+        .nav-links li a:hover, .nav-links li a.active { background: rgba(255, 255, 255, 0.12); }
+        body.light .nav-links li a:hover, body.light .nav-links li a.active { background: rgba(0, 0, 0, 0.07); }
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+        .mac-status-group { display: flex; align-items: center; gap: 8px; }
+        .mac-status-icon { display: flex; align-items: center; opacity: 0.8; padding: 2px 4px; border-radius: 3px; cursor: default; }
+        .mac-theme-toggle {
+            display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px;
+            cursor: pointer; border: none; background: none; color: inherit;
+            font-family: inherit; transition: background 0.15s;
+        }
+        .mac-theme-toggle:hover { background: rgba(255, 255, 255, 0.12); }
+        body.light .mac-theme-toggle:hover { background: rgba(0, 0, 0, 0.07); }
+        .mac-theme-toggle svg { width: 13px; height: 13px; }
+        .nav-clock { font-size: 12px; font-weight: 500; min-width: 60px; text-align: right; }
+        body { padding-top: 28px; }
+        #scrollProgress { position: fixed; top: 28px; left: 0; height: 2px; background: linear-gradient(90deg,#4285f4,#34a853); z-index: 9997; width: 0%; transition: width 0.1s; }
+    </style>
 </head>
 
 <body>
@@ -23,40 +75,51 @@
         </svg>
     </button>
 
-    <!-- Navbar -->
+    <!-- ══ macOS Menu Bar ══ -->
     <nav class="navbar">
         <div class="nav-left">
-            <div class="nav-logo">
-                <span class="dot"></span>
-                OS Simulator
-            </div>
+            <div class="nav-logo" title="System Menu">🦆</div>
             <ul class="nav-links">
-                <li><a href="../index.html">Home</a></li>
-                <li><a href="cpu.html" class="active">CPU Scheduling</a></li>
+                <li><a href="../index.html">Simulator</a></li>
+                <li><a href="cpu.html" class="active">CPU</a></li>
                 <li><a href="memory.html">Memory</a></li>
-                <li><a href="virtual.html">Virtual Memory</a></li>
+                <li><a href="virtual.html">Virtual</a></li>
                 <li><a href="storage.html">Storage</a></li>
             </ul>
         </div>
 
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-        </button>
+        <div class="nav-right">
+            <div class="mac-status-group">
+                <span class="mac-status-icon" title="Wi-Fi (Connected)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.5" fill="currentColor"/>
+                    </svg>
+                </span>
+                <span class="mac-status-icon" title="Sound (100%)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                </span>
+                <span class="mac-status-icon" title="Battery (Charged)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <rect x="2" y="7" width="16" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/>
+                        <rect x="4" y="9" width="10" height="6" rx="1" fill="currentColor" opacity="0.5"/>
+                    </svg>
+                </span>
+                <button class="mac-theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="nav-clock" id="navClock">00:00:00</div>
+        </div>
     </nav>
 
     <!-- Page Header with Aurora -->
@@ -822,6 +885,137 @@
             }
             drawFrame();
 
+        })();
+    </script>
+
+    <script>
+        /* ── Google Antigravity Particle System ── */
+        (function () {
+            const particleCanvas = document.createElement('canvas');
+            particleCanvas.style.cssText = `
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: 1;
+            `;
+            document.querySelector('.cpu-hero-wrapper').appendChild(particleCanvas);
+
+            const pc = particleCanvas.getContext('2d');
+            let pW, pH;
+            let mouseX = -9999, mouseY = -9999;
+
+            function resizeParticles() {
+                pW = particleCanvas.width = particleCanvas.offsetWidth;
+                pH = particleCanvas.height = particleCanvas.offsetHeight;
+            }
+            window.addEventListener('resize', resizeParticles);
+            resizeParticles();
+
+            window.addEventListener('mousemove', function (e) {
+                const rect = particleCanvas.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
+            });
+
+            const GOOGLE_COLORS = ['#4285f4', '#ea4335', '#fbbc05', '#34a853'];
+
+            const particles = Array.from({ length: 50 }, () => ({
+                x: Math.random() * (pW || 800),
+                y: Math.random() * (pH || 400),
+                vx: (Math.random() - 0.5) * 0.8,
+                vy: (Math.random() - 0.5) * 0.8,
+                size: Math.random() * 3 + 2,
+                color: GOOGLE_COLORS[Math.floor(Math.random() * GOOGLE_COLORS.length)],
+                shape: Math.random() < 0.5 ? 'circle' : 'triangle',
+                angle: Math.random() * Math.PI * 2,
+            }));
+
+            function drawParticles() {
+                pc.clearRect(0, 0, pW, pH);
+                const light = document.body.classList.contains('light');
+
+                /* Physics update */
+                particles.forEach(p => {
+                    const dx = mouseX - p.x;
+                    const dy = mouseY - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 220 && dist > 0) {
+                        const force = (220 - dist) / 220;
+                        if (dist < 50) {
+                            p.vx -= (dx / dist) * force * 0.6;
+                            p.vy -= (dy / dist) * force * 0.6;
+                        } else {
+                            p.vx += (dx / dist) * force * 0.08;
+                            p.vy += (dy / dist) * force * 0.08;
+                            p.vx += (-dy / dist) * force * 0.04;
+                            p.vy += (dx / dist) * force * 0.04;
+                        }
+                    }
+
+                    p.vx *= 0.97;
+                    p.vy *= 0.97;
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    if (p.x < -10) p.x = pW + 10;
+                    if (p.x > pW + 10) p.x = -10;
+                    if (p.y < -10) p.y = pH + 10;
+                    if (p.y > pH + 10) p.y = -10;
+
+                    if (Math.abs(p.vx) > 0.01 || Math.abs(p.vy) > 0.01) {
+                        p.angle = Math.atan2(p.vy, p.vx);
+                    }
+                });
+
+                /* Constellation lines */
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 90) {
+                            const alpha = (1 - dist / 90) * (light ? 0.15 : 0.2);
+                            pc.beginPath();
+                            pc.moveTo(particles[i].x, particles[i].y);
+                            pc.lineTo(particles[j].x, particles[j].y);
+                            pc.strokeStyle = light
+                                ? `rgba(0,0,0,${alpha})`
+                                : `rgba(255,255,255,${alpha})`;
+                            pc.lineWidth = 0.8;
+                            pc.stroke();
+                        }
+                    }
+                }
+
+                /* Draw particles */
+                particles.forEach(p => {
+                    pc.save();
+                    pc.globalAlpha = light ? 0.6 : 0.85;
+                    pc.fillStyle = p.color;
+                    if (p.shape === 'circle') {
+                        pc.beginPath();
+                        pc.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                        pc.fill();
+                    } else {
+                        pc.translate(p.x, p.y);
+                        pc.rotate(p.angle);
+                        const s = p.size * 1.6;
+                        pc.beginPath();
+                        pc.moveTo(s, 0);
+                        pc.lineTo(-s * 0.65, -s * 0.65);
+                        pc.lineTo(-s * 0.65, s * 0.65);
+                        pc.closePath();
+                        pc.fill();
+                    }
+                    pc.restore();
+                });
+
+                requestAnimationFrame(drawParticles);
+            }
+            drawParticles();
         })();
     </script>
 
