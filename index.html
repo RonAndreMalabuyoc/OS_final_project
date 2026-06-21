@@ -474,6 +474,57 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         }
 
+        /* ── Calendar Styles ── */
+        .calendar-day-cell {
+            position: relative;
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--text-primary);
+            transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+            user-select: none;
+        }
+        .calendar-day-cell:hover:not(.empty-cell) {
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.08);
+        }
+        body.light .calendar-day-cell:hover:not(.empty-cell) {
+            background: rgba(0, 0, 0, 0.06);
+        }
+        .calendar-day-cell.today-cell {
+            background: var(--accent) !important;
+            color: #fff !important;
+            box-shadow: 0 2px 8px rgba(108, 99, 255, 0.4);
+        }
+        .calendar-day-cell.selected-cell:not(.today-cell) {
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: rgba(108, 99, 255, 0.1);
+        }
+        .calendar-day-cell.has-event-cell::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #34a853;
+        }
+        .calendar-day-cell.today-cell.has-event-cell::after {
+            background: #fff;
+        }
+
+        .cal-input {
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+            color: var(--text-primary); font-family: inherit; font-size: 11px; padding: 4px 8px; outline: none;
+        }
+        body.light .cal-input { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.12); }
+
         /* ══ macOS Taskbar (Dock) ══ */
         .taskbar {
             position: fixed;
@@ -1028,6 +1079,98 @@
             </div>
         </div>
 
+        <!-- ── Clock Window ── -->
+        <div class="os-window minimized" id="win-clock"
+            style="top: 120px; left: calc(50% - 170px); width: 340px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-clock">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-clock" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-clock" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-clock" title="Maximize"></div>
+                </div>
+                <div class="win-title">⏰ Clock</div>
+            </div>
+            <div class="win-body" style="width: 100%; gap: 16px; padding: 20px; align-items: center;">
+                <!-- Analog Clock Face -->
+                <div class="analog-clock-container" style="position: relative; width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--text-primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.3);">
+                    <!-- Clock ticks or indicators -->
+                    <div class="clock-ticks" style="position: absolute; inset: 0; border-radius: 50%;">
+                        <span style="position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">12</span>
+                        <span style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">6</span>
+                        <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">9</span>
+                        <span style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">3</span>
+                    </div>
+                    <!-- Hands -->
+                    <div id="clock-hand-hour" style="position: absolute; width: 4px; height: 35px; background: var(--text-primary); border-radius: 2px; top: 35px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
+                    <div id="clock-hand-min" style="position: absolute; width: 3px; height: 50px; background: var(--text-primary); border-radius: 2px; top: 20px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
+                    <div id="clock-hand-sec" style="position: absolute; width: 1.5px; height: 55px; background: #ea4335; border-radius: 1px; top: 15px; transform-origin: bottom center; transform: rotate(0deg);"></div>
+                    <!-- Center Pivot Pin -->
+                    <div style="position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #ea4335; border: 1.5px solid #fff;"></div>
+                </div>
+                
+                <!-- Digital Clock Display -->
+                <div style="text-align: center;">
+                    <div id="clock-digital-time" style="font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-primary); letter-spacing: -0.02em;">00:00:00 AM</div>
+                    <div id="clock-digital-date" style="font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Monday, June 22, 2026</div>
+                </div>
+
+                <!-- Stopwatch Tool Container -->
+                <div style="width: 100%; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
+                    <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; text-align: center;">Stopwatch</div>
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <div id="stopwatch-display" style="font-size: 20px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #34a853;">00:00.00</div>
+                        <div style="display: flex; gap: 8px; width: 100%; justify-content: center;">
+                            <button id="btn-stopwatch-start" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(52,168,83,0.2); color: #34a853; cursor: pointer;">Start</button>
+                            <button id="btn-stopwatch-lap" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;" disabled>Lap</button>
+                            <button id="btn-stopwatch-reset" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(234,67,53,0.2); color: #ea4335; cursor: pointer;">Reset</button>
+                        </div>
+                        <div id="stopwatch-laps" style="width: 100%; max-height: 60px; overflow-y: auto; font-size: 10px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 2px; padding: 0 10px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Calendar Window ── -->
+        <div class="os-window minimized" id="win-calendar"
+            style="top: 140px; left: calc(50% + 50px); width: 340px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-calendar">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-calendar" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-calendar" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-calendar" title="Maximize"></div>
+                </div>
+                <div class="win-title">📅 Calendar</div>
+            </div>
+            <div class="win-body" style="width: 100%; gap: 14px; padding: 16px;">
+                <!-- Month & Year Selector -->
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                    <button id="cal-prev" style="background: none; border: none; font-size: 16px; color: var(--text-primary); cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background 0.15s;">&larr;</button>
+                    <div id="cal-month-year" style="font-size: 14px; font-weight: 700; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;">June 2026</div>
+                    <button id="cal-next" style="background: none; border: none; font-size: 16px; color: var(--text-primary); cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: background 0.15s;">&rarr;</button>
+                </div>
+                
+                <!-- Calendar Month Grid -->
+                <div style="width: 100%;">
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 10px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px;">
+                        <span>SU</span><span>MO</span><span>TU</span><span>WE</span><span>TH</span><span>FR</span><span>SA</span>
+                    </div>
+                    <div id="cal-days-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center;">
+                        <!-- Days will be dynamically rendered here -->
+                    </div>
+                </div>
+
+                <!-- Event Planner Panel -->
+                <div style="width: 100%; border-top: 1px solid var(--border); padding-top: 10px; margin-top: 2px;">
+                    <div style="font-size: 9px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;" id="cal-selected-day-label">Selected Day: June 22</div>
+                    <div style="display: flex; gap: 6px; width: 100%;">
+                        <input type="text" id="cal-event-input" class="cal-input" placeholder="Add a note/reminder..." style="flex: 1;">
+                        <button id="cal-btn-save" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: var(--accent); color: #fff; cursor: pointer; transition: filter 0.1s;">Save</button>
+                    </div>
+                    <div id="cal-events-display" style="font-size: 10px; color: var(--text-secondary); margin-top: 6px; font-style: italic; background: rgba(255,255,255,0.02); padding: 4px 8px; border-radius: 4px; border-left: 2px solid var(--accent); min-height: 20px; display: flex; align-items: center;">No reminders for this day.</div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- ══ macOS Taskbar (Dock) ══ -->
@@ -1058,6 +1201,14 @@
         </div>
         <div class="taskbar-tab" data-target="win-terminal" id="tab-win-terminal" data-title="Terminal">
             <span class="dock-icon">🐚</span>
+            <span class="dock-dot"></span>
+        </div>
+        <div class="taskbar-tab" data-target="win-clock" id="tab-win-clock" data-title="Clock">
+            <span class="dock-icon">⏰</span>
+            <span class="dock-dot"></span>
+        </div>
+        <div class="taskbar-tab" data-target="win-calendar" id="tab-win-calendar" data-title="Calendar">
+            <span class="dock-icon">📅</span>
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-about" id="tab-win-about" data-title="About Us">
@@ -1225,6 +1376,25 @@
                             }
                         }, baseDelay + i * 90);
                     });
+                    return;
+                }
+
+                // ── CPU Scheduling icon: close other windows and show CPU simulator ──
+                if (tab.dataset.target === 'win-cpu') {
+                    if (win.classList.contains('minimized')) {
+                        openWindow('win-cpu', false);
+                    } else {
+                        const othersOpen = Array.from(document.querySelectorAll('.os-window')).some(w => w.id !== 'win-cpu' && !w.classList.contains('minimized'));
+                        if (othersOpen) {
+                            openWindow('win-cpu', false);
+                        } else {
+                            win.classList.add('minimized');
+                            win.classList.remove('focused');
+                            win.style.opacity = '0';
+                            tab.classList.remove('active-tab');
+                            tab.classList.remove('running-tab');
+                        }
+                    }
                     return;
                 }
 
@@ -2078,6 +2248,262 @@
             addCpuProcessRow('P1', 0, 5, 2);
             addCpuProcessRow('P2', 1, 3, 1);
             addCpuProcessRow('P3', 2, 8, 3);
+        })();
+
+        /* ══ Clock & Calendar Controllers ══ */
+        (function() {
+            // Clock hands & digital displays
+            const hourHand = document.getElementById('clock-hand-hour');
+            const minHand = document.getElementById('clock-hand-min');
+            const secHand = document.getElementById('clock-hand-sec');
+            const digitalTime = document.getElementById('clock-digital-time');
+            const digitalDate = document.getElementById('clock-digital-date');
+
+            function runClock() {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                
+                // Hour hand: 30 degrees per hour + 0.5 degrees per minute
+                const hDeg = (hours % 12) * 30 + minutes * 0.5;
+                // Minute hand: 6 degrees per minute + 0.1 degrees per second
+                const mDeg = minutes * 6 + seconds * 0.1;
+                // Second hand: 6 degrees per second
+                const sDeg = seconds * 6;
+
+                if (hourHand) hourHand.style.transform = `rotate(${hDeg}deg)`;
+                if (minHand) minHand.style.transform = `rotate(${mDeg}deg)`;
+                if (secHand) secHand.style.transform = `rotate(${sDeg}deg)`;
+
+                // Format digital time
+                let displayHours = hours % 12;
+                displayHours = displayHours ? displayHours : 12; // convert 0 to 12
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                const formattedTime = `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')} ${ampm}`;
+                if (digitalTime) digitalTime.textContent = formattedTime;
+
+                // Format date
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                if (digitalDate) digitalDate.textContent = now.toLocaleDateString('en-US', options);
+            }
+            
+            runClock();
+            setInterval(runClock, 1000);
+
+            // Stopwatch logic
+            let stopwatchInterval = null;
+            let stopwatchTime = 0; // in milliseconds
+            let lapCount = 0;
+
+            const swDisplay = document.getElementById('stopwatch-display');
+            const btnStart = document.getElementById('btn-stopwatch-start');
+            const btnLap = document.getElementById('btn-stopwatch-lap');
+            const btnReset = document.getElementById('btn-stopwatch-reset');
+            const swLaps = document.getElementById('stopwatch-laps');
+
+            function formatStopwatch(timeMs) {
+                const totalSec = Math.floor(timeMs / 1000);
+                const ms = Math.floor((timeMs % 1000) / 10);
+                const sec = totalSec % 60;
+                const min = Math.floor(totalSec / 60);
+                return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${String(ms).padStart(2, '0')}`;
+            }
+
+            if (btnStart) {
+                btnStart.addEventListener('click', () => {
+                    if (stopwatchInterval) {
+                        // Stop
+                        clearInterval(stopwatchInterval);
+                        stopwatchInterval = null;
+                        btnStart.textContent = 'Start';
+                        btnStart.style.background = 'rgba(52,168,83,0.2)';
+                        btnStart.style.color = '#34a853';
+                        if (btnLap) btnLap.disabled = true;
+                    } else {
+                        // Start
+                        const startTime = Date.now() - stopwatchTime;
+                        stopwatchInterval = setInterval(() => {
+                            stopwatchTime = Date.now() - startTime;
+                            if (swDisplay) swDisplay.textContent = formatStopwatch(stopwatchTime);
+                        }, 30);
+                        btnStart.textContent = 'Stop';
+                        btnStart.style.background = 'rgba(234,67,53,0.2)';
+                        btnStart.style.color = '#ea4335';
+                        if (btnLap) btnLap.disabled = false;
+                    }
+                });
+            }
+
+            if (btnLap) {
+                btnLap.addEventListener('click', () => {
+                    if (!stopwatchInterval) return;
+                    lapCount++;
+                    const lapItem = document.createElement('div');
+                    lapItem.style.display = 'flex';
+                    lapItem.style.justifyContent = 'space-between';
+                    lapItem.style.borderBottom = '1px solid rgba(255,255,255,0.04)';
+                    lapItem.style.padding = '2px 0';
+                    lapItem.innerHTML = `<span>Lap ${lapCount}</span><span>${formatStopwatch(stopwatchTime)}</span>`;
+                    if (swLaps) {
+                        swLaps.appendChild(lapItem);
+                        swLaps.scrollTop = swLaps.scrollHeight;
+                    }
+                });
+            }
+
+            if (btnReset) {
+                btnReset.addEventListener('click', () => {
+                    clearInterval(stopwatchInterval);
+                    stopwatchInterval = null;
+                    stopwatchTime = 0;
+                    lapCount = 0;
+                    if (swDisplay) swDisplay.textContent = '00:00.00';
+                    if (btnStart) {
+                        btnStart.textContent = 'Start';
+                        btnStart.style.background = 'rgba(52,168,83,0.2)';
+                        btnStart.style.color = '#34a853';
+                    }
+                    if (btnLap) btnLap.disabled = true;
+                    if (swLaps) swLaps.innerHTML = '';
+                });
+            }
+
+            // Calendar logic
+            let currentCalDate = new Date();
+            let selectedCalDate = new Date();
+
+            const calMonthYear = document.getElementById('cal-month-year');
+            const calDaysGrid = document.getElementById('cal-days-grid');
+            const calPrev = document.getElementById('cal-prev');
+            const calNext = document.getElementById('cal-next');
+            const calDayLabel = document.getElementById('cal-selected-day-label');
+            const calEventInput = document.getElementById('cal-event-input');
+            const calBtnSave = document.getElementById('cal-btn-save');
+            const calEventsDisplay = document.getElementById('cal-events-display');
+
+            const monthNames = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+
+            function renderCalendar() {
+                if (!calDaysGrid || !calMonthYear) return;
+                calDaysGrid.innerHTML = '';
+                
+                const year = currentCalDate.getFullYear();
+                const month = currentCalDate.getMonth();
+                
+                calMonthYear.textContent = `${monthNames[month]} ${year}`;
+                
+                // First day of the month index (0 = Sunday, 1 = Monday, etc)
+                const firstDayIndex = new Date(year, month, 1).getDay();
+                // Number of days in the current month
+                const lastDay = new Date(year, month + 1, 0).getDate();
+                
+                // Offset cells for previous month days
+                for (let i = 0; i < firstDayIndex; i++) {
+                    const emptyCell = document.createElement('div');
+                    emptyCell.className = 'calendar-day-cell empty-cell';
+                    calDaysGrid.appendChild(emptyCell);
+                }
+                
+                const today = new Date();
+
+                // Render current month days
+                for (let day = 1; day <= lastDay; day++) {
+                    const dayCell = document.createElement('div');
+                    dayCell.className = 'calendar-day-cell';
+                    dayCell.textContent = day;
+                    
+                    // Check if it is today
+                    if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                        dayCell.classList.add('today-cell');
+                    }
+                    
+                    // Check if it is the selected day
+                    if (day === selectedCalDate.getDate() && month === selectedCalDate.getMonth() && year === selectedCalDate.getFullYear()) {
+                        dayCell.classList.add('selected-cell');
+                    }
+                    
+                    // Check if this day has a saved event
+                    const eventKey = `cal-event-${year}-${month}-${day}`;
+                    if (localStorage.getItem(eventKey)) {
+                        dayCell.classList.add('has-event-cell');
+                    }
+                    
+                    dayCell.addEventListener('click', () => {
+                        selectedCalDate = new Date(year, month, day);
+                        document.querySelectorAll('.calendar-day-cell').forEach(c => c.classList.remove('selected-cell'));
+                        dayCell.classList.add('selected-cell');
+                        updateEventDisplay();
+                    });
+                    
+                    calDaysGrid.appendChild(dayCell);
+                }
+            }
+
+            function updateEventDisplay() {
+                if (!calDayLabel || !calEventsDisplay) return;
+                const year = selectedCalDate.getFullYear();
+                const month = selectedCalDate.getMonth();
+                const day = selectedCalDate.getDate();
+                
+                calDayLabel.textContent = `Selected Day: ${monthNames[month]} ${day}, ${year}`;
+                
+                const eventKey = `cal-event-${year}-${month}-${day}`;
+                const savedEvent = localStorage.getItem(eventKey);
+                
+                if (savedEvent) {
+                    calEventsDisplay.textContent = savedEvent;
+                    calEventsDisplay.style.fontStyle = 'normal';
+                    calEventsDisplay.style.color = 'var(--text-primary)';
+                    if (calEventInput) calEventInput.value = savedEvent;
+                } else {
+                    calEventsDisplay.textContent = 'No reminders for this day.';
+                    calEventsDisplay.style.fontStyle = 'italic';
+                    calEventsDisplay.style.color = 'var(--text-secondary)';
+                    if (calEventInput) calEventInput.value = '';
+                }
+            }
+
+            if (calPrev) {
+                calPrev.addEventListener('click', () => {
+                    currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+                    renderCalendar();
+                });
+            }
+
+            if (calNext) {
+                calNext.addEventListener('click', () => {
+                    currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+                    renderCalendar();
+                });
+            }
+
+            if (calBtnSave) {
+                calBtnSave.addEventListener('click', () => {
+                    if (!calEventInput) return;
+                    const val = calEventInput.value.trim();
+                    const year = selectedCalDate.getFullYear();
+                    const month = selectedCalDate.getMonth();
+                    const day = selectedCalDate.getDate();
+                    const eventKey = `cal-event-${year}-${month}-${day}`;
+                    
+                    if (val) {
+                        localStorage.setItem(eventKey, val);
+                    } else {
+                        localStorage.removeItem(eventKey);
+                    }
+                    
+                    renderCalendar();
+                    updateEventDisplay();
+                });
+            }
+
+            // Initialize calendar view
+            renderCalendar();
+            updateEventDisplay();
         })();
     </script>
 </body>
