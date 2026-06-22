@@ -167,7 +167,8 @@
         }
         .os-window.win-entering {
             opacity: 0;
-            animation: macOS-app-open 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            animation: macOS-app-open 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+            animation-fill-mode: backwards;
         }
         body.light .os-window {
             background: rgba(255,255,255,0.82);
@@ -718,10 +719,65 @@
         #win-memory.win-entering  { animation-delay: 0.55s; }
         #win-virtual.win-entering { animation-delay: 0.75s; }
         #win-storage.win-entering { animation-delay: 0.95s; }
+
+        /* ── macOS Boot Screen ── */
+        #mac-boot-screen {
+            position: fixed;
+            inset: 0;
+            background: #000000;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+            opacity: 1;
+            visibility: visible;
+        }
+        #mac-boot-screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        .boot-logo {
+            font-size: 72px;
+            line-height: 1;
+            filter: drop-shadow(0 0 20px rgba(255,255,255,0.15));
+            animation: boot-pulse 2s ease-in-out infinite;
+        }
+        @keyframes boot-pulse {
+            0%, 100% { opacity: 0.95; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(0.98); }
+        }
+        .boot-progress-bar {
+            width: 200px;
+            height: 4px;
+            background: #2c2c2e;
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+        }
+        .boot-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #ffffff;
+            border-radius: 99px;
+            box-shadow: 0 0 8px rgba(255,255,255,0.5);
+            transition: width 2.5s cubic-bezier(0.1, 0.8, 0.25, 1);
+        }
     </style>
 </head>
 
 <body>
+
+    <!-- ── macOS Boot Screen ── -->
+    <div id="mac-boot-screen">
+        <div class="boot-logo">🦆</div>
+        <div class="boot-progress-bar">
+            <div class="boot-progress-fill"></div>
+        </div>
+    </div>
 
     <!-- Scroll progress -->
     <div id="scrollProgress"></div>
@@ -1330,21 +1386,38 @@
 
     <script src="js/cpu.js"></script>
     <script>
-        // Add entering class only to the 5 main windows (not minimized decorative ones)
-        ['win-welcome','win-cpu-card','win-memory','win-virtual','win-storage'].forEach(id => {
-            const w = document.getElementById(id);
-            if (w) w.classList.add('win-entering');
-        });
+        // Start macOS style boot sequence
+        window.addEventListener('DOMContentLoaded', () => {
+            const fill = document.querySelector('.boot-progress-fill');
+            const bootScreen = document.getElementById('mac-boot-screen');
+            const homeWinIds = ['win-welcome','win-cpu-card','win-memory','win-virtual','win-storage'];
 
-        // After all entry animations finish, remove the class and lock opacity
-        setTimeout(() => {
-            document.querySelectorAll('.os-window').forEach(w => {
-                w.classList.remove('win-entering');
-                if (!w.classList.contains('minimized')) {
-                    w.style.opacity = '1';
-                }
-            });
-        }, 2000);
+            // Animate progress bar fill to 100%
+            setTimeout(() => {
+                if (fill) fill.style.width = '100%';
+            }, 200);
+
+            // Step 1: Add win-entering BEFORE the boot screen fades.
+            // animation-fill-mode: backwards keeps them invisible during delay.
+            setTimeout(() => {
+                homeWinIds.forEach(id => {
+                    const w = document.getElementById(id);
+                    if (!w) return;
+                    w.classList.add('win-entering');
+                    // Use animationend to cleanly settle: set opacity FIRST, then remove class.
+                    // This avoids any flash when the animation class is stripped away.
+                    w.addEventListener('animationend', () => {
+                        w.style.opacity = '1';
+                        w.classList.remove('win-entering');
+                    }, { once: true });
+                });
+            }, 2500);
+
+            // Step 2: Fade out the boot screen (windows already prepped + hidden)
+            setTimeout(() => {
+                if (bootScreen) bootScreen.classList.add('fade-out');
+            }, 2700);
+        });
 
         // Check if "about=true" parameter is present to auto-open the About Us window
         const urlParams = new URLSearchParams(window.location.search);
