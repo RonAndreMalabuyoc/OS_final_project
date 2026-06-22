@@ -281,18 +281,224 @@
         }
         .win-launch-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
 
-        .embedded-app-body {
+        .compact-sim-widget {
             height: calc(100vh - 140px);
             min-height: 520px;
-            background: var(--bg-base);
+            overflow-y: auto;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background:
+                radial-gradient(circle at 50% 100%, rgba(108,99,255,0.18), transparent 42%),
+                rgba(13, 17, 23, 0.94);
+        }
+        body.light .compact-sim-widget {
+            background:
+                radial-gradient(circle at 50% 100%, rgba(90,82,232,0.08), transparent 42%),
+                rgba(245, 245, 247, 0.96);
+        }
+        .compact-section-label {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .compact-pill-row,
+        .compact-toolbar,
+        .compact-chip-row,
+        .compact-metrics-grid,
+        .compact-compare-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .compact-pill,
+        .compact-btn {
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font: 600 11px var(--font-ui);
+            cursor: pointer;
+        }
+        .compact-pill:hover,
+        .compact-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.09);
+        }
+        .compact-pill.active {
+            color: #fff;
+            background: rgba(108,99,255,0.65);
+            border-color: rgba(108,99,255,0.9);
+        }
+        .compact-btn.primary {
+            color: #fff;
+            background: linear-gradient(135deg,#6c63ff,#4285f4);
+            border-color: transparent;
+        }
+        .compact-btn.danger {
+            color: #ea4335;
+        }
+        body.light .compact-pill,
+        body.light .compact-btn {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.12);
+        }
+        .compact-desc {
+            margin-top: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .compact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        .compact-grid.two {
+            grid-template-columns: repeat(2, minmax(120px, 1fr));
+        }
+        .compact-full {
+            grid-column: 1 / -1;
+        }
+        .compact-field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .compact-input {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 7px;
+            background: rgba(0,0,0,0.18);
+            color: var(--text-primary);
+            padding: 7px 9px;
+            font: 600 12px var(--font-ui);
+        }
+        body.light .compact-input {
+            background: rgba(255,255,255,0.72);
+            border-color: rgba(0,0,0,0.12);
+        }
+        .compact-chip,
+        .compact-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 24px;
+            padding: 4px 9px;
+            border-radius: 7px;
+            background: rgba(108,99,255,0.18);
+            border: 1px solid rgba(108,99,255,0.28);
+            color: var(--text-primary);
+            font: 700 11px var(--font-mono);
+            cursor: pointer;
+        }
+        .compact-numpad {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .compact-output {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .compact-output.visible {
+            display: flex;
+        }
+        .compact-table-wrap {
+            overflow: auto;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            max-height: 260px;
+        }
+        .compact-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .compact-table th,
+        .compact-table td {
+            padding: 7px 9px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            text-align: left;
+            white-space: nowrap;
+        }
+        .compact-table th {
+            color: var(--text-secondary);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(255,255,255,0.04);
+        }
+        .compact-metric-card,
+        .compact-compare-card {
+            flex: 1 1 130px;
+            min-width: 130px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            padding: 10px;
+        }
+        .compact-metric-value {
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 800;
+        }
+        .compact-metric-label {
+            color: var(--text-secondary);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .vm-trace-mini {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .vm-step-mini {
+            min-width: 44px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 7px;
+            background: rgba(255,255,255,0.04);
+            padding: 6px;
+            text-align: center;
+            font: 700 11px var(--font-mono);
+        }
+        .vm-step-mini.fault { border-color: rgba(234,67,53,0.45); }
+        .vm-step-mini.hit { border-color: rgba(52,168,83,0.45); }
+        .vm-frame-mini {
+            margin-top: 4px;
+            padding: 2px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+        }
+        .disk-canvas-wrap {
+            height: 220px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.14);
             overflow: hidden;
         }
-        .embedded-app-frame {
+        .disk-canvas-wrap canvas {
+            display: block;
             width: 100%;
             height: 100%;
-            border: 0;
-            display: block;
-            background: var(--bg-base);
         }
 
         /* Welcome window wider */
@@ -1551,8 +1757,82 @@
                 </div>
                 <div class="win-title">Virtual Memory Simulator</div>
             </div>
-            <div class="embedded-app-body">
-                <iframe class="embedded-app-frame" title="Virtual Memory Simulator" src="pages/virtual.html"></iframe>
+            <div class="compact-sim-widget" id="vmWidget">
+                <section>
+                    <div class="compact-section-label">Algorithm</div>
+                    <div class="compact-pill-row" id="vmwAlgoPills">
+                        <button class="compact-pill active" data-algo="fifo">FIFO</button>
+                        <button class="compact-pill" data-algo="opt">Optimal</button>
+                        <button class="compact-pill" data-algo="lru">LRU</button>
+                        <button class="compact-pill" data-algo="arb">ARB</button>
+                        <button class="compact-pill" data-algo="clock">Clock</button>
+                        <button class="compact-pill" data-algo="enhanced">Enhanced Clock</button>
+                        <button class="compact-pill" data-algo="lfu">LFU</button>
+                        <button class="compact-pill" data-algo="mfu">MFU</button>
+                    </div>
+                    <div class="compact-desc" id="vmwAlgoDesc"></div>
+                </section>
+                <section>
+                    <div class="compact-section-label">Configuration</div>
+                    <div class="compact-toolbar">
+                        <button class="compact-btn" id="vmwLoadExample">Load Example</button>
+                        <button class="compact-btn danger" id="vmwReset">Reset</button>
+                    </div>
+                    <div class="compact-grid" style="margin-top:10px;">
+                        <div class="compact-field compact-full">
+                            <label>Reference String</label>
+                            <div class="compact-chip-row" id="vmwRefTray"></div>
+                            <div class="compact-numpad" id="vmwNumpad">
+                                <button class="compact-btn" data-val="0">0</button>
+                                <button class="compact-btn" data-val="1">1</button>
+                                <button class="compact-btn" data-val="2">2</button>
+                                <button class="compact-btn" data-val="3">3</button>
+                                <button class="compact-btn" data-val="4">4</button>
+                                <button class="compact-btn" data-val="5">5</button>
+                                <button class="compact-btn" data-val="6">6</button>
+                                <button class="compact-btn" data-val="7">7</button>
+                                <button class="compact-btn" data-val="8">8</button>
+                                <button class="compact-btn" data-val="9">9</button>
+                                <button class="compact-btn" id="vmwDel">Delete</button>
+                                <button class="compact-btn danger" id="vmwClear">Clear</button>
+                            </div>
+                        </div>
+                        <div class="compact-field">
+                            <label for="vmwFrames">Frames</label>
+                            <input class="compact-input" id="vmwFrames" type="number" value="3" min="1" max="20">
+                        </div>
+                        <div class="compact-field">
+                            <label for="vmwMat">Memory Access Time (ns)</label>
+                            <input class="compact-input" id="vmwMat" type="number" value="100" min="1">
+                        </div>
+                        <div class="compact-field">
+                            <label for="vmwPfst">Page Fault Service Time (ns)</label>
+                            <input class="compact-input" id="vmwPfst" type="number" value="8000000" min="1">
+                        </div>
+                    </div>
+                    <div style="text-align:right; margin-top:12px;">
+                        <button class="compact-btn primary" id="vmwRun">Run Simulation</button>
+                    </div>
+                </section>
+                <section class="compact-output" id="vmwOutput">
+                    <div>
+                        <div class="compact-section-label">Frame State Trace</div>
+                        <div class="vm-trace-mini" id="vmwTrace"></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Step-by-Step Results</div>
+                        <div class="compact-table-wrap">
+                            <table class="compact-table">
+                                <thead><tr id="vmwTableHead"></tr></thead>
+                                <tbody id="vmwTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Performance Metrics</div>
+                        <div class="compact-metrics-grid" id="vmwMetrics"></div>
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -1567,8 +1847,76 @@
                 </div>
                 <div class="win-title">Mass Storage Simulator</div>
             </div>
-            <div class="embedded-app-body">
-                <iframe class="embedded-app-frame" title="Mass Storage Simulator" src="pages/storage.html"></iframe>
+            <div class="compact-sim-widget" id="storageWidget">
+                <section>
+                    <div class="compact-section-label">Algorithm</div>
+                    <div class="compact-pill-row" id="storAlgoPills">
+                        <button class="compact-pill active" data-algo="fcfs">FCFS</button>
+                        <button class="compact-pill" data-algo="sstf">SSTF</button>
+                        <button class="compact-pill" data-algo="scan">SCAN</button>
+                        <button class="compact-pill" data-algo="cscan">C-SCAN</button>
+                        <button class="compact-pill" data-algo="look">LOOK</button>
+                        <button class="compact-pill" data-algo="clook">C-LOOK</button>
+                    </div>
+                    <div class="compact-pill-row" id="storDirPills" style="margin-top:8px;">
+                        <button class="compact-pill active" data-dir="up">Toward Higher Tracks</button>
+                        <button class="compact-pill" data-dir="down">Toward Lower Tracks</button>
+                    </div>
+                    <div class="compact-desc" id="storAlgoDesc"></div>
+                </section>
+                <section>
+                    <div class="compact-section-label">Disk Configuration</div>
+                    <div class="compact-grid two">
+                        <div class="compact-field">
+                            <label for="storDiskSize">Total Tracks (0-N)</label>
+                            <input class="compact-input" id="storDiskSize" type="number" value="199" min="10" max="9999">
+                        </div>
+                        <div class="compact-field">
+                            <label for="storHead">Initial Head Position</label>
+                            <input class="compact-input" id="storHead" type="number" value="53" min="0">
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <div class="compact-section-label">Request Queue</div>
+                    <div class="compact-toolbar">
+                        <input class="compact-input" id="storReqInput" type="number" placeholder="Track number" min="0" style="max-width:160px;">
+                        <button class="compact-btn primary" id="storAddReq">Add</button>
+                        <button class="compact-btn" id="storLoadExample">Load Example</button>
+                        <button class="compact-btn danger" id="storClearReqs">Clear</button>
+                    </div>
+                    <div class="compact-chip-row" id="storReqTags" style="margin-top:10px;"></div>
+                    <div style="text-align:right; margin-top:12px;">
+                        <button class="compact-btn primary" id="storRun">Run Simulation</button>
+                    </div>
+                </section>
+                <section class="compact-output" id="storOutput">
+                    <div>
+                        <div class="compact-section-label">Seek Path</div>
+                        <div class="disk-canvas-wrap"><canvas id="storSeekCanvas"></canvas></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Service Order</div>
+                        <div class="compact-chip-row" id="storSeekOrder"></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Step-by-Step Head Movement</div>
+                        <div class="compact-table-wrap">
+                            <table class="compact-table">
+                                <thead><tr><th>#</th><th>From</th><th>To</th><th>Distance</th><th>Total</th></tr></thead>
+                                <tbody id="storCalcBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Performance Metrics</div>
+                        <div class="compact-metrics-grid" id="storMetrics"></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Algorithm Comparison</div>
+                        <div class="compact-compare-grid" id="storCompare"></div>
+                    </div>
+                </section>
             </div>
         </div>
 
@@ -2525,6 +2873,360 @@
         document.getElementById('storageCardOpenBtn').addEventListener('click', () => {
             openWindow('win-storage-app');
         });
+
+        /* Compact Virtual Memory desktop widget */
+        (function() {
+            const descs = {
+                fifo: 'Pages are replaced in the order they were loaded into memory.',
+                opt: 'Replaces the page whose next use is farthest in the future.',
+                lru: 'Replaces the page that has not been used for the longest time.',
+                arb: 'Aging/ARB approximates LRU by shifting reference history bits over time.',
+                clock: 'Uses a circular pointer and reference bits to give pages a second chance.',
+                enhanced: 'Considers reference and modified bits before choosing a victim page.',
+                lfu: 'Replaces the least frequently used page.',
+                mfu: 'Replaces the most frequently used page.'
+            };
+            let algo = 'fifo';
+            let refPages = [7,0,1,2,0,3,0,4,2,3,0,3,2];
+
+            function setDesc() {
+                const el = document.getElementById('vmwAlgoDesc');
+                if (el) el.textContent = descs[algo];
+            }
+            function renderRefs() {
+                const tray = document.getElementById('vmwRefTray');
+                if (!tray) return;
+                tray.innerHTML = '';
+                if (!refPages.length) {
+                    tray.innerHTML = '<span class="compact-tag">No pages</span>';
+                    return;
+                }
+                refPages.forEach((page, index) => {
+                    const chip = document.createElement('button');
+                    chip.className = 'compact-chip';
+                    chip.textContent = page + ' x';
+                    chip.addEventListener('click', () => {
+                        refPages.splice(index, 1);
+                        renderRefs();
+                    });
+                    tray.appendChild(chip);
+                });
+            }
+            function createFrames(n) {
+                return Array.from({ length: n }, () => ({ page:null, loadedAt:0, lastUsed:0, ref:0, mod:0, count:0, age:0 }));
+            }
+            function loadFrame(frame, page, time) {
+                frame.page = page;
+                frame.loadedAt = time;
+                frame.lastUsed = time;
+                frame.ref = 1;
+                frame.mod = page % 2;
+                frame.count = 1;
+                frame.age = 128;
+            }
+            function hitFrame(frame, time) {
+                frame.lastUsed = time;
+                frame.ref = 1;
+                frame.count++;
+                frame.age = Math.min(255, frame.age + 32);
+            }
+            function chooseVictim(frames, refs, index, state) {
+                if (algo === 'fifo') return frames.reduce((best, f, i) => f.loadedAt < frames[best].loadedAt ? i : best, 0);
+                if (algo === 'opt') {
+                    let best = 0, farthest = -1;
+                    frames.forEach((f, i) => {
+                        const next = refs.slice(index + 1).indexOf(f.page);
+                        const dist = next === -1 ? Infinity : next;
+                        if (dist > farthest) { farthest = dist; best = i; }
+                    });
+                    return best;
+                }
+                if (algo === 'lru') return frames.reduce((best, f, i) => f.lastUsed < frames[best].lastUsed ? i : best, 0);
+                if (algo === 'arb') {
+                    frames.forEach(f => { f.age = (f.age >> 1) | (f.ref ? 128 : 0); f.ref = 0; });
+                    return frames.reduce((best, f, i) => f.age < frames[best].age ? i : best, 0);
+                }
+                if (algo === 'lfu') return frames.reduce((best, f, i) => f.count < frames[best].count ? i : best, 0);
+                if (algo === 'mfu') return frames.reduce((best, f, i) => f.count > frames[best].count ? i : best, 0);
+                if (algo === 'enhanced') {
+                    for (const pair of [[0,0],[0,1],[1,0],[1,1]]) {
+                        const found = frames.findIndex(f => f.ref === pair[0] && f.mod === pair[1]);
+                        if (found !== -1) return found;
+                    }
+                    return 0;
+                }
+                for (let guard = 0; guard < frames.length * 2; guard++) {
+                    const i = state.pointer % frames.length;
+                    if (frames[i].ref === 0) {
+                        state.pointer = (i + 1) % frames.length;
+                        return i;
+                    }
+                    frames[i].ref = 0;
+                    state.pointer = (i + 1) % frames.length;
+                }
+                return state.pointer % frames.length;
+            }
+            function simulateVm() {
+                const count = Math.max(1, parseInt(document.getElementById('vmwFrames').value) || 3);
+                const frames = createFrames(count);
+                const state = { pointer: 0 };
+                const steps = [];
+                let hits = 0, faults = 0;
+                refPages.forEach((page, index) => {
+                    const time = index + 1;
+                    const hit = frames.findIndex(f => f.page === page);
+                    let status = 'FAULT', victim = null;
+                    if (hit !== -1) {
+                        hits++;
+                        status = 'HIT';
+                        hitFrame(frames[hit], time);
+                    } else {
+                        faults++;
+                        let target = frames.findIndex(f => f.page === null);
+                        if (target === -1) {
+                            target = chooseVictim(frames, refPages, index, state);
+                            victim = frames[target].page;
+                        }
+                        loadFrame(frames[target], page, time);
+                    }
+                    steps.push({ page, status, victim, frames: frames.map(f => f.page) });
+                });
+                return { steps, hits, faults };
+            }
+            function renderVm(result) {
+                document.getElementById('vmwOutput').classList.add('visible');
+                const trace = document.getElementById('vmwTrace');
+                trace.innerHTML = '';
+                result.steps.forEach(step => {
+                    const card = document.createElement('div');
+                    card.className = 'vm-step-mini ' + step.status.toLowerCase();
+                    card.innerHTML = `<div>${step.page}</div>${step.frames.map(f => `<div class="vm-frame-mini">${f === null ? '-' : f}</div>`).join('')}<div>${step.status}</div>`;
+                    trace.appendChild(card);
+                });
+                const head = document.getElementById('vmwTableHead');
+                const body = document.getElementById('vmwTableBody');
+                head.innerHTML = '<th>Step</th><th>Page</th><th>Status</th><th>Victim</th>' + result.steps[0].frames.map((_, i) => `<th>F${i + 1}</th>`).join('');
+                body.innerHTML = '';
+                result.steps.forEach((step, i) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${i + 1}</td><td>${step.page}</td><td>${step.status}</td><td>${step.victim ?? '-'}</td>${step.frames.map(f => `<td>${f === null ? '-' : f}</td>`).join('')}`;
+                    body.appendChild(row);
+                });
+                const total = result.hits + result.faults;
+                const mat = Math.max(1, parseInt(document.getElementById('vmwMat').value) || 100);
+                const pfst = Math.max(1, parseInt(document.getElementById('vmwPfst').value) || 8000000);
+                const eat = total ? ((result.hits * mat + result.faults * pfst) / total).toFixed(2) : '0.00';
+                document.getElementById('vmwMetrics').innerHTML = [
+                    ['References', total, ''],
+                    ['Hits', result.hits, `${((result.hits / total) * 100 || 0).toFixed(1)}%`],
+                    ['Faults', result.faults, `${((result.faults / total) * 100 || 0).toFixed(1)}%`],
+                    ['EAT', eat, 'ns']
+                ].map(([label, value, unit]) => `<div class="compact-metric-card"><div class="compact-metric-value">${value}<span style="font-size:11px;color:var(--text-secondary);margin-left:3px;">${unit}</span></div><div class="compact-metric-label">${label}</div></div>`).join('');
+            }
+            document.querySelectorAll('#vmwAlgoPills .compact-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#vmwAlgoPills .compact-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    algo = pill.dataset.algo;
+                    setDesc();
+                });
+            });
+            document.querySelectorAll('#vmwNumpad [data-val]').forEach(btn => {
+                btn.addEventListener('click', () => { refPages.push(parseInt(btn.dataset.val)); renderRefs(); });
+            });
+            document.getElementById('vmwDel').addEventListener('click', () => { refPages.pop(); renderRefs(); });
+            document.getElementById('vmwClear').addEventListener('click', () => { refPages = []; renderRefs(); });
+            document.getElementById('vmwLoadExample').addEventListener('click', () => { refPages = [7,0,1,2,0,3,0,4,2,3,0,3,2]; renderRefs(); });
+            document.getElementById('vmwReset').addEventListener('click', () => {
+                refPages = [7,0,1,2,0,3,0,4,2,3,0,3,2];
+                document.getElementById('vmwFrames').value = 3;
+                document.getElementById('vmwMat').value = 100;
+                document.getElementById('vmwPfst').value = 8000000;
+                document.getElementById('vmwOutput').classList.remove('visible');
+                renderRefs();
+            });
+            document.getElementById('vmwRun').addEventListener('click', () => { if (refPages.length) renderVm(simulateVm()); });
+            setDesc();
+            renderRefs();
+        })();
+
+        /* Compact Mass Storage desktop widget */
+        (function() {
+            const descs = {
+                fcfs: 'Services requests in arrival order. Simple, but seek movement can be high.',
+                sstf: 'Chooses the nearest pending request from the current head position.',
+                scan: 'Moves in one direction to the disk end, then reverses.',
+                cscan: 'Moves in one direction, wraps to the start, then continues.',
+                look: 'Moves only as far as the last request before reversing.',
+                clook: 'Circular LOOK wraps between request extremes instead of disk edges.'
+            };
+            let algo = 'fcfs';
+            let direction = 'up';
+            let requests = [98,183,37,122,14,124,65,67];
+
+            function sortedReqs() { return [...requests].sort((a, b) => a - b); }
+            function buildSteps(order, head) {
+                const steps = [];
+                let current = head, total = 0;
+                order.forEach(to => {
+                    const dist = Math.abs(to - current);
+                    total += dist;
+                    steps.push({ from: current, to, dist, total });
+                    current = to;
+                });
+                return { order, steps, totalSeek: total };
+            }
+            function runStorage(selectedAlgo, head, diskSize, dir) {
+                const sorted = sortedReqs();
+                let order = [];
+                if (selectedAlgo === 'fcfs') order = [...requests];
+                if (selectedAlgo === 'sstf') {
+                    const pending = [...requests];
+                    let cur = head;
+                    while (pending.length) {
+                        let best = 0;
+                        pending.forEach((r, i) => {
+                            if (Math.abs(r - cur) < Math.abs(pending[best] - cur)) best = i;
+                        });
+                        cur = pending.splice(best, 1)[0];
+                        order.push(cur);
+                    }
+                }
+                if (selectedAlgo === 'scan') {
+                    const up = sorted.filter(r => r >= head);
+                    const down = sorted.filter(r => r < head).reverse();
+                    order = dir === 'up' ? [...up, diskSize, ...down] : [...down, 0, ...up];
+                }
+                if (selectedAlgo === 'cscan') {
+                    const up = sorted.filter(r => r >= head);
+                    const down = sorted.filter(r => r < head);
+                    order = dir === 'up' ? [...up, diskSize, 0, ...down] : [...down.reverse(), 0, diskSize, ...up.reverse()];
+                }
+                if (selectedAlgo === 'look') {
+                    const up = sorted.filter(r => r >= head);
+                    const down = sorted.filter(r => r < head).reverse();
+                    order = dir === 'up' ? [...up, ...down] : [...down, ...up];
+                }
+                if (selectedAlgo === 'clook') {
+                    const up = sorted.filter(r => r >= head);
+                    const down = sorted.filter(r => r < head);
+                    order = dir === 'up' ? [...up, ...down] : [...down.reverse(), ...up.reverse()];
+                }
+                return buildSteps(order, head);
+            }
+            function renderTags() {
+                const wrap = document.getElementById('storReqTags');
+                wrap.innerHTML = '';
+                if (!requests.length) {
+                    wrap.innerHTML = '<span class="compact-tag">No requests</span>';
+                    return;
+                }
+                requests.forEach((request, index) => {
+                    const tag = document.createElement('button');
+                    tag.className = 'compact-chip';
+                    tag.textContent = request + ' x';
+                    tag.addEventListener('click', () => {
+                        requests.splice(index, 1);
+                        renderTags();
+                    });
+                    wrap.appendChild(tag);
+                });
+            }
+            function addRequest() {
+                const input = document.getElementById('storReqInput');
+                const diskSize = Math.max(10, parseInt(document.getElementById('storDiskSize').value) || 199);
+                const val = parseInt(input.value);
+                if (!Number.isFinite(val) || val < 0 || val > diskSize) return;
+                requests.push(val);
+                input.value = '';
+                renderTags();
+            }
+            function drawPath(result, head, diskSize) {
+                const canvas = document.getElementById('storSeekCanvas');
+                const wrap = canvas.parentElement;
+                canvas.width = Math.max(2, wrap.clientWidth * 2);
+                canvas.height = Math.max(2, wrap.clientHeight * 2);
+                const ctx = canvas.getContext('2d');
+                const W = canvas.width, H = canvas.height, pad = 44;
+                ctx.clearRect(0, 0, W, H);
+                ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(pad, pad);
+                ctx.lineTo(W - pad, pad);
+                ctx.stroke();
+                const xFor = track => pad + (track / diskSize) * (W - pad * 2);
+                const points = [head, ...result.order].map((track, i) => ({
+                    x: xFor(track),
+                    y: pad + i * ((H - pad * 2) / Math.max(1, result.order.length))
+                }));
+                ctx.strokeStyle = '#6c63ff';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
+                ctx.stroke();
+                points.forEach((p, i) => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, i === 0 ? 8 : 6, 0, Math.PI * 2);
+                    ctx.fillStyle = i === 0 ? '#f0a500' : '#4285f4';
+                    ctx.fill();
+                });
+            }
+            function renderOutput() {
+                if (!requests.length) return;
+                const head = Math.max(0, parseInt(document.getElementById('storHead').value) || 0);
+                const diskSize = Math.max(10, parseInt(document.getElementById('storDiskSize').value) || 199);
+                const all = ['fcfs','sstf','scan','cscan','look','clook'].map(name => ({
+                    name,
+                    result: runStorage(name, head, diskSize, direction)
+                }));
+                const current = all.find(item => item.name === algo).result;
+                document.getElementById('storOutput').classList.add('visible');
+                drawPath(current, head, diskSize);
+                document.getElementById('storSeekOrder').innerHTML = current.order.map(track => `<span class="compact-tag">${track}</span>`).join('');
+                document.getElementById('storCalcBody').innerHTML = current.steps.map((step, i) => `<tr><td>${i + 1}</td><td>${step.from}</td><td>${step.to}</td><td>${step.dist}</td><td>${step.total}</td></tr>`).join('');
+                document.getElementById('storMetrics').innerHTML = [
+                    ['Total Seek', current.totalSeek, 'tracks'],
+                    ['Requests', requests.length, ''],
+                    ['Average Seek', (current.totalSeek / current.steps.length).toFixed(2), 'tracks']
+                ].map(([label, value, unit]) => `<div class="compact-metric-card"><div class="compact-metric-value">${value}<span style="font-size:11px;color:var(--text-secondary);margin-left:3px;">${unit}</span></div><div class="compact-metric-label">${label}</div></div>`).join('');
+                const maxSeek = Math.max(...all.map(item => item.result.totalSeek), 1);
+                document.getElementById('storCompare').innerHTML = all.map(item => {
+                    const width = Math.max(6, (item.result.totalSeek / maxSeek) * 100);
+                    const fill = item.name === algo ? '#6c63ff' : 'rgba(255,255,255,0.32)';
+                    return `<div class="compact-compare-card"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><strong>${item.name.toUpperCase()}</strong><span>${item.result.totalSeek}</span></div><div style="height:6px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${width}%;background:${fill};"></div></div></div>`;
+                }).join('');
+            }
+            function syncDesc() {
+                document.getElementById('storAlgoDesc').textContent = descs[algo];
+            }
+
+            document.querySelectorAll('#storAlgoPills .compact-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#storAlgoPills .compact-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    algo = pill.dataset.algo;
+                    syncDesc();
+                });
+            });
+            document.querySelectorAll('#storDirPills .compact-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#storDirPills .compact-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    direction = pill.dataset.dir;
+                });
+            });
+            document.getElementById('storAddReq').addEventListener('click', addRequest);
+            document.getElementById('storReqInput').addEventListener('keydown', e => { if (e.key === 'Enter') addRequest(); });
+            document.getElementById('storLoadExample').addEventListener('click', () => { requests = [98,183,37,122,14,124,65,67]; renderTags(); });
+            document.getElementById('storClearReqs').addEventListener('click', () => { requests = []; renderTags(); });
+            document.getElementById('storRun').addEventListener('click', renderOutput);
+            window.addEventListener('resize', () => {
+                if (document.getElementById('storOutput').classList.contains('visible')) renderOutput();
+            });
+            syncDesc();
+            renderTags();
+        })();
 
         /* ══ CPU Scheduling Simulator Controller ══ */
         (function() {
