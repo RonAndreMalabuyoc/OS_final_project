@@ -525,6 +525,58 @@
         }
         body.light .cal-input { background: rgba(0,0,0,0.05); border-color: rgba(0,0,0,0.12); }
 
+        /* ── Clock & Widgets ── */
+        .clock-widget-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 14px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            min-height: 250px;
+        }
+        .clock-widget-card:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+        body.light .clock-widget-card {
+            background: rgba(0, 0, 0, 0.02);
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        body.light .clock-widget-card:hover {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        .timer-preset-btn {
+            padding: 3px 8px;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.03);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .timer-preset-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+        }
+        body.light .timer-preset-btn {
+            border-color: rgba(0,0,0,0.08);
+            background: rgba(0,0,0,0.03);
+        }
+        body.light .timer-preset-btn:hover {
+            background: rgba(0,0,0,0.06);
+        }
+
         /* ══ macOS Taskbar (Dock) ══ */
         .taskbar {
             position: fixed;
@@ -1081,7 +1133,7 @@
 
         <!-- ── Clock Window ── -->
         <div class="os-window minimized" id="win-clock"
-            style="top: 120px; left: calc(50% - 170px); width: 340px; opacity: 0;">
+            style="top: 120px; left: calc(50% - 390px); width: 250px; opacity: 0;">
             <div class="win-titlebar" data-window="win-clock">
                 <div class="traffic-lights">
                     <div class="tl tl-red"    data-action="close"    data-target="win-clock" title="Close"></div>
@@ -1090,41 +1142,92 @@
                 </div>
                 <div class="win-title">⏰ Clock</div>
             </div>
-            <div class="win-body" style="width: 100%; gap: 16px; padding: 20px; align-items: center;">
-                <!-- Analog Clock Face -->
-                <div class="analog-clock-container" style="position: relative; width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--text-primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.3);">
-                    <!-- Clock ticks or indicators -->
-                    <div class="clock-ticks" style="position: absolute; inset: 0; border-radius: 50%;">
-                        <span style="position: absolute; top: 6px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">12</span>
-                        <span style="position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">6</span>
-                        <span style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">9</span>
-                        <span style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-size: 10px; font-weight: bold; color: var(--text-primary);">3</span>
-                    </div>
-                    <!-- Hands -->
-                    <div id="clock-hand-hour" style="position: absolute; width: 4px; height: 35px; background: var(--text-primary); border-radius: 2px; top: 35px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
-                    <div id="clock-hand-min" style="position: absolute; width: 3px; height: 50px; background: var(--text-primary); border-radius: 2px; top: 20px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
-                    <div id="clock-hand-sec" style="position: absolute; width: 1.5px; height: 55px; background: #ea4335; border-radius: 1px; top: 15px; transform-origin: bottom center; transform: rotate(0deg);"></div>
-                    <!-- Center Pivot Pin -->
-                    <div style="position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #ea4335; border: 1.5px solid #fff;"></div>
-                </div>
-                
-                <!-- Digital Clock Display -->
-                <div style="text-align: center;">
-                    <div id="clock-digital-time" style="font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-primary); letter-spacing: -0.02em;">00:00:00 AM</div>
-                    <div id="clock-digital-date" style="font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.05em;">Monday, June 22, 2026</div>
-                </div>
-
-                <!-- Stopwatch Tool Container -->
-                <div style="width: 100%; border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px;">
-                    <div style="font-size: 10px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; text-align: center;">Stopwatch</div>
-                    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                        <div id="stopwatch-display" style="font-size: 20px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #34a853;">00:00.00</div>
-                        <div style="display: flex; gap: 8px; width: 100%; justify-content: center;">
-                            <button id="btn-stopwatch-start" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(52,168,83,0.2); color: #34a853; cursor: pointer;">Start</button>
-                            <button id="btn-stopwatch-lap" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;" disabled>Lap</button>
-                            <button id="btn-stopwatch-reset" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(234,67,53,0.2); color: #ea4335; cursor: pointer;">Reset</button>
+            <div class="win-body" style="width: 100%; gap: 16px; padding: 16px; align-items: center;">
+                <div class="clock-widget-card" id="clock-widget" style="width: 100%; min-height: unset;">
+                    <!-- Analog Clock Face -->
+                    <div class="analog-clock-container" style="position: relative; width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--text-primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.3); margin-top: 4px;">
+                        <!-- Clock ticks or indicators -->
+                        <div class="clock-ticks" style="position: absolute; inset: 0; border-radius: 50%;">
+                            <span style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">12</span>
+                            <span style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">6</span>
+                            <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">9</span>
+                            <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">3</span>
                         </div>
-                        <div id="stopwatch-laps" style="width: 100%; max-height: 60px; overflow-y: auto; font-size: 10px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 2px; padding: 0 10px;"></div>
+                        <!-- Hands -->
+                        <div id="clock-hand-hour" style="position: absolute; width: 3px; height: 30px; background: var(--text-primary); border-radius: 1.5px; top: 30px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
+                        <div id="clock-hand-min" style="position: absolute; width: 2px; height: 42px; background: var(--text-primary); border-radius: 1px; top: 18px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
+                        <div id="clock-hand-sec" style="position: absolute; width: 1px; height: 46px; background: #ea4335; border-radius: 0.5px; top: 14px; transform-origin: bottom center; transform: rotate(0deg);"></div>
+                        <!-- Center Pivot Pin -->
+                        <div style="position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #ea4335; border: 1px solid #fff;"></div>
+                    </div>
+                    
+                    <!-- Digital Clock Display -->
+                    <div style="text-align: center; margin-top: 4px;">
+                        <div id="clock-digital-time" style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-primary); letter-spacing: -0.02em;">00:00:00 AM</div>
+                        <div id="clock-digital-date" style="font-size: 10px; font-weight: 600; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em;">Monday, June 22, 2026</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Stopwatch Window ── -->
+        <div class="os-window minimized" id="win-stopwatch"
+            style="top: 120px; left: calc(50% - 130px); width: 260px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-stopwatch">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-stopwatch" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-stopwatch" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-stopwatch" title="Maximize"></div>
+                </div>
+                <div class="win-title">⏱️ Stopwatch</div>
+            </div>
+            <div class="win-body" style="width: 100%; gap: 16px; padding: 16px; align-items: center;">
+                <div class="clock-widget-card" id="stopwatch-widget" style="width: 100%; min-height: unset;">
+                    <div id="stopwatch-display" style="font-size: 24px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #34a853; margin: 8px 0;">00:00.00</div>
+                    <div style="display: flex; gap: 6px; width: 100%; justify-content: center;">
+                        <button id="btn-stopwatch-start" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(52,168,83,0.2); color: #34a853; cursor: pointer; transition: background 0.15s;">Start</button>
+                        <button id="btn-stopwatch-lap" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;" disabled>Lap</button>
+                        <button id="btn-stopwatch-reset" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(234,67,53,0.2); color: #ea4335; cursor: pointer; transition: background 0.15s;">Reset</button>
+                    </div>
+                    <div id="stopwatch-laps" style="width: 100%; height: 90px; overflow-y: auto; font-size: 10px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 2px; padding: 0 4px; margin-top: 6px; border-top: 1px solid var(--border); padding-top: 6px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Timer Window ── -->
+        <div class="os-window minimized" id="win-timer"
+            style="top: 120px; left: calc(50% + 140px); width: 260px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-timer">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-timer" title="Close"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-timer" title="Minimize"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-timer" title="Maximize"></div>
+                </div>
+                <div class="win-title">⏳ Timer</div>
+            </div>
+            <div class="win-body" style="width: 100%; gap: 16px; padding: 16px; align-items: center;">
+                <div class="clock-widget-card" id="timer-widget" style="width: 100%; min-height: unset;">
+                    <div id="timer-display" style="font-size: 24px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #4285f4; margin: 8px 0;">05:00</div>
+                    
+                    <!-- Presets -->
+                    <div style="display: flex; gap: 4px; justify-content: center; width: 100%;">
+                        <button class="timer-preset-btn" data-time="60">1m</button>
+                        <button class="timer-preset-btn" data-time="180">3m</button>
+                        <button class="timer-preset-btn" data-time="300">5m</button>
+                        <button class="timer-preset-btn" data-time="600">10m</button>
+                    </div>
+
+                    <!-- Custom Input (Mins/Secs) -->
+                    <div style="display: flex; align-items: center; gap: 4px; width: 100%; justify-content: center; margin-top: 6px;">
+                        <input type="number" id="timer-input-min" min="0" max="99" value="5" style="width: 45px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: var(--text-primary); font-family: inherit; font-size: 11px; padding: 3px 6px;" placeholder="Min">
+                        <span style="color: var(--text-secondary); font-size: 11px;">:</span>
+                        <input type="number" id="timer-input-sec" min="0" max="59" value="0" style="width: 45px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: var(--text-primary); font-family: inherit; font-size: 11px; padding: 3px 6px;" placeholder="Sec">
+                    </div>
+
+                    <!-- Controls -->
+                    <div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: 8px;">
+                        <button id="btn-timer-start" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(66,133,244,0.2); color: #4285f4; cursor: pointer; transition: background 0.15s;">Start</button>
+                        <button id="btn-timer-reset" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer; transition: background 0.15s;">Reset</button>
                     </div>
                 </div>
             </div>
@@ -1205,6 +1308,14 @@
         </div>
         <div class="taskbar-tab" data-target="win-clock" id="tab-win-clock" data-title="Clock">
             <span class="dock-icon">⏰</span>
+            <span class="dock-dot"></span>
+        </div>
+        <div class="taskbar-tab" data-target="win-stopwatch" id="tab-win-stopwatch" data-title="Stopwatch">
+            <span class="dock-icon">⏱️</span>
+            <span class="dock-dot"></span>
+        </div>
+        <div class="taskbar-tab" data-target="win-timer" id="tab-win-timer" data-title="Timer">
+            <span class="dock-icon">⏳</span>
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-calendar" id="tab-win-calendar" data-title="Calendar">
@@ -2368,6 +2479,130 @@
                     if (swLaps) swLaps.innerHTML = '';
                 });
             }
+
+            // Timer logic
+            let timerInterval = null;
+            let timerSeconds = 300; // default 5 minutes
+            let timerRunning = false;
+
+            const timerDisplay = document.getElementById('timer-display');
+            const btnTimerStart = document.getElementById('btn-timer-start');
+            const btnTimerReset = document.getElementById('btn-timer-reset');
+            const timerInputMin = document.getElementById('timer-input-min');
+            const timerInputSec = document.getElementById('timer-input-sec');
+            const timerPresetBtns = document.querySelectorAll('.timer-preset-btn');
+
+            function updateTimerDisplay() {
+                const min = Math.floor(timerSeconds / 60);
+                const sec = timerSeconds % 60;
+                if (timerDisplay) {
+                    timerDisplay.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+                }
+            }
+
+            function startTimer() {
+                if (timerRunning) return;
+                timerRunning = true;
+                if (btnTimerStart) {
+                    btnTimerStart.textContent = 'Pause';
+                    btnTimerStart.style.background = 'rgba(234,67,53,0.2)';
+                    btnTimerStart.style.color = '#ea4335';
+                }
+                timerInterval = setInterval(() => {
+                    if (timerSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        timerInterval = null;
+                        timerRunning = false;
+                        if (btnTimerStart) {
+                            btnTimerStart.textContent = 'Start';
+                            btnTimerStart.style.background = 'rgba(66,133,244,0.2)';
+                            btnTimerStart.style.color = '#4285f4';
+                        }
+                        // Alert / Flash effect on timer completion
+                        if (timerDisplay) {
+                            timerDisplay.style.color = '#ea4335';
+                            let flash = true;
+                            const flashInterval = setInterval(() => {
+                                timerDisplay.style.visibility = flash ? 'hidden' : 'visible';
+                                flash = !flash;
+                            }, 300);
+                            setTimeout(() => {
+                                clearInterval(flashInterval);
+                                timerDisplay.style.visibility = 'visible';
+                                timerDisplay.style.color = '#4285f4';
+                            }, 3000);
+                        }
+                        return;
+                    }
+                    timerSeconds--;
+                    updateTimerDisplay();
+                }, 1000);
+            }
+
+            function pauseTimer() {
+                if (!timerRunning) return;
+                timerRunning = false;
+                clearInterval(timerInterval);
+                timerInterval = null;
+                if (btnTimerStart) {
+                    btnTimerStart.textContent = 'Start';
+                    btnTimerStart.style.background = 'rgba(66,133,244,0.2)';
+                    btnTimerStart.style.color = '#4285f4';
+                }
+            }
+
+            if (btnTimerStart) {
+                btnTimerStart.addEventListener('click', () => {
+                    if (timerRunning) {
+                        pauseTimer();
+                    } else {
+                        const minsVal = parseInt(timerInputMin.value) || 0;
+                        const secsVal = parseInt(timerInputSec.value) || 0;
+                        const totalSecs = minsVal * 60 + secsVal;
+                        
+                        if (timerSeconds <= 0 || timerSeconds === 300) {
+                            timerSeconds = totalSecs > 0 ? totalSecs : 300;
+                        }
+                        startTimer();
+                    }
+                });
+            }
+
+            if (btnTimerReset) {
+                btnTimerReset.addEventListener('click', () => {
+                    pauseTimer();
+                    const minsVal = parseInt(timerInputMin.value) || 0;
+                    const secsVal = parseInt(timerInputSec.value) || 0;
+                    timerSeconds = minsVal * 60 + secsVal;
+                    if (timerSeconds <= 0) timerSeconds = 300;
+                    updateTimerDisplay();
+                });
+            }
+
+            if (timerPresetBtns) {
+                timerPresetBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        pauseTimer();
+                        timerSeconds = parseInt(btn.dataset.time);
+                        updateTimerDisplay();
+                        const mins = Math.floor(timerSeconds / 60);
+                        const secs = timerSeconds % 60;
+                        if (timerInputMin) timerInputMin.value = mins;
+                        if (timerInputSec) timerInputSec.value = secs;
+                    });
+                });
+            }
+
+            const handleInputChange = () => {
+                if (!timerRunning) {
+                    const minsVal = parseInt(timerInputMin.value) || 0;
+                    const secsVal = parseInt(timerInputSec.value) || 0;
+                    timerSeconds = minsVal * 60 + secsVal;
+                    updateTimerDisplay();
+                }
+            };
+            if (timerInputMin) timerInputMin.addEventListener('input', handleInputChange);
+            if (timerInputSec) timerInputSec.addEventListener('input', handleInputChange);
 
             // Calendar logic
             let currentCalDate = new Date();
