@@ -132,15 +132,18 @@ async function getUserInput() {
         const algorithm = await askAlgorithm(ask);
         const compactionEnabled = await askYesNo(ask, 'Enable compaction when total free memory can fit a waiting job?', true);
         const totalMemoryKb = await askPositiveInteger(ask, 'Total Memory Size in KB', DEFAULT_TOTAL_MEMORY_KB);
-        let osMemoryKb;
+        const includeOsMemory = await askYesNo(ask, 'Include OS memory in the calculation?', true);
+        let osMemoryKb = 0;
 
-        while (true) {
-            osMemoryKb = await askPositiveInteger(ask, 'OS Memory Size in KB', DEFAULT_OS_MEMORY_KB);
-            if (osMemoryKb < totalMemoryKb) break;
-            console.log('OS memory must be smaller than total memory.');
+        if (includeOsMemory) {
+            while (true) {
+                osMemoryKb = await askPositiveInteger(ask, 'OS Memory Size in KB', DEFAULT_OS_MEMORY_KB);
+                if (osMemoryKb < totalMemoryKb) break;
+                console.log('OS memory must be smaller than total memory.');
+            }
         }
 
-        const userMemoryKb = totalMemoryKb - osMemoryKb;
+        const userMemoryKb = includeOsMemory ? totalMemoryKb - osMemoryKb : totalMemoryKb;
         const jobCount = await askPositiveInteger(ask, 'Number of Jobs', DEFAULT_JOBS.length);
         const jobs = [];
 
@@ -154,6 +157,7 @@ async function getUserInput() {
         return {
             algorithm,
             compactionEnabled,
+            includeOsMemory,
             totalMemoryKb,
             osMemoryKb,
             userMemoryKb,
@@ -179,6 +183,12 @@ function createTaskStates(jobs) {
 }
 
 function createMemoryBlocks(config) {
+    if (!config.includeOsMemory) {
+        return [
+            { type: 'hole', start: 0, sizeKb: config.userMemoryKb, task: null },
+        ];
+    }
+
     return [
         { type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null },
         { type: 'hole', start: config.osMemoryKb, sizeKb: config.userMemoryKb, task: null },
@@ -189,6 +199,7 @@ function printHeader(config) {
     console.log('\nMVT: VARIABLE PARTITION ALLOCATION');
     printLine();
     console.log(`Total memory:        ${config.totalMemoryKb} KB`);
+    console.log(`OS memory included:  ${config.includeOsMemory ? 'Yes' : 'No'}`);
     console.log(`OS memory:           ${config.osMemoryKb} KB`);
     console.log(`User memory:         ${config.userMemoryKb} KB`);
     console.log(`Allocation method:   ${ALGORITHMS[config.algorithm]}`);
@@ -320,7 +331,7 @@ function mergeAdjacentHoles(blocks) {
 
 function compactMemory(blocks, config, clock) {
     const jobBlocks = blocks.filter(block => block.type === 'job');
-    let nextStart = config.osMemoryKb;
+    let nextStart = config.includeOsMemory ? config.osMemoryKb : 0;
 
     jobBlocks.forEach(block => {
         block.start = nextStart;
@@ -329,7 +340,9 @@ function compactMemory(blocks, config, clock) {
     });
 
     blocks.length = 0;
-    blocks.push({ type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null });
+    if (config.includeOsMemory) {
+        blocks.push({ type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null });
+    }
     blocks.push(...jobBlocks);
 
     const freeKb = config.totalMemoryKb - nextStart;

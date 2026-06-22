@@ -103,19 +103,28 @@
         <section class="cpu-section" id="memoryConfigSection">
             <div class="section-label">Memory Configuration</div>
             <div class="mem-config-grid">
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-total-card">
                     <label class="cpu-label" for="totalMemory">Total Memory (KB)</label>
                     <input type="number" id="totalMemory" class="cpu-input" value="384" min="1" />
                 </div>
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-os-card">
                     <label class="cpu-label" for="osMemory">OS Reserved (KB)</label>
                     <input type="number" id="osMemory" class="cpu-input" value="64" min="1" />
                 </div>
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-include-os-card">
+                    <label class="cpu-label mem-toggle-label" for="includeOsMemoryToggle">
+                        <span>Include OS Memory</span>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="includeOsMemoryToggle" checked />
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </label>
+                </div>
+                <div class="mem-config-card mem-user-card">
                     <div class="cpu-label">User Memory</div>
                     <div class="mem-computed-value" id="userMemoryDisplay">320 KB</div>
                 </div>
-                <div class="mem-config-card">
+                <div class="mem-config-card mem-compaction-card">
                     <label class="cpu-label mem-toggle-label" for="compactionToggle">
                         <span>Compaction</span>
                         <div class="toggle-switch">
@@ -322,6 +331,12 @@
         }
 
         function createMemoryBlocks(config) {
+            if (!config.includeOsMemory) {
+                return [
+                    { type: 'hole', start: 0, sizeKb: config.userMemoryKb, task: null },
+                ];
+            }
+
             return [
                 { type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null },
                 { type: 'hole', start: config.osMemoryKb, sizeKb: config.userMemoryKb, task: null },
@@ -436,7 +451,7 @@
 
         function compactMemory(blocks, config, clock, log) {
             const jobBlocks = blocks.filter(block => block.type === 'job');
-            let nextStart = config.osMemoryKb;
+            let nextStart = config.includeOsMemory ? config.osMemoryKb : 0;
 
             jobBlocks.forEach(block => {
                 block.start = nextStart;
@@ -445,7 +460,9 @@
             });
 
             blocks.length = 0;
-            blocks.push({ type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null });
+            if (config.includeOsMemory) {
+                blocks.push({ type: 'os', start: 0, sizeKb: config.osMemoryKb, task: null });
+            }
             blocks.push(...jobBlocks);
 
             const freeKb = config.totalMemoryKb - nextStart;
@@ -651,18 +668,24 @@
         /* ── Memory Configuration ───────────────────── */
         const totalMemInput = document.getElementById('totalMemory');
         const osMemInput = document.getElementById('osMemory');
+        const includeOsMemoryToggle = document.getElementById('includeOsMemoryToggle');
         const userMemDisplay = document.getElementById('userMemoryDisplay');
 
         function updateUserMemoryDisplay() {
             const total = parseInt(totalMemInput.value) || 0;
-            const os = parseInt(osMemInput.value) || 0;
+            const includeOs = includeOsMemoryToggle.checked;
+            const os = includeOs ? (parseInt(osMemInput.value) || 0) : 0;
             const user = Math.max(0, total - os);
             userMemDisplay.textContent = user + ' KB';
             userMemDisplay.style.color = user <= 0 ? 'var(--red)' : '';
+            osMemInput.disabled = !includeOs;
+            osMemInput.style.opacity = includeOs ? '1' : '0.5';
         }
 
         totalMemInput.addEventListener('input', updateUserMemoryDisplay);
         osMemInput.addEventListener('input', updateUserMemoryDisplay);
+        includeOsMemoryToggle.addEventListener('change', updateUserMemoryDisplay);
+        updateUserMemoryDisplay();
 
         /* ── Job Table ────────────────────────────── */
         const jobTableBody = document.getElementById('jobTableBody');
@@ -778,9 +801,10 @@
             if (jobs.length === 0) return;
 
             const totalMemoryKb = parseInt(totalMemInput.value) || 384;
-            const osMemoryKb = parseInt(osMemInput.value) || 64;
+            const includeOsMemory = includeOsMemoryToggle.checked;
+            const osMemoryKb = includeOsMemory ? (parseInt(osMemInput.value) || 64) : 0;
 
-            if (osMemoryKb >= totalMemoryKb) {
+            if (includeOsMemory && osMemoryKb >= totalMemoryKb) {
                 alert('OS memory must be smaller than total memory.');
                 return;
             }
@@ -788,9 +812,10 @@
             const config = {
                 algorithm: currentAlgo,
                 compactionEnabled: document.getElementById('compactionToggle').checked,
+                includeOsMemory,
                 totalMemoryKb,
                 osMemoryKb,
-                userMemoryKb: totalMemoryKb - osMemoryKb,
+                userMemoryKb: includeOsMemory ? totalMemoryKb - osMemoryKb : totalMemoryKb,
                 jobs: jobs.sort((a, b) => {
                     if (a.arrivalOrder !== b.arrivalOrder) return a.arrivalOrder - b.arrivalOrder;
                     return a.id.localeCompare(b.id);
