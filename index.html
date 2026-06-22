@@ -281,6 +281,20 @@
         }
         .win-launch-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
 
+        .embedded-app-body {
+            height: calc(100vh - 140px);
+            min-height: 520px;
+            background: var(--bg-base);
+            overflow: hidden;
+        }
+        .embedded-app-frame {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+            background: var(--bg-base);
+        }
+
         /* Welcome window wider */
         #win-welcome .win-body { align-items: center; text-align: center; padding: 38px 36px 36px; }
         #win-welcome .win-title-big {
@@ -1071,8 +1085,8 @@
             <div class="nav-logo" title="System Menu">🦆</div>
             <ul class="nav-links">
                 <li><a href="#" id="navbarSimulatorLink" class="active">Simulator</a></li>
-                <li><a href="#" id="navbarCpuLink">CPU</a></li>
-                <li><a href="#" id="navbarMemoryLink">Memory</a></li>
+                <li><a href="pages/cpu.html" id="navbarCpuLink">CPU</a></li>
+                <li><a href="pages/memory.html" id="navbarMemoryLink">Memory</a></li>
                 <li><a href="pages/virtual.html">Virtual</a></li>
                 <li><a href="pages/storage.html">Storage</a></li>
                 <li><a href="#" id="navbarAboutLink">About</a></li>
@@ -1453,9 +1467,9 @@
                     <span class="win-algo-tag">Optimal</span>
                     <span class="win-algo-tag">Clock</span>
                 </div>
-                <a href="pages/virtual.html" class="win-launch-btn" style="background:rgba(251,188,5,0.85);color:#000;">
+                <button id="virtualCardOpenBtn" class="win-launch-btn" style="background:rgba(251,188,5,0.85);color:#000; border:none; font-family:inherit;">
                     Open →
-                </a>
+                </button>
             </div>
         </div>
 
@@ -1480,13 +1494,45 @@
                     <span class="win-algo-tag">SCAN</span>
                     <span class="win-algo-tag">C-SCAN</span>
                 </div>
-                <a href="pages/storage.html" class="win-launch-btn" style="background:rgba(52,168,83,0.85);">
+                <button id="storageCardOpenBtn" class="win-launch-btn" style="background:rgba(52,168,83,0.85); border:none; font-family:inherit;">
                     Open →
-                </a>
+                </button>
             </div>
         </div>
 
         <!-- ── Activity Monitor Window ── -->
+        <!-- Embedded Virtual Memory App Window -->
+        <div class="os-window minimized" id="win-virtual-app"
+            style="top: 36px; left: calc(50% - 560px); width: 1120px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-virtual-app">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-virtual-app"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-virtual-app"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-virtual-app"></div>
+                </div>
+                <div class="win-title">Virtual Memory Simulator</div>
+            </div>
+            <div class="embedded-app-body">
+                <iframe class="embedded-app-frame" title="Virtual Memory Simulator" src="pages/virtual.html"></iframe>
+            </div>
+        </div>
+
+        <!-- Embedded Mass Storage App Window -->
+        <div class="os-window minimized" id="win-storage-app"
+            style="top: 36px; left: calc(50% - 560px); width: 1120px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-storage-app">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-storage-app"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-storage-app"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-storage-app"></div>
+                </div>
+                <div class="win-title">Mass Storage Simulator</div>
+            </div>
+            <div class="embedded-app-body">
+                <iframe class="embedded-app-frame" title="Mass Storage Simulator" src="pages/storage.html"></iframe>
+            </div>
+        </div>
+
         <div class="os-window minimized" id="win-performance"
             style="top: 200px; left: calc(50% - 370px); width: 330px; opacity: 0;">
             <div class="win-titlebar" data-window="win-performance">
@@ -1771,14 +1817,14 @@
             <span class="dock-icon">🧠</span>
             <span class="dock-dot"></span>
         </div>
-        <a class="taskbar-tab running-tab" href="pages/virtual.html" data-target="win-virtual" id="tab-win-virtual" data-title="Virtual Memory">
+        <div class="taskbar-tab" data-target="win-virtual-app" id="tab-win-virtual-app" data-title="Virtual Memory">
             <span class="dock-icon">📄</span>
             <span class="dock-dot"></span>
-        </a>
-        <a class="taskbar-tab running-tab" href="pages/storage.html" data-target="win-storage" id="tab-win-storage" data-title="Mass Storage">
+        </div>
+        <div class="taskbar-tab" data-target="win-storage-app" id="tab-win-storage-app" data-title="Mass Storage">
             <span class="dock-icon">💾</span>
             <span class="dock-dot"></span>
-        </a>
+        </div>
         <div class="taskbar-tab" data-target="win-performance" id="tab-win-performance" data-title="Activity Monitor">
             <span class="dock-icon">📊</span>
             <span class="dock-dot"></span>
@@ -2013,11 +2059,7 @@
 
         document.querySelectorAll('.taskbar-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                // If it is a redirection link, allow default anchor behavior
-                if (tab.tagName.toLowerCase() === 'a') {
-                    return;
-                }
-
+                e.preventDefault();
                 const win = document.getElementById(tab.dataset.target);
                 if (!win) return;
 
@@ -2028,60 +2070,22 @@
                 }
 
                 // ── CPU Scheduling icon: close other windows and show CPU simulator ──
-                if (tab.dataset.target === 'win-cpu') {
-                    if (win.classList.contains('minimized')) {
-                        openWindow('win-cpu', false);
-                    } else {
-                        const othersOpen = Array.from(document.querySelectorAll('.os-window')).some(w => w.id !== 'win-cpu' && !w.classList.contains('minimized'));
-                        if (othersOpen) {
-                            openWindow('win-cpu', false);
-                        } else {
-                            win.classList.add('minimized');
-                            win.classList.remove('focused');
-                            win.style.opacity = '0';
-                            tab.classList.remove('active-tab');
-                            tab.classList.remove('running-tab');
-                        }
-                    }
-                    return;
-                }
+                
 
                 // ── Memory Simulator icon: close other windows and show Memory simulator ──
-                if (tab.dataset.target === 'win-mem-sim') {
-                    if (win.classList.contains('minimized')) {
-                        openWindow('win-mem-sim', false);
-                    } else {
-                        const othersOpen = Array.from(document.querySelectorAll('.os-window')).some(w => w.id !== 'win-mem-sim' && !w.classList.contains('minimized'));
-                        if (othersOpen) {
-                            openWindow('win-mem-sim', false);
-                        } else {
-                            win.classList.add('minimized');
-                            win.classList.remove('focused');
-                            win.style.opacity = '0';
-                            tab.classList.remove('active-tab');
-                            tab.classList.remove('running-tab');
-                        }
-                    }
-                    return;
-                }
+                
 
-                if (win.classList.contains('minimized')) {
-                    // Restore
-                    win.classList.remove('minimized');
-                    document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
-                    win.classList.add('focused');
-                    win.style.opacity = '1';
-                    document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
-                    tab.classList.add('active-tab');
-                    tab.classList.add('running-tab');
-                } else {
-                    // Minimize
-                    win.classList.add('minimized');
-                    win.classList.remove('focused');
-                    win.style.opacity = '0';
-                    tab.classList.remove('active-tab');
-                    tab.classList.remove('running-tab');
-                }
+                win.classList.remove('minimized', 'win-entering');
+                document.querySelectorAll('.os-window').forEach(w => {
+                    w.classList.remove('focused');
+                    w.style.zIndex = '10';
+                });
+                win.classList.add('focused');
+                win.style.opacity = '1';
+                win.style.zIndex = '20';
+                document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
+                tab.classList.add('active-tab');
+                tab.classList.add('running-tab');
             });
         });
 
@@ -2455,7 +2459,7 @@
 
         document.getElementById('navbarCpuLink').addEventListener('click', (e) => {
             e.preventDefault();
-            openWindow('win-cpu');
+            window.location.href = 'pages/cpu.html';
         });
 
         document.getElementById('navbarAboutLink').addEventListener('click', (e) => {
@@ -2473,6 +2477,14 @@
 
         document.getElementById('memCardOpenBtn').addEventListener('click', () => {
             openWindow('win-mem-sim');
+        });
+
+        document.getElementById('virtualCardOpenBtn').addEventListener('click', () => {
+            openWindow('win-virtual-app');
+        });
+
+        document.getElementById('storageCardOpenBtn').addEventListener('click', () => {
+            openWindow('win-storage-app');
         });
 
         /* ══ CPU Scheduling Simulator Controller ══ */
@@ -3315,7 +3327,7 @@
             if (navMemLink) {
                 navMemLink.addEventListener('click', (e) => {
                     e.preventDefault();
-                    openWindow('win-mem-sim', false);
+                    window.location.href = 'pages/memory.html';
                 });
             }
 
