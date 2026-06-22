@@ -837,6 +837,32 @@
             border-color: rgba(234,67,53,0.5);
             color: #ea4335;
         }
+        .mem-algo-desc {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        body.light .mem-algo-desc {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.08);
+        }
+        .mem-algo-desc-icon {
+            flex-shrink: 0;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #ea4335;
+        }
+        #memAlgoDescText {
+            margin: 0;
+            font-size: 11px;
+            line-height: 1.4;
+            color: var(--text-secondary);
+        }
         .mem-config-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -1327,6 +1353,10 @@
                         <button class="mem-algo-pill" data-algo="best">Best Fit</button>
                         <button class="mem-algo-pill" data-algo="worst">Worst Fit</button>
                     </div>
+                    <div class="mem-algo-desc">
+                        <span class="mem-algo-desc-icon" aria-hidden="true">ⓘ</span>
+                        <p id="memAlgoDescText"></p>
+                    </div>
                 </div>
 
                 <!-- Memory Config -->
@@ -1340,6 +1370,15 @@
                         <div class="mem-config-card">
                             <label class="mem-label" for="memOS">OS Reserved (KB)</label>
                             <input type="number" id="memOS" class="mem-sim-input" value="64" min="1">
+                        </div>
+                        <div class="mem-config-card">
+                            <div class="mem-toggle-row">
+                                <span>Include OS</span>
+                                <label class="mem-toggle-switch">
+                                    <input type="checkbox" id="memIncludeOS" checked>
+                                    <span class="mem-toggle-slider"></span>
+                                </label>
+                            </div>
                         </div>
                         <div class="mem-config-card">
                             <div class="mem-label">User Memory</div>
@@ -3333,10 +3372,21 @@
 
             /* — MVT Algorithm Engine — */
             const MEM_ALGOS = { first:'First Fit', next:'Next Fit', best:'Best Fit', worst:'Worst Fit' };
+            const MEM_ALGO_DESC = {
+                first: 'Scans memory from the beginning and allocates the first hole that is large enough. Fast but can cause fragmentation at the start of memory.',
+                next:  'Starts searching from where the last allocation was made, wrapping around. Distributes allocations more evenly across memory.',
+                best:  'Finds the smallest hole that is large enough. Minimizes wasted space per allocation but can create many tiny unusable holes.',
+                worst: 'Finds the largest available hole. Leaves the largest possible remaining hole, which may be more useful for future allocations.'
+            };
             const JOB_COLORS = ['#00c8e0','#6c63ff','#f0a500','#34c77b','#e05555','#a855f7','#ec4899','#14b8a6','#f97316','#8b5cf6'];
             function getJobColor(i) { return JOB_COLORS[i % JOB_COLORS.length]; }
 
             function createMemBlocks(cfg) {
+                if (!cfg.includeOs) {
+                    return [
+                        { type:'hole', start:0, sizeKb:cfg.userKb, task:null },
+                    ];
+                }
                 return [
                     { type:'os',   start:0,        sizeKb:cfg.osKb,   task:null },
                     { type:'hole', start:cfg.osKb,  sizeKb:cfg.userKb, task:null },
@@ -3390,10 +3440,10 @@
                 }
             }
             function compact(blocks, cfg, clock, log) {
-                const jobs=blocks.filter(b=>b.type==='job'); let ns=cfg.osKb;
+                const jobs=blocks.filter(b=>b.type==='job'); let ns=cfg.includeOs?cfg.osKb:0;
                 jobs.forEach(b=>{ b.start=ns; b.task.startAddr=ns; ns+=b.sizeKb; });
                 blocks.length=0;
-                blocks.push({type:'os',start:0,sizeKb:cfg.osKb,task:null});
+                if (cfg.includeOs) blocks.push({type:'os',start:0,sizeKb:cfg.osKb,task:null});
                 blocks.push(...jobs);
                 const free=cfg.totalKb-ns; if(free>0) blocks.push({type:'hole',start:ns,sizeKb:free,task:null});
                 log.push({t:clock, msg:'Compaction performed — holes merged.', type:'warning'});
@@ -3445,25 +3495,34 @@
             let memWaterAnimId = null, memWaterCanvases = [];
 
             /* — Algorithm Pills — */
+            const memAlgoDescEl = document.getElementById('memAlgoDescText');
             document.querySelectorAll('.mem-algo-pill').forEach(pill => {
                 pill.addEventListener('click', () => {
                     document.querySelectorAll('.mem-algo-pill').forEach(p=>p.classList.remove('active'));
                     pill.classList.add('active');
                     memAlgo = pill.dataset.algo;
+                    if (memAlgoDescEl) memAlgoDescEl.textContent = MEM_ALGO_DESC[memAlgo] || '';
                 });
             });
+            if (memAlgoDescEl) memAlgoDescEl.textContent = MEM_ALGO_DESC[memAlgo] || '';
 
             /* — Memory config user display — */
             const memTotalEl = document.getElementById('memTotal');
             const memOSEl    = document.getElementById('memOS');
             const memUserEl  = document.getElementById('memUserDisplay');
+            const memIncOsEl = document.getElementById('memIncludeOS');
             function updateUserMem() {
-                const t=parseInt(memTotalEl&&memTotalEl.value)||0, o=parseInt(memOSEl&&memOSEl.value)||0;
+                const t=parseInt(memTotalEl&&memTotalEl.value)||0;
+                const includeOs = !memIncOsEl || memIncOsEl.checked;
+                const o=includeOs?(parseInt(memOSEl&&memOSEl.value)||0):0;
                 const u=Math.max(0,t-o);
                 if (memUserEl) { memUserEl.textContent=u+' KB'; memUserEl.style.color=u<=0?'#ea4335':'#34a853'; }
+                if (memOSEl) { memOSEl.disabled=!includeOs; memOSEl.style.opacity=includeOs?'1':'0.5'; }
             }
             if (memTotalEl) memTotalEl.addEventListener('input', updateUserMem);
             if (memOSEl)    memOSEl.addEventListener('input', updateUserMem);
+            if (memIncOsEl) memIncOsEl.addEventListener('change', updateUserMem);
+            updateUserMem();
 
             /* — Job Table — */
             const memBody = document.getElementById('memJobTableBody');
@@ -3519,13 +3578,15 @@
             if (memRunBtn) memRunBtn.addEventListener('click', () => {
                 const jobs = getMemJobs(); if (!jobs.length) return;
                 const totalKb = parseInt(memTotalEl&&memTotalEl.value)||384;
-                const osKb    = parseInt(memOSEl&&memOSEl.value)||64;
-                if (osKb>=totalKb) { alert('OS memory must be smaller than total memory.'); return; }
+                const includeOs = !memIncOsEl || memIncOsEl.checked;
+                const osKb = includeOs ? (parseInt(memOSEl&&memOSEl.value)||64) : 0;
+                if (includeOs && osKb>=totalKb) { alert('OS memory must be smaller than total memory.'); return; }
                 const compactEl = document.getElementById('memCompaction');
                 const cfg = {
                     algo:memAlgo,
                     compact:compactEl?compactEl.checked:true,
-                    totalKb, osKb, userKb:totalKb-osKb,
+                    includeOs,
+                    totalKb, osKb, userKb:includeOs?totalKb-osKb:totalKb,
                     jobs:jobs.sort((a,b)=>a.arrivalOrder-b.arrivalOrder||a.id.localeCompare(b.id))
                 };
                 memResult = runMVT(cfg);
