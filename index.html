@@ -178,6 +178,12 @@
             opacity: 0;
             animation: macOS-app-open 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
+        .os-window.win-genie-opening {
+            pointer-events: none;
+            transform-origin: var(--genie-origin-x, 50%) 100%;
+            will-change: transform, clip-path, opacity, border-radius;
+            animation: macOS-genie-open 0.72s cubic-bezier(0.18, 0.9, 0.2, 1) both;
+        }
         body.light .os-window {
             background: rgba(255,255,255,0.82);
             border: 1px solid rgba(0,0,0,0.1);
@@ -192,13 +198,13 @@
             box-shadow: 0 16px 48px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15);
         }
         /* Window Hover Pop-up Effect */
-        .os-window:not(.minimized):not(.dragging):hover {
+        .os-window:not(.minimized):not(.dragging):not(.win-genie-opening):hover {
             transform: scale(1.025) translateY(-4px);
             box-shadow: 0 24px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.4);
             border-color: rgba(255, 255, 255, 0.25);
             z-index: 25;
         }
-        body.light .os-window:not(.minimized):not(.dragging):hover {
+        body.light .os-window:not(.minimized):not(.dragging):not(.win-genie-opening):hover {
             box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
             border-color: rgba(0, 0, 0, 0.18);
         }
@@ -971,6 +977,38 @@
             100% {
                 opacity: 1;
                 transform: scale(1) translateY(0);
+            }
+        }
+        @keyframes macOS-genie-open {
+            0% {
+                opacity: 0.18;
+                border-radius: 24px;
+                clip-path: polygon(47% 100%, 53% 100%, 57% 100%, 43% 100%);
+                transform:
+                    translate(var(--genie-translate-x, 0px), var(--genie-translate-y, 72px))
+                    scale(0.08, 0.035)
+                    skewX(var(--genie-skew, 0deg));
+            }
+            38% {
+                opacity: 0.92;
+                border-radius: 18px;
+                clip-path: polygon(17% 26%, 83% 19%, 100% 100%, 0 100%);
+                transform:
+                    translate(var(--genie-mid-x, 0px), var(--genie-mid-y, 24px))
+                    scale(0.82, 0.64)
+                    skewX(var(--genie-mid-skew, 0deg));
+            }
+            72% {
+                opacity: 1;
+                border-radius: 14px;
+                clip-path: polygon(3% 3%, 97% 0, 100% 100%, 0 98%);
+                transform: translate(0, -8px) scale(1.015, 1.02) skewX(0deg);
+            }
+            100% {
+                opacity: 1;
+                border-radius: 12px;
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                transform: translate(0, 0) scale(1, 1) skewX(0deg);
             }
         }
         #win-welcome.win-entering  { animation-delay: 0.15s; }
@@ -2442,8 +2480,43 @@
             } catch (error) {}
         }
 
+        function playGenieOpen(win, sourceEl) {
+            if (!win || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            const sourceRect = sourceEl?.getBoundingClientRect ? sourceEl.getBoundingClientRect() : sourceEl;
+            const winRect = win.getBoundingClientRect();
+            const sourceX = sourceRect ? sourceRect.left + sourceRect.width / 2 : winRect.left + winRect.width / 2;
+            const sourceY = sourceRect ? sourceRect.top + sourceRect.height / 2 : window.innerHeight - 28;
+            const winX = winRect.left + winRect.width / 2;
+            const winY = winRect.top + winRect.height / 2;
+            const originX = Math.max(12, Math.min(88, ((sourceX - winRect.left) / winRect.width) * 100));
+            const skew = Math.max(-12, Math.min(12, (sourceX - winX) / 42));
+
+            win.style.setProperty('--genie-translate-x', `${sourceX - winX}px`);
+            win.style.setProperty('--genie-translate-y', `${sourceY - winY}px`);
+            win.style.setProperty('--genie-mid-x', `${(sourceX - winX) * 0.24}px`);
+            win.style.setProperty('--genie-mid-y', `${(sourceY - winY) * 0.35}px`);
+            win.style.setProperty('--genie-origin-x', `${originX}%`);
+            win.style.setProperty('--genie-skew', `${skew}deg`);
+            win.style.setProperty('--genie-mid-skew', `${skew * 0.22}deg`);
+            win.classList.remove('win-genie-opening');
+            void win.offsetWidth;
+            win.classList.add('win-genie-opening');
+            win.addEventListener('animationend', () => {
+                win.classList.remove('win-genie-opening');
+                win.style.removeProperty('--genie-translate-x');
+                win.style.removeProperty('--genie-translate-y');
+                win.style.removeProperty('--genie-mid-x');
+                win.style.removeProperty('--genie-mid-y');
+                win.style.removeProperty('--genie-origin-x');
+                win.style.removeProperty('--genie-skew');
+                win.style.removeProperty('--genie-mid-skew');
+            }, { once: true });
+        }
+
         function hideWindow(target, win, tab, keepRunning) {
             win.classList.add('minimized');
+            win.classList.remove('win-genie-opening');
             win.classList.remove('focused');
             win.style.opacity = '0';
             if (!tab) return;
@@ -2613,6 +2686,7 @@
                 // ── Memory Simulator icon: close other windows and show Memory simulator ──
                 
 
+                const wasMinimized = win.classList.contains('minimized');
                 win.classList.remove('minimized', 'win-entering');
                 document.querySelectorAll('.os-window').forEach(w => {
                     w.classList.remove('focused');
@@ -2621,6 +2695,7 @@
                 win.classList.add('focused');
                 win.style.opacity = '1';
                 win.style.zIndex = '20';
+                if (wasMinimized) playGenieOpen(win, tab);
                 document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
                 tab.classList.add('active-tab');
                 tab.classList.add('running-tab');
@@ -2931,15 +3006,20 @@
         })();
 
         /* ══ Global Window Manager Utility ══ */
-        function openWindow(id, keepOthers = false) {
+        function openWindow(id, keepOthers = false, sourceEl = null) {
             const win = document.getElementById(id);
             if (!win) return;
+            const wasMinimized = win.classList.contains('minimized');
+            const genieSource = sourceEl?.getBoundingClientRect
+                ? sourceEl.getBoundingClientRect()
+                : sourceEl || document.getElementById('tab-' + id);
 
             if (keepOthers) {
-                win.classList.remove('minimized');
+                win.classList.remove('minimized', 'win-entering');
                 document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
                 win.classList.add('focused');
                 win.style.opacity = '1';
+                if (wasMinimized) playGenieOpen(win, genieSource);
                 
                 // Bring to front
                 document.querySelectorAll('.os-window').forEach(w => w.style.zIndex = '10');
@@ -2970,10 +3050,11 @@
             // Pop the target window in after others have collapsed
             const delay = others.length > 0 ? others.length * 60 + 80 : 0;
             setTimeout(() => {
-                win.classList.remove('minimized');
+                win.classList.remove('minimized', 'win-entering');
                 document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
                 win.classList.add('focused');
                 win.style.opacity = '1';
+                if (wasMinimized) playGenieOpen(win, genieSource);
 
                 // Bring to front
                 document.querySelectorAll('.os-window').forEach(w => w.style.zIndex = '10');
@@ -3005,24 +3086,24 @@
             openWindow('win-about', true);
         });
 
-        document.getElementById('welcomeCpuStartBtn').addEventListener('click', () => {
-            openWindow('win-cpu');
+        document.getElementById('welcomeCpuStartBtn').addEventListener('click', (event) => {
+            openWindow('win-cpu', false, event.currentTarget);
         });
 
-        document.getElementById('cpuCardOpenBtn').addEventListener('click', () => {
-            openWindow('win-cpu');
+        document.getElementById('cpuCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-cpu', false, event.currentTarget);
         });
 
-        document.getElementById('memCardOpenBtn').addEventListener('click', () => {
-            openWindow('win-mem-sim');
+        document.getElementById('memCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-mem-sim', false, event.currentTarget);
         });
 
-        document.getElementById('virtualCardOpenBtn').addEventListener('click', () => {
-            openWindow('win-virtual-app');
+        document.getElementById('virtualCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-virtual-app', false, event.currentTarget);
         });
 
-        document.getElementById('storageCardOpenBtn').addEventListener('click', () => {
-            openWindow('win-storage-app');
+        document.getElementById('storageCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-storage-app', false, event.currentTarget);
         });
 
         /* Compact Virtual Memory desktop widget */
