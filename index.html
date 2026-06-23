@@ -837,6 +837,37 @@
             padding: 0 24px;
             gap: 20px;
         }
+        .dock-separator {
+            width: 1px;
+            height: 44px;
+            flex: 0 0 1px;
+            align-self: center;
+            margin: 0 2px;
+            border-radius: 999px;
+            background: linear-gradient(
+                to bottom,
+                transparent,
+                rgba(255, 255, 255, 0.28) 18%,
+                rgba(255, 255, 255, 0.28) 82%,
+                transparent
+            );
+            box-shadow: 1px 0 0 rgba(0, 0, 0, 0.22);
+            pointer-events: none;
+            transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .taskbar:hover .dock-separator {
+            height: 50px;
+        }
+        body.light .dock-separator {
+            background: linear-gradient(
+                to bottom,
+                transparent,
+                rgba(0, 0, 0, 0.22) 18%,
+                rgba(0, 0, 0, 0.22) 82%,
+                transparent
+            );
+            box-shadow: 1px 0 0 rgba(255, 255, 255, 0.35);
+        }
         .taskbar-tab {
             position: relative;
             display: flex;
@@ -2212,6 +2243,7 @@
             <span class="dock-icon">💾</span>
             <span class="dock-dot"></span>
         </div>
+        <div class="dock-separator" aria-hidden="true"></div>
         <div class="taskbar-tab" data-target="win-performance" id="tab-win-performance" data-title="Activity Monitor">
             <span class="dock-icon">📊</span>
             <span class="dock-dot"></span>
