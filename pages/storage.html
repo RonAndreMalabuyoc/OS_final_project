@@ -7,6 +7,15 @@
     <title>Mass Storage Simulator — OS Simulator</title>
     <meta name="description"
         content="Interactive disk scheduling simulator with seek time visualization. Supports FCFS, SSTF, SCAN, C-SCAN, LOOK, and C-LOOK algorithms." />
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem('theme') === 'light') {
+                    document.documentElement.classList.add('light');
+                }
+            } catch (error) { }
+        })();
+    </script>
     <link rel="stylesheet" href="../styles.css" />
     <style>
         /* ── Storage-specific styles ─────────────────────── */
@@ -65,11 +74,15 @@
         .disk-seek-canvas-wrap {
             position: relative;
             width: 100%;
-            height: 300px;
+            height: 420px;
             margin-top: 8px;
+            background: rgba(255,255,255,0.015);
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(255,255,255,0.06);
         }
 
         #seekCanvas {
+            display: block;
             width: 100%;
             height: 100%;
             border-radius: var(--radius-sm);
@@ -453,9 +466,83 @@
             opacity: 0.9;
         }
     </style>
+    <style>
+        /* ── macOS Top Menu Bar (subpage) ── */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 28px;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            background: rgba(30, 30, 30, 0.82);
+            backdrop-filter: blur(20px) saturate(1.8);
+            -webkit-backdrop-filter: blur(20px) saturate(1.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.88);
+            user-select: none;
+        }
+        body.light .navbar {
+            background: rgba(240, 240, 240, 0.82);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.85);
+        }
+        .nav-left { display: flex; align-items: center; gap: 2px; }
+        .nav-logo { font-size: 16px; padding: 2px 8px; border-radius: 4px; cursor: default; }
+        .nav-links { display: flex; list-style: none; margin: 0; padding: 0; gap: 0; }
+        .nav-links li a {
+            display: block; padding: 3px 10px; border-radius: 4px; text-decoration: none;
+            color: inherit; font-size: 13px; transition: background 0.15s; white-space: nowrap;
+        }
+        .nav-links li a:hover, .nav-links li a.active { background: rgba(255, 255, 255, 0.12); }
+        body.light .nav-links li a:hover, body.light .nav-links li a.active { background: rgba(0, 0, 0, 0.07); }
+        .nav-right { display: flex; align-items: center; gap: 10px; }
+        .mac-status-group { display: flex; align-items: center; gap: 8px; }
+        .mac-status-icon { display: flex; align-items: center; opacity: 0.8; padding: 2px 4px; border-radius: 3px; cursor: default; }
+        .mac-theme-toggle {
+            display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px;
+            cursor: pointer; border: none; background: none; color: inherit;
+            font-family: inherit; transition: background 0.15s;
+        }
+        .mac-theme-toggle:hover { background: rgba(255, 255, 255, 0.12); }
+        body.light .mac-theme-toggle:hover { background: rgba(0, 0, 0, 0.07); }
+        .mac-theme-toggle svg { width: 13px; height: 13px; }
+        .nav-clock { font-size: 12px; font-weight: 500; min-width: 60px; text-align: right; }
+        body { padding-top: 28px; }
+        #scrollProgress { position: fixed; top: 28px; left: 0; height: 2px; background: linear-gradient(90deg,#4285f4,#34a853); z-index: 9997; width: 0%; transition: width 0.1s; }
+    </style>
 </head>
 
 <body>
+    <script>
+        (function () {
+            function setTheme(isLight) {
+                document.documentElement.classList.toggle('light', isLight);
+                document.body.classList.toggle('light', isLight);
+                document.body.style.colorScheme = isLight ? 'light' : 'dark';
+                try {
+                    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                } catch (error) { }
+            }
+
+            setTheme(document.documentElement.classList.contains('light'));
+
+            document.addEventListener('click', function (event) {
+                const toggle = event.target.closest('#themeToggle');
+                if (!toggle) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                setTheme(!document.body.classList.contains('light'));
+            }, true);
+        })();
+    </script>
 
     <div id="scrollProgress"></div>
 
@@ -466,39 +553,53 @@
         </svg>
     </button>
 
+    <!-- ══ macOS Menu Bar ══ -->
+    <!-- ══ macOS Menu Bar ══ -->
     <nav class="navbar">
         <div class="nav-left">
-            <div class="nav-logo">
-                <span class="dot"></span>
-                OS Simulator
-            </div>
+            <div class="nav-logo" title="System Menu">🦆</div>
             <ul class="nav-links">
-                <li><a href="../index.html">Home</a></li>
-                <li><a href="cpu.html">CPU Scheduling</a></li>
+                <li><a href="../index.html">Simulator</a></li>
+                <li><a href="cpu.html">CPU</a></li>
                 <li><a href="memory.html">Memory</a></li>
-                <li><a href="virtual.html">Virtual Memory</a></li>
+                <li><a href="virtual.html">Virtual</a></li>
                 <li><a href="storage.html" class="active">Storage</a></li>
+                <li><a href="../index.html?about=true">About</a></li>
             </ul>
         </div>
 
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
-            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="5" />
-                <line x1="12" y1="1" x2="12" y2="3" />
-                <line x1="12" y1="21" x2="12" y2="23" />
-                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                <line x1="1" y1="12" x2="3" y2="12" />
-                <line x1="21" y1="12" x2="23" y2="12" />
-                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-            </svg>
-        </button>
+        <div class="nav-right">
+            <div class="mac-status-group">
+                <span class="mac-status-icon" title="Wi-Fi (Connected)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/>
+                        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1.5" fill="currentColor"/>
+                    </svg>
+                </span>
+                <span class="mac-status-icon" title="Sound (100%)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                    </svg>
+                </span>
+                <span class="mac-status-icon" title="Battery (Charged)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+                        <rect x="2" y="7" width="16" height="10" rx="2"/><line x1="22" y1="11" x2="22" y2="13"/>
+                        <rect x="4" y="9" width="10" height="6" rx="1" fill="currentColor" opacity="0.5"/>
+                    </svg>
+                </span>
+                <button class="mac-theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"/>
+                        <line x1="12" y1="1" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="7.05" y2="7.05"/><line x1="16.95" y1="16.95" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="7.05" y2="16.95"/><line x1="16.95" y1="7.05" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="nav-clock" id="navClock">00:00:00</div>
+        </div>
     </nav>
 
     <div class="cpu-hero-wrapper">
@@ -996,7 +1097,12 @@
                 const outSec = document.getElementById('outputSection');
                 outSec.style.display = '';
                 renderRuler(diskSize);
-                renderSeekCanvas(result.order, result.steps, diskSize);
+                // Defer canvas render so the DOM has laid out the now-visible section
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        renderSeekCanvas(result.order, result.steps, diskSize);
+                    });
+                });
                 renderSeekOrder(result.order);
                 renderCalcTable(result.steps, result.totalSeek);
                 renderMetrics(result, head, diskSize);
@@ -1023,48 +1129,154 @@
             function renderSeekCanvas(order, steps, diskSize) {
                 const canvas = document.getElementById('seekCanvas');
                 const wrap = canvas.parentElement;
-                canvas.width = wrap.offsetWidth * 2;
-                canvas.height = wrap.offsetHeight * 2;
-                canvas.style.width = wrap.offsetWidth + 'px';
-                canvas.style.height = wrap.offsetHeight + 'px';
+                const DPR = window.devicePixelRatio || 1;
+                const cssW = wrap.clientWidth  || wrap.offsetWidth  || 600;
+                const cssH = wrap.clientHeight || wrap.offsetHeight || 300;
+                canvas.width  = cssW * DPR;
+                canvas.height = cssH * DPR;
+                canvas.style.width  = cssW + 'px';
+                canvas.style.height = cssH + 'px';
 
                 const ctx = canvas.getContext('2d');
-                const W = canvas.width, H = canvas.height;
-                const PAD_L = W * 0.02, PAD_R = W * 0.02;
+                ctx.scale(DPR, DPR);         // work in CSS-pixel space from here
+                const W = cssW, H = cssH;
+
+                const PAD_L = 48, PAD_R = 48, PAD_T = 40, PAD_B = 20;
                 const usableW = W - PAD_L - PAD_R;
                 const color = ALGO_COLORS[currentAlgo];
 
                 function trackX(t) { return PAD_L + (t / diskSize) * usableW; }
-                const yStep = H / (order.length + 1);
-                function stepY(i) { return yStep * (i + 1); }
+                const usableH = H - PAD_T - PAD_B;
+                const yStep = usableH / (order.length + 1);
+                function stepY(i) { return PAD_T + yStep * (i + 1); }
 
                 if (seekAnimId) cancelAnimationFrame(seekAnimId);
 
                 const stepMeta = steps || [];
                 let progress = 0;
                 const TOTAL_STEPS = order.length - 1;
-                const FRAMES_PER_STEP = 80; // slower animation
+                const FRAMES_PER_STEP = 60;
                 const TOTAL_FRAMES = TOTAL_STEPS * FRAMES_PER_STEP;
 
                 function drawSeg(x1, y1, x2, y2, strokeColor, lineWidth, dashed) {
+                    ctx.save();
                     ctx.beginPath();
-                    ctx.setLineDash(dashed ? [16, 12] : []);
+                    ctx.setLineDash(dashed ? [8, 6] : []);
                     ctx.moveTo(x1, y1);
                     ctx.lineTo(x2, y2);
                     ctx.strokeStyle = strokeColor;
                     ctx.lineWidth = lineWidth;
+                    ctx.lineJoin = 'round';
+                    ctx.lineCap = 'round';
                     ctx.stroke();
-                    ctx.setLineDash([]);
+                    ctx.restore();
+                }
+
+                function drawNode(i, isPartial) {
+                    const x = trackX(order[i]), y = stepY(i);
+                    const isHead  = i === 0;
+                    const isEdge  = stepMeta[i - 1] && stepMeta[i - 1].isEdge;
+                    const isWrap  = stepMeta[i - 1] && stepMeta[i - 1].isWrap;
+                    const dotR    = isHead ? 8 : (isEdge ? 7 : 6);
+                    const glowR   = dotR + 7;
+
+                    let dotColor, glowColor;
+                    if (isHead)      { dotColor = '#34c77b'; glowColor = '#34c77b33'; }
+                    else if (isEdge) { dotColor = '#f0a500'; glowColor = 'rgba(240,165,0,0.25)'; }
+                    else             { dotColor = color;     glowColor = color + '28'; }
+
+                    // Glow halo
+                    ctx.beginPath(); ctx.arc(x, y, glowR, 0, Math.PI * 2);
+                    ctx.fillStyle = glowColor; ctx.fill();
+                    // Main dot
+                    ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI * 2);
+                    ctx.fillStyle = dotColor; ctx.fill();
+                    // White centre
+                    ctx.beginPath(); ctx.arc(x, y, dotR * 0.4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff'; ctx.fill();
+
+                    if (isPartial) return;
+
+                    // ── Track-number label (above dot) ──
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.font = `bold 11px 'JetBrains Mono', monospace`;
+                    ctx.fillStyle = isHead ? '#34c77b' : (isEdge ? '#f0a500' : 'rgba(200,210,230,0.92)');
+                    ctx.fillText(order[i], x, y - dotR - 6);
+                    ctx.restore();
+
+                    // ── Step-number badge (right of dot, small pill) ──
+                    if (!isHead) {
+                        const stepNum = i;   // step 1 = first move, step i = ith position
+                        const bx = x + dotR + 4;
+                        const by = y;
+                        const label = `#${stepNum}`;
+                        ctx.save();
+                        ctx.font = `600 9px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        const tw = ctx.measureText(label).width;
+                        const ph = 13, pw = tw + 8, pr = 4;
+                        // pill background
+                        ctx.beginPath();
+                        ctx.roundRect(bx, by - ph / 2, pw, ph, pr);
+                        ctx.fillStyle = isEdge ? 'rgba(240,165,0,0.18)' : (isWrap ? color + '22' : 'rgba(108,99,255,0.18)');
+                        ctx.strokeStyle = isEdge ? '#f0a50055' : (isWrap ? color + '55' : '#6c63ff44');
+                        ctx.lineWidth = 0.8;
+                        ctx.fill(); ctx.stroke();
+                        // pill text
+                        ctx.fillStyle = isEdge ? '#f0a500cc' : (isWrap ? color + 'cc' : '#a8a4ffcc');
+                        ctx.fillText(label, bx + 4, by);
+                        ctx.restore();
+                    } else {
+                        // HEAD label badge
+                        const bx = x + dotR + 4;
+                        const by = y;
+                        const label = 'HEAD';
+                        ctx.save();
+                        ctx.font = `700 9px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        const tw = ctx.measureText(label).width;
+                        const ph = 13, pw = tw + 8, pr = 4;
+                        ctx.beginPath();
+                        ctx.roundRect(bx, by - ph / 2, pw, ph, pr);
+                        ctx.fillStyle = 'rgba(52,199,123,0.18)';
+                        ctx.strokeStyle = '#34c77b55';
+                        ctx.lineWidth = 0.8;
+                        ctx.fill(); ctx.stroke();
+                        ctx.fillStyle = '#34c77bcc';
+                        ctx.fillText(label, bx + 4, by);
+                        ctx.restore();
+                    }
+
+                    // Edge / wrap annotations below dot
+                    if (isEdge) {
+                        ctx.save();
+                        ctx.font = `600 9px monospace`;
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = '#f0a50099';
+                        ctx.fillText('disk edge', x, y + dotR + 14);
+                        ctx.restore();
+                    }
+                    if (isWrap) {
+                        ctx.save();
+                        ctx.font = `600 9px monospace`;
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = color + '88';
+                        ctx.fillText('jump', x, y + dotR + 14);
+                        ctx.restore();
+                    }
                 }
 
                 function draw() {
                     ctx.clearRect(0, 0, W, H);
 
-                    // Grid lines
+                    // Subtle vertical grid lines at each stop position
                     order.forEach(t => {
                         ctx.beginPath();
-                        ctx.moveTo(trackX(t), 0);
-                        ctx.lineTo(trackX(t), H);
+                        ctx.moveTo(trackX(t), PAD_T);
+                        ctx.lineTo(trackX(t), H - PAD_B);
                         ctx.strokeStyle = 'rgba(255,255,255,0.04)';
                         ctx.lineWidth = 1; ctx.stroke();
                     });
@@ -1078,64 +1290,51 @@
                         drawSeg(
                             trackX(order[i]), stepY(i),
                             trackX(order[i + 1]), stepY(i + 1),
-                            isWrap ? color + '66' : color + 'cc',
-                            isWrap ? 2.5 : 3,
+                            isWrap ? color + '55' : color + 'bb',
+                            isWrap ? 1.5 : 2.5,
                             isWrap
                         );
                     }
 
-                    // Animating segment
+                    // Currently-animating segment
                     if (completedSteps < TOTAL_STEPS) {
                         const i = completedSteps;
                         const x1 = trackX(order[i]), y1 = stepY(i);
                         const x2 = trackX(order[i + 1]), y2 = stepY(i + 1);
                         const isWrap = stepMeta[i] && stepMeta[i].isWrap;
-                        drawSeg(
-                            x1, y1,
-                            x1 + (x2 - x1) * frac, y1 + (y2 - y1) * frac,
-                            isWrap ? color + 'cc' : color + 'ee',
-                            isWrap ? 2.5 : 3,
-                            isWrap
-                        );
+                        const ex = x1 + (x2 - x1) * frac;
+                        const ey = y1 + (y2 - y1) * frac;
+
+                        drawSeg(x1, y1, ex, ey,
+                            isWrap ? color + 'aa' : color + 'ff',
+                            isWrap ? 2 : 3, isWrap);
+
+                        // Animated cursor glow at tip
+                        ctx.save();
+                        const grad = ctx.createRadialGradient(ex, ey, 0, ex, ey, 10);
+                        grad.addColorStop(0, color + 'cc');
+                        grad.addColorStop(1, color + '00');
+                        ctx.beginPath(); ctx.arc(ex, ey, 10, 0, Math.PI * 2);
+                        ctx.fillStyle = grad; ctx.fill();
+                        ctx.restore();
                     }
 
-                    // Dots + labels
+                    // Nodes (drawn after lines so they sit on top)
                     for (let i = 0; i <= Math.min(completedSteps, order.length - 1); i++) {
-                        const x = trackX(order[i]), y = stepY(i);
-                        const isHead = i === 0;
-                        const isEdgePt = stepMeta[i - 1] && stepMeta[i - 1].isEdge;
-                        const isWrapPt = stepMeta[i - 1] && stepMeta[i - 1].isWrap;
-
-                        let dotColor = isHead ? '#34c77b' : (isEdgePt ? '#f0a500' : color + '99');
-
-                        // Glow
-                        ctx.beginPath(); ctx.arc(x, y, isHead ? 14 : (isEdgePt ? 12 : 9), 0, Math.PI * 2);
-                        ctx.fillStyle = isHead ? '#34c77b44' : (isEdgePt ? 'rgba(240,165,0,0.18)' : color + '22'); ctx.fill();
-                        // Dot
-                        ctx.beginPath(); ctx.arc(x, y, isHead ? 7 : (isEdgePt ? 6 : 5), 0, Math.PI * 2);
-                        ctx.fillStyle = dotColor; ctx.fill();
-                        // Inner
-                        ctx.beginPath(); ctx.arc(x, y, isHead ? 3 : 2.5, 0, Math.PI * 2);
-                        ctx.fillStyle = '#fff'; ctx.fill();
-                        // Label
-                        ctx.font = 'bold 22px JetBrains Mono, monospace';
-                        ctx.fillStyle = isHead ? '#34c77b' : (isEdgePt ? '#f0a500' : 'rgba(200,200,220,0.9)');
-                        ctx.textAlign = 'center';
-                        ctx.fillText(order[i], x, y - 20);
-
-                        if (isEdgePt) {
-                            ctx.font = 'bold 18px monospace';
-                            ctx.fillStyle = '#f0a50099';
-                            ctx.fillText('edge', x, y + 28);
-                        }
-                        if (isWrapPt) {
-                            ctx.font = 'bold 18px monospace';
-                            ctx.fillStyle = color + '88';
-                            ctx.fillText('jump', x, y + 28);
-                        }
+                        const isAnimating = (i === completedSteps && completedSteps < TOTAL_STEPS);
+                        drawNode(i, false);
+                    }
+                    // Draw the head of the currently-animating segment (partial, no badge)
+                    if (completedSteps < TOTAL_STEPS) {
+                        const i = completedSteps + 1;
+                        if (frac > 0.85 && i < order.length) drawNode(i, true);
                     }
 
                     if (progress < TOTAL_FRAMES) { progress++; seekAnimId = requestAnimationFrame(draw); }
+                    else {
+                        // Final pass: draw all nodes fully
+                        for (let i = 0; i < order.length; i++) drawNode(i, false);
+                    }
                 }
                 draw();
             }
@@ -1357,6 +1556,29 @@
         })();
     </script>
 
+    <script>
+        /* ── macOS clock & theme ── */
+        (function() {
+            function updateClock() {
+                var now = new Date();
+                var h = String(now.getHours()).padStart(2, '0');
+                var m = String(now.getMinutes()).padStart(2, '0');
+                var s = String(now.getSeconds()).padStart(2, '0');
+                var el = document.getElementById('navClock');
+                if (el) el.textContent = h + ':' + m + ':' + s;
+            }
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            /* Restore theme */
+            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light');
+            var btn = document.getElementById('themeToggle');
+            if (btn) btn.addEventListener('click', function() {
+                document.body.classList.toggle('light');
+                localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+            });
+        })();
+    </script>
 </body>
 
 </html>
