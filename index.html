@@ -551,10 +551,10 @@
             color: var(--text-secondary);
         }
         .disk-canvas-wrap {
-            height: 220px;
+            height: 340px;
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 8px;
-            background: rgba(0,0,0,0.14);
+            background: rgba(255,255,255,0.015);
             overflow: hidden;
         }
         .disk-canvas-wrap canvas {
@@ -3442,56 +3442,159 @@
             let direction = 'up';
             let requests = [98,183,37,122,14,124,65,67];
 
+            const STOR_COLORS = {
+                fcfs:'#6c63ff', sstf:'#00c8e0', scan:'#f0a500',
+                cscan:'#34c77b', look:'#a855f7', clook:'#ec4899'
+            };
+
             function sortedReqs() { return [...requests].sort((a, b) => a - b); }
-            function buildSteps(order, head) {
+
+            /* Full algorithm implementations that emit isEdge / isWrap metadata */
+            function runFcfs(head) {
+                const order = [head, ...requests];
                 const steps = [];
-                let current = head, total = 0;
-                order.forEach(to => {
-                    const dist = Math.abs(to - current);
-                    total += dist;
-                    steps.push({ from: current, to, dist, total });
-                    current = to;
-                });
-                return { order, steps, totalSeek: total };
+                let seek = 0;
+                for (let i = 1; i < order.length; i++) {
+                    const dist = Math.abs(order[i] - order[i-1]);
+                    seek += dist;
+                    steps.push({ from: order[i-1], to: order[i], dist });
+                }
+                return { order, totalSeek: seek, steps };
             }
-            function runStorage(selectedAlgo, head, diskSize, dir) {
+            function runSstf(head) {
+                const pending = [...requests];
+                const order = [head], steps = [];
+                let seek = 0, cur = head;
+                while (pending.length) {
+                    let best = 0;
+                    pending.forEach((r,i) => { if (Math.abs(r-cur) < Math.abs(pending[best]-cur)) best=i; });
+                    const to = pending.splice(best, 1)[0];
+                    const dist = Math.abs(to - cur);
+                    seek += dist;
+                    steps.push({ from: cur, to, dist });
+                    cur = to; order.push(cur);
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runScan(head, diskSize, dir) {
                 const sorted = sortedReqs();
-                let order = [];
-                if (selectedAlgo === 'fcfs') order = [...requests];
-                if (selectedAlgo === 'sstf') {
-                    const pending = [...requests];
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to, flags) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist, ...flags });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
                     let cur = head;
-                    while (pending.length) {
-                        let best = 0;
-                        pending.forEach((r, i) => {
-                            if (Math.abs(r - cur) < Math.abs(pending[best] - cur)) best = i;
-                        });
-                        cur = pending.splice(best, 1)[0];
-                        order.push(cur);
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== diskSize) cur = push(cur, diskSize, { isEdge: true });
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== 0) cur = push(cur, 0, { isEdge: true });
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runCscan(head, diskSize, dir) {
+                const sorted = sortedReqs();
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to, flags) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist, ...flags });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
+                    let cur = head;
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== diskSize) cur = push(cur, diskSize, { isEdge: true });
+                    const lower = sorted.filter(r => r < head);
+                    if (lower.length) {
+                        cur = push(cur, 0, { isWrap: true });
+                        lower.forEach(r => { cur = push(cur, r, {}); });
+                    }
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== 0) cur = push(cur, 0, { isEdge: true });
+                    const higher = sorted.filter(r => r >= head);
+                    if (higher.length) {
+                        cur = push(cur, diskSize, { isWrap: true });
+                        higher.reverse().forEach(r => { cur = push(cur, r, {}); });
                     }
                 }
-                if (selectedAlgo === 'scan') {
-                    const up = sorted.filter(r => r >= head);
-                    const down = sorted.filter(r => r < head).reverse();
-                    order = dir === 'up' ? [...up, diskSize, ...down] : [...down, 0, ...up];
-                }
-                if (selectedAlgo === 'cscan') {
-                    const up = sorted.filter(r => r >= head);
-                    const down = sorted.filter(r => r < head);
-                    order = dir === 'up' ? [...up, diskSize, 0, ...down] : [...down.reverse(), 0, diskSize, ...up.reverse()];
-                }
-                if (selectedAlgo === 'look') {
-                    const up = sorted.filter(r => r >= head);
-                    const down = sorted.filter(r => r < head).reverse();
-                    order = dir === 'up' ? [...up, ...down] : [...down, ...up];
-                }
-                if (selectedAlgo === 'clook') {
-                    const up = sorted.filter(r => r >= head);
-                    const down = sorted.filter(r => r < head);
-                    order = dir === 'up' ? [...up, ...down] : [...down.reverse(), ...up.reverse()];
-                }
-                return buildSteps(order, head);
+                return { order, totalSeek: seek, steps };
             }
+            function runLook(head, dir) {
+                const sorted = sortedReqs();
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
+                    let cur = head;
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r); });
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r); });
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r); });
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r); });
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runClook(head, dir) {
+                const sorted = sortedReqs();
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to, flags) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist, ...flags });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
+                    let cur = head;
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                    const lower = sorted.filter(r => r < head);
+                    if (lower.length) {
+                        cur = push(cur, lower[0], { isWrap: true });
+                        for (let i = 1; i < lower.length; i++) cur = push(cur, lower[i], {});
+                    }
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                    const higher = sorted.filter(r => r >= head).reverse();
+                    if (higher.length) {
+                        cur = push(cur, higher[0], { isWrap: true });
+                        for (let i = 1; i < higher.length; i++) cur = push(cur, higher[i], {});
+                    }
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runStorage(selectedAlgo, head, diskSize, dir) {
+                switch (selectedAlgo) {
+                    case 'fcfs':  return runFcfs(head);
+                    case 'sstf':  return runSstf(head);
+                    case 'scan':  return runScan(head, diskSize, dir);
+                    case 'cscan': return runCscan(head, diskSize, dir);
+                    case 'look':  return runLook(head, dir);
+                    case 'clook': return runClook(head, dir);
+                }
+            }
+
             function renderTags() {
                 const wrap = document.getElementById('storReqTags');
                 wrap.innerHTML = '';
@@ -3519,36 +3622,257 @@
                 input.value = '';
                 renderTags();
             }
+
+            /* ── Animated Seek Path Canvas (ported from storage.html) ── */
+            let storSeekAnimId = null;
             function drawPath(result, head, diskSize) {
                 const canvas = document.getElementById('storSeekCanvas');
                 const wrap = canvas.parentElement;
-                canvas.width = Math.max(2, wrap.clientWidth * 2);
-                canvas.height = Math.max(2, wrap.clientHeight * 2);
+                const DPR = window.devicePixelRatio || 1;
+                const cssW = wrap.clientWidth  || wrap.offsetWidth  || 600;
+                const cssH = wrap.clientHeight || wrap.offsetHeight || 340;
+                canvas.width  = cssW * DPR;
+                canvas.height = cssH * DPR;
+                canvas.style.width  = cssW + 'px';
+                canvas.style.height = cssH + 'px';
+
                 const ctx = canvas.getContext('2d');
-                const W = canvas.width, H = canvas.height, pad = 44;
-                ctx.clearRect(0, 0, W, H);
-                ctx.strokeStyle = 'rgba(255,255,255,0.16)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(pad, pad);
-                ctx.lineTo(W - pad, pad);
-                ctx.stroke();
-                const xFor = track => pad + (track / diskSize) * (W - pad * 2);
-                const points = [head, ...result.order].map((track, i) => ({
-                    x: xFor(track),
-                    y: pad + i * ((H - pad * 2) / Math.max(1, result.order.length))
-                }));
-                ctx.strokeStyle = '#6c63ff';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                points.forEach((p, i) => i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y));
-                ctx.stroke();
-                points.forEach((p, i) => {
+                ctx.scale(DPR, DPR);
+                const W = cssW, H = cssH;
+                const PAD_L = 44, PAD_R = 44, PAD_T = 52, PAD_B = 16;
+                const usableW = W - PAD_L - PAD_R;
+                const color = STOR_COLORS[algo] || '#6c63ff';
+
+                const order    = result.order;
+                const stepMeta = result.steps || [];
+
+                function trackX(t) { return PAD_L + (t / diskSize) * usableW; }
+                const usableH = H - PAD_T - PAD_B;
+                const yStep = usableH / (order.length + 1);
+                function stepY(i) { return PAD_T + yStep * (i + 1); }
+
+                if (storSeekAnimId) cancelAnimationFrame(storSeekAnimId);
+
+                /* ── In-canvas ruler ── */
+                function drawRuler() {
+                    const RULER_Y = 14;        // centre of the ruler bar
+                    const TICK_COUNT = 10;
+
+                    // Ruler background bar
+                    ctx.save();
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, i === 0 ? 8 : 6, 0, Math.PI * 2);
-                    ctx.fillStyle = i === 0 ? '#f0a500' : '#4285f4';
+                    ctx.roundRect(PAD_L, RULER_Y - 2, usableW, 4, 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.07)';
                     ctx.fill();
-                });
+                    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Tick marks + labels
+                    for (let i = 0; i <= TICK_COUNT; i++) {
+                        const val = Math.round((diskSize / TICK_COUNT) * i);
+                        const x = trackX(val);
+
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(x, RULER_Y - 2);
+                        ctx.lineTo(x, RULER_Y + 6);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        ctx.font = `500 9px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.fillStyle = 'rgba(180,180,200,0.55)';
+                        ctx.fillText(val, x, RULER_Y + 8);
+                        ctx.restore();
+                    }
+
+                    // Head-position highlight on ruler
+                    const hx = trackX(head);
+                    ctx.save();
+                    // Glowing tick
+                    ctx.beginPath();
+                    ctx.moveTo(hx, RULER_Y - 5);
+                    ctx.lineTo(hx, RULER_Y + 7);
+                    ctx.strokeStyle = '#34c77b';
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                    // Label pill above bar
+                    const lbl = String(head);
+                    ctx.font = `700 9px 'JetBrains Mono', monospace`;
+                    ctx.textAlign = 'center';
+                    const tw = ctx.measureText(lbl).width;
+                    const pw = tw + 8, ph = 13, pr = 3;
+                    ctx.beginPath();
+                    ctx.roundRect(hx - pw/2, RULER_Y - ph - 6, pw, ph, pr);
+                    ctx.fillStyle = 'rgba(52,199,123,0.22)';
+                    ctx.strokeStyle = '#34c77b55';
+                    ctx.lineWidth = 0.8;
+                    ctx.fill(); ctx.stroke();
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#34c77bdd';
+                    ctx.fillText(lbl, hx, RULER_Y - ph/2 - 6);
+                    ctx.restore();
+                }
+
+                let progress = 0;
+                const TOTAL_STEPS = order.length - 1;
+                const FRAMES_PER_STEP = 55;
+                const TOTAL_FRAMES = TOTAL_STEPS * FRAMES_PER_STEP;
+
+                function drawSeg(x1, y1, x2, y2, strokeColor, lineWidth, dashed) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash(dashed ? [7, 5] : []);
+                    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = lineWidth;
+                    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                function drawNode(i, partial) {
+                    const x = trackX(order[i]), y = stepY(i);
+                    const isHead = i === 0;
+                    const isEdge = stepMeta[i-1] && stepMeta[i-1].isEdge;
+                    const isWrap = stepMeta[i-1] && stepMeta[i-1].isWrap;
+                    const dotR  = isHead ? 7 : (isEdge ? 6 : 5);
+                    const glowR = dotR + 6;
+                    let dotColor, glowColor;
+                    if (isHead)      { dotColor = '#34c77b'; glowColor = '#34c77b33'; }
+                    else if (isEdge) { dotColor = '#f0a500'; glowColor = 'rgba(240,165,0,0.22)'; }
+                    else             { dotColor = color;     glowColor = color + '28'; }
+
+                    ctx.beginPath(); ctx.arc(x, y, glowR, 0, Math.PI*2);
+                    ctx.fillStyle = glowColor; ctx.fill();
+                    ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI*2);
+                    ctx.fillStyle = dotColor; ctx.fill();
+                    ctx.beginPath(); ctx.arc(x, y, dotR * 0.38, 0, Math.PI*2);
+                    ctx.fillStyle = '#fff'; ctx.fill();
+
+                    if (partial) return;
+
+                    // Track-number label above dot
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.font = `bold 10px 'JetBrains Mono', monospace`;
+                    ctx.fillStyle = isHead ? '#34c77b' : (isEdge ? '#f0a500' : 'rgba(200,210,230,0.9)');
+                    ctx.fillText(order[i], x, y - dotR - 4);
+                    ctx.restore();
+
+                    // Step-number badge to the right
+                    if (!isHead) {
+                        const label = `#${i}`;
+                        const bx = x + dotR + 3, by = y;
+                        ctx.save();
+                        ctx.font = `600 8px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        const tw = ctx.measureText(label).width;
+                        const ph = 12, pw = tw + 7, pr = 3;
+                        ctx.beginPath();
+                        ctx.roundRect(bx, by - ph/2, pw, ph, pr);
+                        ctx.fillStyle = isEdge ? 'rgba(240,165,0,0.18)' : (isWrap ? color+'22' : 'rgba(108,99,255,0.18)');
+                        ctx.strokeStyle = isEdge ? '#f0a50055' : (isWrap ? color+'55' : '#6c63ff44');
+                        ctx.lineWidth = 0.8;
+                        ctx.fill(); ctx.stroke();
+                        ctx.fillStyle = isEdge ? '#f0a500cc' : (isWrap ? color+'cc' : '#a8a4ffcc');
+                        ctx.fillText(label, bx + 3, by);
+                        ctx.restore();
+                    } else {
+                        const label = 'HEAD';
+                        const bx = x + dotR + 3, by = y;
+                        ctx.save();
+                        ctx.font = `700 8px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        const tw = ctx.measureText(label).width;
+                        const ph = 12, pw = tw + 7, pr = 3;
+                        ctx.beginPath();
+                        ctx.roundRect(bx, by - ph/2, pw, ph, pr);
+                        ctx.fillStyle = 'rgba(52,199,123,0.18)';
+                        ctx.strokeStyle = '#34c77b55';
+                        ctx.lineWidth = 0.8;
+                        ctx.fill(); ctx.stroke();
+                        ctx.fillStyle = '#34c77bcc';
+                        ctx.fillText(label, bx + 3, by);
+                        ctx.restore();
+                    }
+                    if (isEdge) {
+                        ctx.save(); ctx.font = `600 8px monospace`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                        ctx.fillStyle = '#f0a50088';
+                        ctx.fillText('disk edge', x, y + dotR + 4);
+                        ctx.restore();
+                    }
+                    if (isWrap) {
+                        ctx.save(); ctx.font = `600 8px monospace`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                        ctx.fillStyle = color + '88';
+                        ctx.fillText('jump', x, y + dotR + 4);
+                        ctx.restore();
+                    }
+                }
+
+                function draw() {
+                    ctx.clearRect(0, 0, W, H);
+
+                    // Ruler drawn first (bottom layer)
+                    drawRuler();
+
+                    // Subtle vertical guides at each stop
+                    order.forEach(t => {
+                        ctx.beginPath();
+                        ctx.moveTo(trackX(t), PAD_T);
+                        ctx.lineTo(trackX(t), H - PAD_B);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+                        ctx.lineWidth = 1; ctx.stroke();
+                    });
+
+                    const done = Math.floor(progress / FRAMES_PER_STEP);
+                    const frac = (progress % FRAMES_PER_STEP) / FRAMES_PER_STEP;
+
+                    // Completed segments
+                    for (let i = 0; i < done && i < TOTAL_STEPS; i++) {
+                        const iw = stepMeta[i] && stepMeta[i].isWrap;
+                        drawSeg(trackX(order[i]), stepY(i), trackX(order[i+1]), stepY(i+1),
+                            iw ? color+'55' : color+'bb', iw ? 1.5 : 2.5, iw);
+                    }
+
+                    // Animating segment
+                    if (done < TOTAL_STEPS) {
+                        const i = done;
+                        const x1=trackX(order[i]), y1=stepY(i), x2=trackX(order[i+1]), y2=stepY(i+1);
+                        const iw = stepMeta[i] && stepMeta[i].isWrap;
+                        const ex = x1 + (x2-x1)*frac, ey = y1 + (y2-y1)*frac;
+                        drawSeg(x1, y1, ex, ey, iw ? color+'aa' : color+'ff', iw ? 2 : 3, iw);
+
+                        // Glowing cursor tip
+                        ctx.save();
+                        const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, 9);
+                        gr.addColorStop(0, color+'cc'); gr.addColorStop(1, color+'00');
+                        ctx.beginPath(); ctx.arc(ex, ey, 9, 0, Math.PI*2);
+                        ctx.fillStyle = gr; ctx.fill();
+                        ctx.restore();
+                    }
+
+                    // Nodes on top
+                    for (let i = 0; i <= Math.min(done, order.length-1); i++) drawNode(i, false);
+                    if (done < TOTAL_STEPS) {
+                        const ni = done + 1;
+                        if (frac > 0.82 && ni < order.length) drawNode(ni, true);
+                    }
+
+                    if (progress < TOTAL_FRAMES) { progress++; storSeekAnimId = requestAnimationFrame(draw); }
+                    else { drawRuler(); for (let i = 0; i < order.length; i++) drawNode(i, false); }
+                }
+                draw();
             }
             function renderOutput() {
                 if (!requests.length) return;
@@ -3559,20 +3883,36 @@
                     result: runStorage(name, head, diskSize, direction)
                 }));
                 const current = all.find(item => item.name === algo).result;
+
                 document.getElementById('storOutput').classList.add('visible');
-                drawPath(current, head, diskSize);
+
+                // Defer canvas render — wait for DOM to lay out the now-visible output section
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    drawPath(current, head, diskSize);
+                }));
+
                 document.getElementById('storSeekOrder').innerHTML = current.order.map(track => `<span class="compact-tag">${track}</span>`).join('');
-                document.getElementById('storCalcBody').innerHTML = current.steps.map((step, i) => `<tr><td>${i + 1}</td><td>${step.from}</td><td>${step.to}</td><td>${step.dist}</td><td>${step.total}</td></tr>`).join('');
+
+                // Build running total on the fly (step objects have .dist, not .total)
+                let runningTotal = 0;
+                document.getElementById('storCalcBody').innerHTML = current.steps.map((step, i) => {
+                    runningTotal += step.dist;
+                    return `<tr><td>${i + 1}</td><td>${step.from}</td><td>${step.to}</td><td>${step.dist}</td><td>${runningTotal}</td></tr>`;
+                }).join('');
+
                 document.getElementById('storMetrics').innerHTML = [
                     ['Total Seek', current.totalSeek, 'tracks'],
                     ['Requests', requests.length, ''],
-                    ['Average Seek', (current.totalSeek / current.steps.length).toFixed(2), 'tracks']
+                    ['Average Seek', (current.totalSeek / Math.max(1, current.steps.length)).toFixed(2), 'tracks']
                 ].map(([label, value, unit]) => `<div class="compact-metric-card"><div class="compact-metric-value">${value}<span style="font-size:11px;color:var(--text-secondary);margin-left:3px;">${unit}</span></div><div class="compact-metric-label">${label}</div></div>`).join('');
+
                 const maxSeek = Math.max(...all.map(item => item.result.totalSeek), 1);
+                const algoColor = STOR_COLORS[algo] || '#6c63ff';
                 document.getElementById('storCompare').innerHTML = all.map(item => {
                     const width = Math.max(6, (item.result.totalSeek / maxSeek) * 100);
-                    const fill = item.name === algo ? '#6c63ff' : 'rgba(255,255,255,0.32)';
-                    return `<div class="compact-compare-card"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><strong>${item.name.toUpperCase()}</strong><span>${item.result.totalSeek}</span></div><div style="height:6px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${width}%;background:${fill};"></div></div></div>`;
+                    const isCur = item.name === algo;
+                    const fill = isCur ? (STOR_COLORS[item.name] || '#6c63ff') : 'rgba(255,255,255,0.22)';
+                    return `<div class="compact-compare-card" style="${isCur ? `border-color:${algoColor}44;background:${algoColor}0d;` : ''}"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><strong style="${isCur ? `color:${algoColor}` : ''}">${item.name.toUpperCase()}</strong><span style="${isCur ? `color:${algoColor}` : ''}">${item.result.totalSeek}</span></div><div style="height:5px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${width}%;background:${fill};border-radius:99px;transition:width 0.5s;"></div></div></div>`;
                 }).join('');
             }
             function syncDesc() {
