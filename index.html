@@ -9,6 +9,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        (function() {
+            try {
+                if (sessionStorage.getItem('osSimulatorBootShown') === 'true') {
+                    document.documentElement.classList.add('boot-seen');
+                }
+            } catch (error) {}
+        })();
+    </script>
     <style>
         /* ── Reset ── */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -46,6 +55,49 @@
             padding-top: 28px;
             padding-bottom: 0;
             user-select: none;
+        }
+        body.theme-animating,
+        body.theme-animating * {
+            transition-duration: 0.42s !important;
+            transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+        }
+        .theme-transition-wash {
+            position: fixed;
+            left: var(--theme-x, 50vw);
+            top: var(--theme-y, 14px);
+            width: 220vmax;
+            height: 220vmax;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100001;
+            background: var(--theme-wash, rgba(255, 255, 255, 0.72));
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            filter: blur(2px);
+            animation: theme-wash 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+            mix-blend-mode: soft-light;
+        }
+        @keyframes theme-wash {
+            0% {
+                opacity: 0.65;
+                transform: translate(-50%, -50%) scale(0);
+            }
+            58% {
+                opacity: 0.22;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            body.theme-animating,
+            body.theme-animating * {
+                transition-duration: 0.01ms !important;
+            }
+            .theme-transition-wash {
+                display: none;
+            }
         }
 
         /* ══ macOS Top Menu Bar ══ */
@@ -169,6 +221,18 @@
             opacity: 0;
             animation: macOS-app-open 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
+        .os-window.win-genie-opening,
+        .os-window.win-genie-minimizing {
+            pointer-events: none;
+            transform-origin: var(--genie-origin-x, 50%) 100%;
+            will-change: transform, clip-path, opacity, border-radius;
+        }
+        .os-window.win-genie-opening {
+            animation: macOS-genie-open 0.72s cubic-bezier(0.18, 0.9, 0.2, 1) both;
+        }
+        .os-window.win-genie-minimizing {
+            animation: macOS-genie-open 0.62s cubic-bezier(0.45, 0, 0.18, 1) reverse both;
+        }
         body.light .os-window {
             background: rgba(255,255,255,0.82);
             border: 1px solid rgba(0,0,0,0.1);
@@ -183,13 +247,13 @@
             box-shadow: 0 16px 48px rgba(0,0,0,0.2), 0 4px 12px rgba(0,0,0,0.15);
         }
         /* Window Hover Pop-up Effect */
-        .os-window:not(.minimized):not(.dragging):hover {
+        .os-window:not(.minimized):not(.dragging):not(.win-genie-opening):not(.win-genie-minimizing):hover {
             transform: scale(1.025) translateY(-4px);
             box-shadow: 0 24px 64px rgba(0,0,0,0.65), 0 8px 24px rgba(0,0,0,0.4);
             border-color: rgba(255, 255, 255, 0.25);
             z-index: 25;
         }
-        body.light .os-window:not(.minimized):not(.dragging):hover {
+        body.light .os-window:not(.minimized):not(.dragging):not(.win-genie-opening):not(.win-genie-minimizing):hover {
             box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 8px 24px rgba(0,0,0,0.12);
             border-color: rgba(0, 0, 0, 0.18);
         }
@@ -242,6 +306,13 @@
             gap: 8px;
         }
         .win-module-icon { font-size: 36px; line-height: 1; }
+        .win-module-icon-img {
+            width: 48px;
+            height: 48px;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.28));
+        }
         .win-module-name {
             font-size: 16px; font-weight: 700;
             color: var(--text-primary); letter-spacing: -0.01em;
@@ -271,6 +342,226 @@
             cursor: pointer;
         }
         .win-launch-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+
+        .compact-sim-widget {
+            height: calc(100vh - 140px);
+            min-height: 520px;
+            overflow-y: auto;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background:
+                radial-gradient(circle at 50% 100%, rgba(108,99,255,0.18), transparent 42%),
+                rgba(13, 17, 23, 0.94);
+        }
+        body.light .compact-sim-widget {
+            background:
+                radial-gradient(circle at 50% 100%, rgba(90,82,232,0.08), transparent 42%),
+                rgba(245, 245, 247, 0.96);
+        }
+        .compact-section-label {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .compact-pill-row,
+        .compact-toolbar,
+        .compact-chip-row,
+        .compact-metrics-grid,
+        .compact-compare-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .compact-pill,
+        .compact-btn {
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-secondary);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font: 600 11px var(--font-ui);
+            cursor: pointer;
+        }
+        .compact-pill:hover,
+        .compact-btn:hover {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.09);
+        }
+        .compact-pill.active {
+            color: #fff;
+            background: rgba(108,99,255,0.65);
+            border-color: rgba(108,99,255,0.9);
+        }
+        .compact-btn.primary {
+            color: #fff;
+            background: linear-gradient(135deg,#6c63ff,#4285f4);
+            border-color: transparent;
+        }
+        .compact-btn.danger {
+            color: #ea4335;
+        }
+        body.light .compact-pill,
+        body.light .compact-btn {
+            background: rgba(0,0,0,0.04);
+            border-color: rgba(0,0,0,0.12);
+        }
+        .compact-desc {
+            margin-top: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(255,255,255,0.04);
+            color: var(--text-secondary);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .compact-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        .compact-grid.two {
+            grid-template-columns: repeat(2, minmax(120px, 1fr));
+        }
+        .compact-full {
+            grid-column: 1 / -1;
+        }
+        .compact-field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .compact-input {
+            width: 100%;
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 7px;
+            background: rgba(0,0,0,0.18);
+            color: var(--text-primary);
+            padding: 7px 9px;
+            font: 600 12px var(--font-ui);
+        }
+        body.light .compact-input {
+            background: rgba(255,255,255,0.72);
+            border-color: rgba(0,0,0,0.12);
+        }
+        .compact-chip,
+        .compact-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 24px;
+            padding: 4px 9px;
+            border-radius: 7px;
+            background: rgba(108,99,255,0.18);
+            border: 1px solid rgba(108,99,255,0.28);
+            color: var(--text-primary);
+            font: 700 11px var(--font-mono);
+            cursor: pointer;
+        }
+        .compact-numpad {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .compact-output {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .compact-output.visible {
+            display: flex;
+        }
+        .compact-table-wrap {
+            overflow: auto;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            max-height: 260px;
+        }
+        .compact-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        .compact-table th,
+        .compact-table td {
+            padding: 7px 9px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            text-align: left;
+            white-space: nowrap;
+        }
+        .compact-table th {
+            color: var(--text-secondary);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            background: rgba(255,255,255,0.04);
+        }
+        .compact-metric-card,
+        .compact-compare-card {
+            flex: 1 1 130px;
+            min-width: 130px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.04);
+            padding: 10px;
+        }
+        .compact-metric-value {
+            color: var(--text-primary);
+            font-size: 18px;
+            font-weight: 800;
+        }
+        .compact-metric-label {
+            color: var(--text-secondary);
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .vm-trace-mini {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+        .vm-step-mini {
+            min-width: 44px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 7px;
+            background: rgba(255,255,255,0.04);
+            padding: 6px;
+            text-align: center;
+            font: 700 11px var(--font-mono);
+        }
+        .vm-step-mini.fault { border-color: rgba(234,67,53,0.45); }
+        .vm-step-mini.hit { border-color: rgba(52,168,83,0.45); }
+        .vm-frame-mini {
+            margin-top: 4px;
+            padding: 2px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+        }
+        .disk-canvas-wrap {
+            height: 340px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.015);
+            overflow: hidden;
+        }
+        .disk-canvas-wrap canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
 
         /* Welcome window wider */
         #win-welcome .win-body { align-items: center; text-align: center; padding: 38px 36px 36px; }
@@ -554,6 +845,51 @@
             background: rgba(0, 0, 0, 0.04);
             border-color: rgba(0, 0, 0, 0.1);
         }
+        .clock-mode-tabs {
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4px;
+            padding: 4px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        body.light .clock-mode-tabs {
+            background: rgba(0, 0, 0, 0.04);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+        .clock-mode-tab {
+            border: none;
+            border-radius: 7px;
+            padding: 6px 8px;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font: inherit;
+            font-size: 11px;
+            font-weight: 700;
+            transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+        }
+        .clock-mode-tab.active {
+            background: rgba(255, 255, 255, 0.12);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        }
+        body.light .clock-mode-tab.active {
+            background: rgba(255, 255, 255, 0.72);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .clock-mode-panel {
+            width: 100%;
+            display: none;
+        }
+        .clock-mode-panel.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
         .timer-preset-btn {
             padding: 3px 8px;
             font-size: 10px;
@@ -608,6 +944,37 @@
             padding: 0 24px;
             gap: 20px;
         }
+        .dock-separator {
+            width: 1px;
+            height: 44px;
+            flex: 0 0 1px;
+            align-self: center;
+            margin: 0 2px;
+            border-radius: 999px;
+            background: linear-gradient(
+                to bottom,
+                transparent,
+                rgba(255, 255, 255, 0.28) 18%,
+                rgba(255, 255, 255, 0.28) 82%,
+                transparent
+            );
+            box-shadow: 1px 0 0 rgba(0, 0, 0, 0.22);
+            pointer-events: none;
+            transition: height 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .taskbar:hover .dock-separator {
+            height: 50px;
+        }
+        body.light .dock-separator {
+            background: linear-gradient(
+                to bottom,
+                transparent,
+                rgba(0, 0, 0, 0.22) 18%,
+                rgba(0, 0, 0, 0.22) 82%,
+                transparent
+            );
+            box-shadow: 1px 0 0 rgba(255, 255, 255, 0.35);
+        }
         .taskbar-tab {
             position: relative;
             display: flex;
@@ -643,7 +1010,28 @@
             line-height: 1;
             transition: transform 0.2s;
         }
+        .dock-icon-img {
+            width: 38px;
+            height: 38px;
+            display: block;
+            object-fit: contain;
+        }
+        .dock-icon-terminal {
+            width: 50px;
+            height: 50px;
+        }
+        .dock-icon-clock {
+            width: 48px;
+            height: 48px;
+        }
+        .dock-icon-calendar {
+            width: 48px;
+            height: 48px;
+        }
         .taskbar-tab:hover .dock-icon {
+            transform: scale(1.05);
+        }
+        .taskbar-tab:hover .dock-icon-img {
             transform: scale(1.05);
         }
         .dock-dot {
@@ -713,6 +1101,38 @@
                 transform: scale(1) translateY(0);
             }
         }
+        @keyframes macOS-genie-open {
+            0% {
+                opacity: 0.18;
+                border-radius: 24px;
+                clip-path: polygon(47% 100%, 53% 100%, 57% 100%, 43% 100%);
+                transform:
+                    translate(var(--genie-translate-x, 0px), var(--genie-translate-y, 72px))
+                    scale(0.08, 0.035)
+                    skewX(var(--genie-skew, 0deg));
+            }
+            38% {
+                opacity: 0.92;
+                border-radius: 18px;
+                clip-path: polygon(17% 26%, 83% 19%, 100% 100%, 0 100%);
+                transform:
+                    translate(var(--genie-mid-x, 0px), var(--genie-mid-y, 24px))
+                    scale(0.82, 0.64)
+                    skewX(var(--genie-mid-skew, 0deg));
+            }
+            72% {
+                opacity: 1;
+                border-radius: 14px;
+                clip-path: polygon(3% 3%, 97% 0, 100% 100%, 0 98%);
+                transform: translate(0, -8px) scale(1.015, 1.02) skewX(0deg);
+            }
+            100% {
+                opacity: 1;
+                border-radius: 12px;
+                clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+                transform: translate(0, 0) scale(1, 1) skewX(0deg);
+            }
+        }
         #win-welcome.win-entering  { animation-delay: 0.15s; }
         #win-cpu-card.win-entering  { animation-delay: 0.35s; }
         #win-memory.win-entering    { animation-delay: 0.55s; }
@@ -733,6 +1153,9 @@
             transition: opacity 0.8s ease, visibility 0.8s ease;
             opacity: 1;
             visibility: visible;
+        }
+        html.boot-seen #mac-boot-screen {
+            display: none;
         }
         #mac-boot-screen.fade-out {
             opacity: 0;
@@ -810,6 +1233,32 @@
             background: rgba(234,67,53,0.18);
             border-color: rgba(234,67,53,0.5);
             color: #ea4335;
+        }
+        .mem-algo-desc {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        body.light .mem-algo-desc {
+            background: rgba(0,0,0,0.03);
+            border-color: rgba(0,0,0,0.08);
+        }
+        .mem-algo-desc-icon {
+            flex-shrink: 0;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #ea4335;
+        }
+        #memAlgoDescText {
+            margin: 0;
+            font-size: 11px;
+            line-height: 1.4;
+            color: var(--text-secondary);
         }
         .mem-config-row {
             display: grid;
@@ -1058,9 +1507,9 @@
         <div class="nav-left">
             <div class="nav-logo" title="System Menu">🦆</div>
             <ul class="nav-links">
-                <li><a href="index.html" class="active">Simulator</a></li>
-                <li><a href="#" id="navbarCpuLink">CPU</a></li>
-                <li><a href="#" id="navbarMemoryLink">Memory</a></li>
+                <li><a href="#" id="navbarSimulatorLink" class="active">Simulator</a></li>
+                <li><a href="pages/cpu.html" id="navbarCpuLink">CPU</a></li>
+                <li><a href="pages/memory.html" id="navbarMemoryLink">Memory</a></li>
                 <li><a href="pages/virtual.html">Virtual</a></li>
                 <li><a href="pages/storage.html">Storage</a></li>
                 <li><a href="#" id="navbarAboutLink">About</a></li>
@@ -1146,7 +1595,7 @@
                 <div class="win-title">CPU Scheduling</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">⚙️</div>
+                <img class="win-module-icon-img" src="assets/cpu_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">CPU Scheduling</div>
                 <div class="win-module-desc">Animated Gantt charts and real-time waiting &amp; turnaround time stats.</div>
                 <div class="win-algo-tags">
@@ -1171,7 +1620,7 @@
                     <div class="tl tl-yellow" data-action="minimize" data-target="win-cpu"></div>
                     <div class="tl tl-green"  data-action="maximize" data-target="win-cpu"></div>
                 </div>
-                <div class="win-title">⚙️ CPU Scheduling Simulator</div>
+                <div class="win-title">CPU Scheduling Simulator</div>
             </div>
             <div class="cpu-sim-wrap" id="cpuSimWrap">
                 <!-- Algorithm Selector -->
@@ -1264,7 +1713,7 @@
                 <div class="win-title">Memory Management</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">🧠</div>
+                <img class="win-module-icon-img" src="assets/ram_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">Memory Management</div>
                 <div class="win-module-desc">MVT variable partitions and visual memory maps with allocation policies.</div>
                 <div class="win-algo-tags">
@@ -1288,7 +1737,7 @@
                     <div class="tl tl-yellow" data-action="minimize" data-target="win-mem-sim"></div>
                     <div class="tl tl-green"  data-action="maximize" data-target="win-mem-sim"></div>
                 </div>
-                <div class="win-title">🧠 Memory Management Simulator</div>
+                <div class="win-title">Memory Management Simulator</div>
             </div>
             <div class="mem-sim-wrap" id="memSimWrap">
 
@@ -1300,6 +1749,10 @@
                         <button class="mem-algo-pill active" data-algo="next">Next Fit</button>
                         <button class="mem-algo-pill" data-algo="best">Best Fit</button>
                         <button class="mem-algo-pill" data-algo="worst">Worst Fit</button>
+                    </div>
+                    <div class="mem-algo-desc">
+                        <span class="mem-algo-desc-icon" aria-hidden="true">ⓘ</span>
+                        <p id="memAlgoDescText"></p>
                     </div>
                 </div>
 
@@ -1314,6 +1767,15 @@
                         <div class="mem-config-card">
                             <label class="mem-label" for="memOS">OS Reserved (KB)</label>
                             <input type="number" id="memOS" class="mem-sim-input" value="64" min="1">
+                        </div>
+                        <div class="mem-config-card">
+                            <div class="mem-toggle-row">
+                                <span>Include OS</span>
+                                <label class="mem-toggle-switch">
+                                    <input type="checkbox" id="memIncludeOS" checked>
+                                    <span class="mem-toggle-slider"></span>
+                                </label>
+                            </div>
                         </div>
                         <div class="mem-config-card">
                             <div class="mem-label">User Memory</div>
@@ -1432,7 +1894,7 @@
                 <div class="win-title">Virtual Memory</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">📄</div>
+                <img class="win-module-icon-img" src="assets/cube_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">Virtual Memory</div>
                 <div class="win-module-desc">Page tables, page faults, and replacement policies visualization.</div>
                 <div class="win-algo-tags">
@@ -1441,9 +1903,9 @@
                     <span class="win-algo-tag">Optimal</span>
                     <span class="win-algo-tag">Clock</span>
                 </div>
-                <a href="pages/virtual.html" class="win-launch-btn" style="background:rgba(251,188,5,0.85);color:#000;">
+                <button id="virtualCardOpenBtn" class="win-launch-btn" style="background:rgba(251,188,5,0.85);color:#000; border:none; font-family:inherit;">
                     Open →
-                </a>
+                </button>
             </div>
         </div>
 
@@ -1459,7 +1921,7 @@
                 <div class="win-title">Mass Storage</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">💾</div>
+                <img class="win-module-icon-img" src="assets/hard_drive_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">Mass Storage</div>
                 <div class="win-module-desc">Disk scheduling with seek-track visualization across multiple algorithms.</div>
                 <div class="win-algo-tags">
@@ -1468,13 +1930,187 @@
                     <span class="win-algo-tag">SCAN</span>
                     <span class="win-algo-tag">C-SCAN</span>
                 </div>
-                <a href="pages/storage.html" class="win-launch-btn" style="background:rgba(52,168,83,0.85);">
+                <button id="storageCardOpenBtn" class="win-launch-btn" style="background:rgba(52,168,83,0.85); border:none; font-family:inherit;">
                     Open →
-                </a>
+                </button>
             </div>
         </div>
 
         <!-- ── Activity Monitor Window ── -->
+        <!-- Embedded Virtual Memory App Window -->
+        <div class="os-window minimized" id="win-virtual-app"
+            style="top: 36px; left: calc(50% - 560px); width: 1120px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-virtual-app">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-virtual-app"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-virtual-app"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-virtual-app"></div>
+                </div>
+                <div class="win-title">Virtual Memory Simulator</div>
+            </div>
+            <div class="compact-sim-widget" id="vmWidget">
+                <section>
+                    <div class="compact-section-label">Algorithm</div>
+                    <div class="compact-pill-row" id="vmwAlgoPills">
+                        <button class="compact-pill active" data-algo="fifo">FIFO</button>
+                        <button class="compact-pill" data-algo="opt">Optimal</button>
+                        <button class="compact-pill" data-algo="lru">LRU</button>
+                        <button class="compact-pill" data-algo="arb">ARB</button>
+                        <button class="compact-pill" data-algo="clock">Clock</button>
+                        <button class="compact-pill" data-algo="enhanced">Enhanced Clock</button>
+                        <button class="compact-pill" data-algo="lfu">LFU</button>
+                        <button class="compact-pill" data-algo="mfu">MFU</button>
+                    </div>
+                    <div class="compact-desc" id="vmwAlgoDesc"></div>
+                </section>
+                <section>
+                    <div class="compact-section-label">Configuration</div>
+                    <div class="compact-toolbar">
+                        <button class="compact-btn" id="vmwLoadExample">Load Example</button>
+                        <button class="compact-btn danger" id="vmwReset">Reset</button>
+                    </div>
+                    <div class="compact-grid" style="margin-top:10px;">
+                        <div class="compact-field compact-full">
+                            <label>Reference String</label>
+                            <div class="compact-chip-row" id="vmwRefTray"></div>
+                            <div class="compact-numpad" id="vmwNumpad">
+                                <button class="compact-btn" data-val="0">0</button>
+                                <button class="compact-btn" data-val="1">1</button>
+                                <button class="compact-btn" data-val="2">2</button>
+                                <button class="compact-btn" data-val="3">3</button>
+                                <button class="compact-btn" data-val="4">4</button>
+                                <button class="compact-btn" data-val="5">5</button>
+                                <button class="compact-btn" data-val="6">6</button>
+                                <button class="compact-btn" data-val="7">7</button>
+                                <button class="compact-btn" data-val="8">8</button>
+                                <button class="compact-btn" data-val="9">9</button>
+                                <button class="compact-btn" id="vmwDel">Delete</button>
+                                <button class="compact-btn danger" id="vmwClear">Clear</button>
+                            </div>
+                        </div>
+                        <div class="compact-field">
+                            <label for="vmwFrames">Frames</label>
+                            <input class="compact-input" id="vmwFrames" type="number" value="3" min="1" max="20">
+                        </div>
+                        <div class="compact-field">
+                            <label for="vmwMat">Memory Access Time (ns)</label>
+                            <input class="compact-input" id="vmwMat" type="number" value="100" min="1">
+                        </div>
+                        <div class="compact-field">
+                            <label for="vmwPfst">Page Fault Service Time (ns)</label>
+                            <input class="compact-input" id="vmwPfst" type="number" value="8000000" min="1">
+                        </div>
+                    </div>
+                    <div style="text-align:right; margin-top:12px;">
+                        <button class="compact-btn primary" id="vmwRun">Run Simulation</button>
+                    </div>
+                </section>
+                <section class="compact-output" id="vmwOutput">
+                    <div>
+                        <div class="compact-section-label">Frame State Trace</div>
+                        <div class="vm-trace-mini" id="vmwTrace"></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Step-by-Step Results</div>
+                        <div class="compact-table-wrap">
+                            <table class="compact-table">
+                                <thead><tr id="vmwTableHead"></tr></thead>
+                                <tbody id="vmwTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Performance Metrics</div>
+                        <div class="compact-metrics-grid" id="vmwMetrics"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Embedded Mass Storage App Window -->
+        <div class="os-window minimized" id="win-storage-app"
+            style="top: 36px; left: calc(50% - 560px); width: 1120px; opacity: 0;">
+            <div class="win-titlebar" data-window="win-storage-app">
+                <div class="traffic-lights">
+                    <div class="tl tl-red"    data-action="close"    data-target="win-storage-app"></div>
+                    <div class="tl tl-yellow" data-action="minimize" data-target="win-storage-app"></div>
+                    <div class="tl tl-green"  data-action="maximize" data-target="win-storage-app"></div>
+                </div>
+                <div class="win-title">Mass Storage Simulator</div>
+            </div>
+            <div class="compact-sim-widget" id="storageWidget">
+                <section>
+                    <div class="compact-section-label">Algorithm</div>
+                    <div class="compact-pill-row" id="storAlgoPills">
+                        <button class="compact-pill active" data-algo="fcfs">FCFS</button>
+                        <button class="compact-pill" data-algo="sstf">SSTF</button>
+                        <button class="compact-pill" data-algo="scan">SCAN</button>
+                        <button class="compact-pill" data-algo="cscan">C-SCAN</button>
+                        <button class="compact-pill" data-algo="look">LOOK</button>
+                        <button class="compact-pill" data-algo="clook">C-LOOK</button>
+                    </div>
+                    <div class="compact-pill-row" id="storDirPills" style="margin-top:8px;">
+                        <button class="compact-pill active" data-dir="up">Toward Higher Tracks</button>
+                        <button class="compact-pill" data-dir="down">Toward Lower Tracks</button>
+                    </div>
+                    <div class="compact-desc" id="storAlgoDesc"></div>
+                </section>
+                <section>
+                    <div class="compact-section-label">Disk Configuration</div>
+                    <div class="compact-grid two">
+                        <div class="compact-field">
+                            <label for="storDiskSize">Total Tracks (0-N)</label>
+                            <input class="compact-input" id="storDiskSize" type="number" value="199" min="10" max="9999">
+                        </div>
+                        <div class="compact-field">
+                            <label for="storHead">Initial Head Position</label>
+                            <input class="compact-input" id="storHead" type="number" value="53" min="0">
+                        </div>
+                    </div>
+                </section>
+                <section>
+                    <div class="compact-section-label">Request Queue</div>
+                    <div class="compact-toolbar">
+                        <input class="compact-input" id="storReqInput" type="number" placeholder="Track number" min="0" style="max-width:160px;">
+                        <button class="compact-btn primary" id="storAddReq">Add</button>
+                        <button class="compact-btn" id="storLoadExample">Load Example</button>
+                        <button class="compact-btn danger" id="storClearReqs">Clear</button>
+                    </div>
+                    <div class="compact-chip-row" id="storReqTags" style="margin-top:10px;"></div>
+                    <div style="text-align:right; margin-top:12px;">
+                        <button class="compact-btn primary" id="storRun">Run Simulation</button>
+                    </div>
+                </section>
+                <section class="compact-output" id="storOutput">
+                    <div>
+                        <div class="compact-section-label">Seek Path</div>
+                        <div class="disk-canvas-wrap"><canvas id="storSeekCanvas"></canvas></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Service Order</div>
+                        <div class="compact-chip-row" id="storSeekOrder"></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Step-by-Step Head Movement</div>
+                        <div class="compact-table-wrap">
+                            <table class="compact-table">
+                                <thead><tr><th>#</th><th>From</th><th>To</th><th>Distance</th><th>Total</th></tr></thead>
+                                <tbody id="storCalcBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Performance Metrics</div>
+                        <div class="compact-metrics-grid" id="storMetrics"></div>
+                    </div>
+                    <div>
+                        <div class="compact-section-label">Algorithm Comparison</div>
+                        <div class="compact-compare-grid" id="storCompare"></div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
         <div class="os-window minimized" id="win-performance"
             style="top: 200px; left: calc(50% - 370px); width: 330px; opacity: 0;">
             <div class="win-titlebar" data-window="win-performance">
@@ -1602,102 +2238,82 @@
 
         <!-- ── Clock Window ── -->
         <div class="os-window minimized" id="win-clock"
-            style="top: 120px; left: calc(50% - 390px); width: 250px; opacity: 0;">
+            style="top: 96px; left: calc(50% - 180px); width: 360px; opacity: 0;">
             <div class="win-titlebar" data-window="win-clock">
                 <div class="traffic-lights">
                     <div class="tl tl-red"    data-action="close"    data-target="win-clock" title="Close"></div>
                     <div class="tl tl-yellow" data-action="minimize" data-target="win-clock" title="Minimize"></div>
                     <div class="tl tl-green"  data-action="maximize" data-target="win-clock" title="Maximize"></div>
                 </div>
-                <div class="win-title">⏰ Clock</div>
+                <div class="win-title">Clock</div>
             </div>
             <div class="win-body" style="width: 100%; gap: 16px; padding: 16px; align-items: center;">
-                <div class="clock-widget-card" id="clock-widget" style="width: 100%; min-height: unset;">
-                    <!-- Analog Clock Face -->
-                    <div class="analog-clock-container" style="position: relative; width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--text-primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.3); margin-top: 4px;">
-                        <!-- Clock ticks or indicators -->
-                        <div class="clock-ticks" style="position: absolute; inset: 0; border-radius: 50%;">
-                            <span style="position: absolute; top: 4px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">12</span>
-                            <span style="position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">6</span>
-                            <span style="position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">9</span>
-                            <span style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">3</span>
+                <div class="clock-mode-tabs" role="tablist" aria-label="Clock tools">
+                    <button class="clock-mode-tab active" type="button" data-clock-mode="clock" role="tab" aria-selected="true">Clock</button>
+                    <button class="clock-mode-tab" type="button" data-clock-mode="stopwatch" role="tab" aria-selected="false">Stopwatch</button>
+                    <button class="clock-mode-tab" type="button" data-clock-mode="timer" role="tab" aria-selected="false">Timer</button>
+                </div>
+
+                <div class="clock-widget-card" style="width: 100%; min-height: 250px;">
+                    <section class="clock-mode-panel active" data-clock-panel="clock" id="clock-widget">
+                        <!-- Analog Clock Face -->
+                        <div class="analog-clock-container" style="position: relative; width: 138px; height: 138px; border-radius: 50%; border: 4px solid var(--text-primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.3); margin-top: 4px;">
+                            <!-- Clock ticks or indicators -->
+                            <div class="clock-ticks" style="position: absolute; inset: 0; border-radius: 50%;">
+                                <span style="position: absolute; top: 5px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">12</span>
+                                <span style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">6</span>
+                                <span style="position: absolute; left: 7px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">9</span>
+                                <span style="position: absolute; right: 7px; top: 50%; transform: translateY(-50%); font-size: 8px; font-weight: bold; color: var(--text-primary);">3</span>
+                            </div>
+                            <!-- Hands -->
+                            <div id="clock-hand-hour" style="position: absolute; width: 3px; height: 35px; background: var(--text-primary); border-radius: 1.5px; top: 34px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
+                            <div id="clock-hand-min" style="position: absolute; width: 2px; height: 48px; background: var(--text-primary); border-radius: 1px; top: 21px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
+                            <div id="clock-hand-sec" style="position: absolute; width: 1px; height: 52px; background: #ea4335; border-radius: 0.5px; top: 17px; transform-origin: bottom center; transform: rotate(0deg);"></div>
+                            <!-- Center Pivot Pin -->
+                            <div style="position: absolute; width: 7px; height: 7px; border-radius: 50%; background: #ea4335; border: 1px solid #fff;"></div>
                         </div>
-                        <!-- Hands -->
-                        <div id="clock-hand-hour" style="position: absolute; width: 3px; height: 30px; background: var(--text-primary); border-radius: 1.5px; top: 30px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
-                        <div id="clock-hand-min" style="position: absolute; width: 2px; height: 42px; background: var(--text-primary); border-radius: 1px; top: 18px; transform-origin: bottom center; transform: rotate(0deg); transition: transform 0.5s cubic-bezier(0.4, 2.3, 0.3, 1);"></div>
-                        <div id="clock-hand-sec" style="position: absolute; width: 1px; height: 46px; background: #ea4335; border-radius: 0.5px; top: 14px; transform-origin: bottom center; transform: rotate(0deg);"></div>
-                        <!-- Center Pivot Pin -->
-                        <div style="position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #ea4335; border: 1px solid #fff;"></div>
-                    </div>
-                    
-                    <!-- Digital Clock Display -->
-                    <div style="text-align: center; margin-top: 4px;">
-                        <div id="clock-digital-time" style="font-size: 20px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-primary); letter-spacing: -0.02em;">00:00:00 AM</div>
-                        <div id="clock-digital-date" style="font-size: 10px; font-weight: 600; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em;">Monday, June 22, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- ── Stopwatch Window ── -->
-        <div class="os-window minimized" id="win-stopwatch"
-            style="top: 120px; left: calc(50% - 130px); width: 260px; opacity: 0;">
-            <div class="win-titlebar" data-window="win-stopwatch">
-                <div class="traffic-lights">
-                    <div class="tl tl-red"    data-action="close"    data-target="win-stopwatch" title="Close"></div>
-                    <div class="tl tl-yellow" data-action="minimize" data-target="win-stopwatch" title="Minimize"></div>
-                    <div class="tl tl-green"  data-action="maximize" data-target="win-stopwatch" title="Maximize"></div>
-                </div>
-                <div class="win-title">⏱️ Stopwatch</div>
-            </div>
-            <div class="win-body" style="width: 100%; gap: 16px; padding: 16px; align-items: center;">
-                <div class="clock-widget-card" id="stopwatch-widget" style="width: 100%; min-height: unset;">
-                    <div id="stopwatch-display" style="font-size: 24px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #34a853; margin: 8px 0;">00:00.00</div>
-                    <div style="display: flex; gap: 6px; width: 100%; justify-content: center;">
-                        <button id="btn-stopwatch-start" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(52,168,83,0.2); color: #34a853; cursor: pointer; transition: background 0.15s;">Start</button>
-                        <button id="btn-stopwatch-lap" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;" disabled>Lap</button>
-                        <button id="btn-stopwatch-reset" style="padding: 4px 10px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(234,67,53,0.2); color: #ea4335; cursor: pointer; transition: background 0.15s;">Reset</button>
-                    </div>
-                    <div id="stopwatch-laps" style="width: 100%; height: 90px; overflow-y: auto; font-size: 10px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 2px; padding: 0 4px; margin-top: 6px; border-top: 1px solid var(--border); padding-top: 6px;"></div>
-                </div>
-            </div>
-        </div>
+                        <!-- Digital Clock Display -->
+                        <div style="text-align: center; margin-top: 4px;">
+                            <div id="clock-digital-time" style="font-size: 22px; font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--text-primary); letter-spacing: -0.02em;">00:00:00 AM</div>
+                            <div id="clock-digital-date" style="font-size: 10px; font-weight: 600; color: var(--text-secondary); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.05em;">Monday, June 22, 2026</div>
+                        </div>
+                    </section>
 
-        <!-- ── Timer Window ── -->
-        <div class="os-window minimized" id="win-timer"
-            style="top: 120px; left: calc(50% + 140px); width: 260px; opacity: 0;">
-            <div class="win-titlebar" data-window="win-timer">
-                <div class="traffic-lights">
-                    <div class="tl tl-red"    data-action="close"    data-target="win-timer" title="Close"></div>
-                    <div class="tl tl-yellow" data-action="minimize" data-target="win-timer" title="Minimize"></div>
-                    <div class="tl tl-green"  data-action="maximize" data-target="win-timer" title="Maximize"></div>
-                </div>
-                <div class="win-title">⏳ Timer</div>
-            </div>
-            <div class="win-body" style="width: 100%; gap: 16px; padding: 16px; align-items: center;">
-                <div class="clock-widget-card" id="timer-widget" style="width: 100%; min-height: unset;">
-                    <div id="timer-display" style="font-size: 24px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #4285f4; margin: 8px 0;">05:00</div>
-                    
-                    <!-- Presets -->
-                    <div style="display: flex; gap: 4px; justify-content: center; width: 100%;">
-                        <button class="timer-preset-btn" data-time="60">1m</button>
-                        <button class="timer-preset-btn" data-time="180">3m</button>
-                        <button class="timer-preset-btn" data-time="300">5m</button>
-                        <button class="timer-preset-btn" data-time="600">10m</button>
-                    </div>
+                    <section class="clock-mode-panel" data-clock-panel="stopwatch" id="stopwatch-widget">
+                        <div id="stopwatch-display" style="font-size: 30px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #34a853; margin: 8px 0;">00:00.00</div>
+                        <div style="display: flex; gap: 6px; width: 100%; justify-content: center;">
+                            <button id="btn-stopwatch-start" style="padding: 5px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(52,168,83,0.2); color: #34a853; cursor: pointer; transition: background 0.15s;">Start</button>
+                            <button id="btn-stopwatch-lap" style="padding: 5px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer;" disabled>Lap</button>
+                            <button id="btn-stopwatch-reset" style="padding: 5px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(234,67,53,0.2); color: #ea4335; cursor: pointer; transition: background 0.15s;">Reset</button>
+                        </div>
+                        <div id="stopwatch-laps" style="width: 100%; height: 112px; overflow-y: auto; font-size: 10px; color: var(--text-secondary); display: flex; flex-direction: column; gap: 2px; padding: 0 4px; margin-top: 6px; border-top: 1px solid var(--border); padding-top: 6px;"></div>
+                    </section>
 
-                    <!-- Custom Input (Mins/Secs) -->
-                    <div style="display: flex; align-items: center; gap: 4px; width: 100%; justify-content: center; margin-top: 6px;">
-                        <input type="number" id="timer-input-min" min="0" max="99" value="5" style="width: 45px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: var(--text-primary); font-family: inherit; font-size: 11px; padding: 3px 6px;" placeholder="Min">
-                        <span style="color: var(--text-secondary); font-size: 11px;">:</span>
-                        <input type="number" id="timer-input-sec" min="0" max="59" value="0" style="width: 45px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: var(--text-primary); font-family: inherit; font-size: 11px; padding: 3px 6px;" placeholder="Sec">
-                    </div>
+                    <section class="clock-mode-panel" data-clock-panel="timer" id="timer-widget">
+                        <div id="timer-display" style="font-size: 30px; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #4285f4; margin: 8px 0;">05:00</div>
 
-                    <!-- Controls -->
-                    <div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: 8px;">
-                        <button id="btn-timer-start" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(66,133,244,0.2); color: #4285f4; cursor: pointer; transition: background 0.15s;">Start</button>
-                        <button id="btn-timer-reset" style="padding: 4px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer; transition: background 0.15s;">Reset</button>
-                    </div>
+                        <!-- Presets -->
+                        <div style="display: flex; gap: 4px; justify-content: center; width: 100%;">
+                            <button class="timer-preset-btn" data-time="60">1m</button>
+                            <button class="timer-preset-btn" data-time="180">3m</button>
+                            <button class="timer-preset-btn" data-time="300">5m</button>
+                            <button class="timer-preset-btn" data-time="600">10m</button>
+                        </div>
+
+                        <!-- Custom Input (Mins/Secs) -->
+                        <div style="display: flex; align-items: center; gap: 4px; width: 100%; justify-content: center; margin-top: 6px;">
+                            <input type="number" id="timer-input-min" min="0" max="99" value="5" style="width: 45px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: var(--text-primary); font-family: inherit; font-size: 11px; padding: 3px 6px;" placeholder="Min">
+                            <span style="color: var(--text-secondary); font-size: 11px;">:</span>
+                            <input type="number" id="timer-input-sec" min="0" max="59" value="0" style="width: 45px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 6px; color: var(--text-primary); font-family: inherit; font-size: 11px; padding: 3px 6px;" placeholder="Sec">
+                        </div>
+
+                        <!-- Controls -->
+                        <div style="display: flex; gap: 8px; width: 100%; justify-content: center; margin-top: 8px;">
+                            <button id="btn-timer-start" style="padding: 5px 14px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(66,133,244,0.2); color: #4285f4; cursor: pointer; transition: background 0.15s;">Start</button>
+                            <button id="btn-timer-reset" style="padding: 5px 14px; font-size: 11px; font-weight: 600; border-radius: 6px; border: none; background: rgba(255,255,255,0.06); color: var(--text-secondary); cursor: pointer; transition: background 0.15s;">Reset</button>
+                        </div>
+                    </section>
                 </div>
             </div>
         </div>
@@ -1752,43 +2368,36 @@
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-cpu" id="tab-win-cpu" data-title="CPU Scheduling">
-            <span class="dock-icon">⚙️</span>
+            <img class="dock-icon dock-icon-img" src="assets/cpu_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-mem-sim" id="tab-win-mem-sim" data-title="Memory Simulator">
-            <span class="dock-icon">🧠</span>
+            <img class="dock-icon dock-icon-img" src="assets/ram_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
-        <a class="taskbar-tab running-tab" href="pages/virtual.html" data-target="win-virtual" id="tab-win-virtual" data-title="Virtual Memory">
-            <span class="dock-icon">📄</span>
+        <div class="taskbar-tab" data-target="win-virtual-app" id="tab-win-virtual-app" data-title="Virtual Memory">
+            <img class="dock-icon dock-icon-img" src="assets/cube_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
-        </a>
-        <a class="taskbar-tab running-tab" href="pages/storage.html" data-target="win-storage" id="tab-win-storage" data-title="Mass Storage">
-            <span class="dock-icon">💾</span>
+        </div>
+        <div class="taskbar-tab" data-target="win-storage-app" id="tab-win-storage-app" data-title="Mass Storage">
+            <img class="dock-icon dock-icon-img" src="assets/hard_drive_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
-        </a>
+        </div>
+        <div class="dock-separator" aria-hidden="true"></div>
         <div class="taskbar-tab" data-target="win-performance" id="tab-win-performance" data-title="Activity Monitor">
             <span class="dock-icon">📊</span>
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-terminal" id="tab-win-terminal" data-title="Terminal">
-            <span class="dock-icon">🐚</span>
+            <img class="dock-icon dock-icon-img dock-icon-terminal" src="assets/terminal_icon.png?v=1" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-clock" id="tab-win-clock" data-title="Clock">
-            <span class="dock-icon">⏰</span>
-            <span class="dock-dot"></span>
-        </div>
-        <div class="taskbar-tab" data-target="win-stopwatch" id="tab-win-stopwatch" data-title="Stopwatch">
-            <span class="dock-icon">⏱️</span>
-            <span class="dock-dot"></span>
-        </div>
-        <div class="taskbar-tab" data-target="win-timer" id="tab-win-timer" data-title="Timer">
-            <span class="dock-icon">⏳</span>
+            <img class="dock-icon dock-icon-img dock-icon-clock" src="assets/clock_icon.png?v=2" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-calendar" id="tab-win-calendar" data-title="Calendar">
-            <span class="dock-icon">📅</span>
+            <img class="dock-icon dock-icon-img dock-icon-calendar" src="assets/calendar_icon.png?v=1" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-about" id="tab-win-about" data-title="About Us">
@@ -1799,11 +2408,40 @@
 
     <script src="js/cpu.js"></script>
     <script>
-        // Start macOS style boot sequence
+        const bootSessionKey = 'osSimulatorBootShown';
+
+        function hasShownBootThisSession() {
+            try {
+                return sessionStorage.getItem(bootSessionKey) === 'true';
+            } catch (error) {
+                return false;
+            }
+        }
+
+        function markBootShownThisSession() {
+            try {
+                sessionStorage.setItem(bootSessionKey, 'true');
+            } catch (error) {}
+        }
+
+        // Start macOS style boot sequence once per app session.
         window.addEventListener('DOMContentLoaded', () => {
             const fill = document.querySelector('.boot-progress-fill');
             const bootScreen = document.getElementById('mac-boot-screen');
             const homeWinIds = ['win-welcome','win-cpu-card','win-memory','win-virtual','win-storage'];
+
+            if (hasShownBootThisSession()) {
+                if (bootScreen) bootScreen.remove();
+                homeWinIds.forEach(id => {
+                    const w = document.getElementById(id);
+                    if (!w) return;
+                    w.classList.remove('win-entering');
+                    w.style.opacity = '1';
+                });
+                return;
+            }
+
+            markBootShownThisSession();
 
             // Animate progress bar fill to 100%
             setTimeout(() => {
@@ -1830,6 +2468,14 @@
             setTimeout(() => {
                 if (bootScreen) bootScreen.classList.add('fade-out');
             }, 2700);
+
+            if (bootScreen) {
+                bootScreen.addEventListener('transitionend', (event) => {
+                    if (event.propertyName === 'opacity') {
+                        bootScreen.remove();
+                    }
+                }, { once: true });
+            }
         });
 
         // Check if "about=true" parameter is present to auto-open the About Us window
@@ -1855,9 +2501,27 @@
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') document.body.classList.add('light');
 
-        document.getElementById('themeToggle').addEventListener('click', () => {
+        document.getElementById('themeToggle').addEventListener('click', (event) => {
+            const goingLight = !document.body.classList.contains('light');
+            const rect = event.currentTarget.getBoundingClientRect();
+            const wash = document.createElement('div');
+            wash.className = 'theme-transition-wash';
+            wash.style.setProperty('--theme-x', `${rect.left + rect.width / 2}px`);
+            wash.style.setProperty('--theme-y', `${rect.top + rect.height / 2}px`);
+            wash.style.setProperty(
+                '--theme-wash',
+                goingLight ? 'rgba(255, 255, 255, 0.78)' : 'rgba(8, 10, 14, 0.72)'
+            );
+
+            document.body.classList.add('theme-animating');
+            document.body.appendChild(wash);
             document.body.classList.toggle('light');
-            localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+            localStorage.setItem('theme', goingLight ? 'light' : 'dark');
+
+            wash.addEventListener('animationend', () => {
+                wash.remove();
+                document.body.classList.remove('theme-animating');
+            }, { once: true });
         });
 
         /* ══ Window Dragging ══ */
@@ -1904,6 +2568,189 @@
         });
 
         /* ══ Traffic Light Buttons ══ */
+        const fullPageRoutes = {
+            'win-cpu-card': 'pages/cpu.html',
+            'win-cpu': 'pages/cpu.html',
+            'win-cpu-results': 'pages/cpu.html',
+            'win-memory': 'pages/memory.html',
+            'win-mem-sim': 'pages/memory.html',
+            'win-mem-results': 'pages/memory.html',
+            'win-virtual': 'pages/virtual.html',
+            'win-virtual-app': 'pages/virtual.html',
+            'win-storage': 'pages/storage.html',
+            'win-storage-app': 'pages/storage.html'
+        };
+
+        function saveWindowInputs(target, win) {
+            const state = {};
+            win.querySelectorAll('input, select, textarea').forEach((field, index) => {
+                const key = field.id || field.name || `${field.tagName.toLowerCase()}-${index}`;
+                state[key] = field.type === 'checkbox' ? field.checked : field.value;
+            });
+            try {
+                sessionStorage.setItem(`windowState:${target}`, JSON.stringify(state));
+            } catch (error) {}
+        }
+
+        function setGenieMotionVars(win, sourceEl) {
+            const sourceRect = sourceEl?.getBoundingClientRect ? sourceEl.getBoundingClientRect() : sourceEl;
+            const winRect = win.getBoundingClientRect();
+            const sourceX = sourceRect ? sourceRect.left + sourceRect.width / 2 : winRect.left + winRect.width / 2;
+            const sourceY = sourceRect ? sourceRect.top + sourceRect.height / 2 : window.innerHeight - 28;
+            const winX = winRect.left + winRect.width / 2;
+            const winY = winRect.top + winRect.height / 2;
+            const originX = Math.max(12, Math.min(88, ((sourceX - winRect.left) / winRect.width) * 100));
+            const skew = Math.max(-12, Math.min(12, (sourceX - winX) / 42));
+
+            win.style.setProperty('--genie-translate-x', `${sourceX - winX}px`);
+            win.style.setProperty('--genie-translate-y', `${sourceY - winY}px`);
+            win.style.setProperty('--genie-mid-x', `${(sourceX - winX) * 0.24}px`);
+            win.style.setProperty('--genie-mid-y', `${(sourceY - winY) * 0.35}px`);
+            win.style.setProperty('--genie-origin-x', `${originX}%`);
+            win.style.setProperty('--genie-skew', `${skew}deg`);
+            win.style.setProperty('--genie-mid-skew', `${skew * 0.22}deg`);
+        }
+
+        function clearGenieMotionVars(win) {
+            win.style.removeProperty('--genie-translate-x');
+            win.style.removeProperty('--genie-translate-y');
+            win.style.removeProperty('--genie-mid-x');
+            win.style.removeProperty('--genie-mid-y');
+            win.style.removeProperty('--genie-origin-x');
+            win.style.removeProperty('--genie-skew');
+            win.style.removeProperty('--genie-mid-skew');
+        }
+
+        function playGenieOpen(win, sourceEl) {
+            if (!win || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            setGenieMotionVars(win, sourceEl);
+            win.classList.remove('win-genie-opening', 'win-genie-minimizing');
+            void win.offsetWidth;
+            win.classList.add('win-genie-opening');
+            win.addEventListener('animationend', () => {
+                win.classList.remove('win-genie-opening');
+                clearGenieMotionVars(win);
+            }, { once: true });
+        }
+
+        function playGenieMinimize(win, sourceEl, onDone) {
+            if (!win || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                onDone();
+                return;
+            }
+
+            setGenieMotionVars(win, sourceEl);
+            win.classList.remove('win-genie-opening', 'win-genie-minimizing');
+            void win.offsetWidth;
+            win.classList.add('win-genie-minimizing');
+            win.addEventListener('animationend', () => {
+                win.classList.remove('win-genie-minimizing');
+                clearGenieMotionVars(win);
+                onDone();
+            }, { once: true });
+        }
+
+        function hideWindow(target, win, tab, keepRunning, useGenie = false) {
+            const finishHide = () => {
+                win.classList.add('minimized');
+                win.classList.remove('win-genie-opening', 'win-genie-minimizing');
+                win.style.opacity = '0';
+            };
+
+            win.classList.remove('focused');
+            if (tab) {
+                tab.classList.remove('active-tab');
+                if (keepRunning) {
+                    tab.classList.add('running-tab');
+                } else {
+                    tab.classList.remove('running-tab');
+                }
+            }
+            if (useGenie && keepRunning) {
+                playGenieMinimize(win, tab || document.getElementById('tab-' + target), finishHide);
+                return;
+            }
+            finishHide();
+        }
+
+        function resetWindowToDefaults(target, win) {
+            if (target === 'win-cpu-results') {
+                target = 'win-cpu';
+                win = document.getElementById('win-cpu') || win;
+            } else if (target === 'win-mem-results') {
+                target = 'win-mem-sim';
+                win = document.getElementById('win-mem-sim') || win;
+            }
+
+            if (target === 'win-cpu') {
+                document.getElementById('cpuSimClear')?.click();
+                const tableBody = document.getElementById('cpuSimTableBody');
+                if (tableBody) {
+                    const addBtn = document.getElementById('cpuSimAddRow');
+                    const defaults = [['P1', 0, 5, 2], ['P2', 1, 3, 1], ['P3', 2, 8, 3]];
+                    defaults.forEach(() => addBtn?.click());
+                    Array.from(tableBody.querySelectorAll('tr')).forEach((row, index) => {
+                        const [id, at, bt, pr] = defaults[index];
+                        const pid = row.querySelector('.cpu-sim-pid-input');
+                        const arrival = row.querySelector('.cpu-sim-at-input');
+                        const burst = row.querySelector('.cpu-sim-bt-input');
+                        const priority = row.querySelector('.cpu-sim-pr-input');
+                        if (pid) pid.value = id;
+                        if (arrival) arrival.value = at;
+                        if (burst) burst.value = bt;
+                        if (priority) priority.value = pr;
+                    });
+                }
+                const tq = document.getElementById('cpuSimTQ');
+                if (tq) tq.value = 2;
+                document.querySelectorAll('#cpuSimPills .cpu-sim-pill').forEach((pill, index) => pill.classList.toggle('active', index === 0));
+                const rrOpts = document.getElementById('cpuSimRROpts');
+                if (rrOpts) rrOpts.style.display = 'none';
+                ['win-cpu-results'].forEach(id => {
+                    const out = document.getElementById(id);
+                    if (out) { out.classList.add('minimized'); out.style.opacity = '0'; }
+                });
+                return;
+            }
+
+            if (target === 'win-mem-sim') {
+                const total = document.getElementById('memTotal');
+                const os = document.getElementById('memOS');
+                const compact = document.getElementById('memCompaction');
+                if (total) total.value = 384;
+                if (os) os.value = 64;
+                if (compact) compact.checked = true;
+                document.getElementById('memLoadExample')?.click();
+                const out = document.getElementById('win-mem-results');
+                if (out) { out.classList.add('minimized'); out.style.opacity = '0'; }
+                return;
+            }
+
+            if (target === 'win-virtual-app') {
+                document.getElementById('vmwReset')?.click();
+                return;
+            }
+
+            if (target === 'win-storage-app') {
+                const disk = document.getElementById('storDiskSize');
+                const head = document.getElementById('storHead');
+                if (disk) disk.value = 199;
+                if (head) head.value = 53;
+                document.getElementById('storLoadExample')?.click();
+                document.getElementById('storOutput')?.classList.remove('visible');
+                return;
+            }
+
+            win.querySelectorAll('input, select, textarea').forEach(field => {
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    field.checked = field.defaultChecked;
+                } else {
+                    field.value = field.defaultValue;
+                }
+            });
+        }
+
         document.querySelectorAll('.tl').forEach(tl => {
             tl.addEventListener('click', e => {
                 e.stopPropagation();
@@ -1913,15 +2760,20 @@
                 const tab = document.getElementById('tab-' + target);
                 if (!win) return;
 
-                if (action === 'close' || action === 'minimize') {
-                    win.classList.add('minimized');
-                    win.classList.remove('focused');
-                    win.style.opacity = '0';
-                    if (tab) {
-                        tab.classList.remove('active-tab');
-                        tab.classList.remove('running-tab');
-                    }
+                if (action === 'close') {
+                    try {
+                        sessionStorage.removeItem(`windowState:${target}`);
+                    } catch (error) {}
+                    resetWindowToDefaults(target, win);
+                    hideWindow(target, win, tab, false);
+                } else if (action === 'minimize') {
+                    saveWindowInputs(target, win);
+                    hideWindow(target, win, tab, true, true);
                 } else if (action === 'maximize') {
+                    if (fullPageRoutes[target]) {
+                        window.location.href = fullPageRoutes[target];
+                        return;
+                    }
                     const stage = document.getElementById('desktopStage');
                     win.style.left  = '8px';
                     win.style.top   = '8px';
@@ -1931,106 +2783,68 @@
         });
 
         /* ══ Taskbar Tabs — Minimize / Restore ══ */
+        function showHomeWindows() {
+            const visible = Array.from(document.querySelectorAll('.os-window')).filter(w => !w.classList.contains('minimized'));
+            visible.forEach((w, i) => {
+                setTimeout(() => {
+                    w.classList.add('minimized');
+                    w.classList.remove('focused');
+                    w.style.opacity = '0';
+                    const t = document.getElementById('tab-' + w.id);
+                    if (t) { t.classList.remove('active-tab'); t.classList.remove('running-tab'); }
+                }, i * 55);
+            });
+
+            const homeWindows = ['win-welcome', 'win-cpu-card', 'win-memory', 'win-virtual', 'win-storage'];
+            const baseDelay = visible.length * 55 + 80;
+            homeWindows.forEach((wid, i) => {
+                setTimeout(() => {
+                    const hw = document.getElementById(wid);
+                    if (!hw) return;
+                    hw.classList.remove('minimized', 'win-entering');
+                    hw.style.opacity = '1';
+                    if (wid === 'win-welcome') {
+                        document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
+                        hw.classList.add('focused');
+                        document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
+                        const duckTab = document.getElementById('tab-win-welcome');
+                        if (duckTab) { duckTab.classList.add('active-tab'); duckTab.classList.add('running-tab'); }
+                    }
+                }, baseDelay + i * 90);
+            });
+        }
+
         document.querySelectorAll('.taskbar-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
-                // If it is a redirection link, allow default anchor behavior
-                if (tab.tagName.toLowerCase() === 'a') {
-                    return;
-                }
-
+                e.preventDefault();
                 const win = document.getElementById(tab.dataset.target);
                 if (!win) return;
 
                 // ── Duck icon: go back to homepage ──
                 if (tab.dataset.target === 'win-welcome') {
-                    // Dismiss all visible windows first (staggered)
-                    const visible = Array.from(document.querySelectorAll('.os-window')).filter(w => !w.classList.contains('minimized'));
-                    visible.forEach((w, i) => {
-                        setTimeout(() => {
-                            w.classList.add('minimized');
-                            w.classList.remove('focused');
-                            w.style.opacity = '0';
-                            const t = document.getElementById('tab-' + w.id);
-                            if (t) { t.classList.remove('active-tab'); t.classList.remove('running-tab'); }
-                        }, i * 55);
-                    });
-
-                    // After all collapse, restore the home layout
-                    const homeWindows = ['win-welcome', 'win-cpu-card', 'win-memory', 'win-virtual', 'win-storage'];
-                    const baseDelay = visible.length * 55 + 80;
-                    homeWindows.forEach((wid, i) => {
-                        setTimeout(() => {
-                            const hw = document.getElementById(wid);
-                            if (!hw) return;
-                            hw.classList.remove('minimized');
-                            hw.style.opacity = '1';
-                            if (wid === 'win-welcome') {
-                                document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
-                                hw.classList.add('focused');
-                                document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
-                                const duckTab = document.getElementById('tab-win-welcome');
-                                if (duckTab) { duckTab.classList.add('active-tab'); duckTab.classList.add('running-tab'); }
-                            }
-                        }, baseDelay + i * 90);
-                    });
+                    showHomeWindows();
                     return;
                 }
 
                 // ── CPU Scheduling icon: close other windows and show CPU simulator ──
-                if (tab.dataset.target === 'win-cpu') {
-                    if (win.classList.contains('minimized')) {
-                        openWindow('win-cpu', false);
-                    } else {
-                        const othersOpen = Array.from(document.querySelectorAll('.os-window')).some(w => w.id !== 'win-cpu' && !w.classList.contains('minimized'));
-                        if (othersOpen) {
-                            openWindow('win-cpu', false);
-                        } else {
-                            win.classList.add('minimized');
-                            win.classList.remove('focused');
-                            win.style.opacity = '0';
-                            tab.classList.remove('active-tab');
-                            tab.classList.remove('running-tab');
-                        }
-                    }
-                    return;
-                }
+                
 
                 // ── Memory Simulator icon: close other windows and show Memory simulator ──
-                if (tab.dataset.target === 'win-mem-sim') {
-                    if (win.classList.contains('minimized')) {
-                        openWindow('win-mem-sim', false);
-                    } else {
-                        const othersOpen = Array.from(document.querySelectorAll('.os-window')).some(w => w.id !== 'win-mem-sim' && !w.classList.contains('minimized'));
-                        if (othersOpen) {
-                            openWindow('win-mem-sim', false);
-                        } else {
-                            win.classList.add('minimized');
-                            win.classList.remove('focused');
-                            win.style.opacity = '0';
-                            tab.classList.remove('active-tab');
-                            tab.classList.remove('running-tab');
-                        }
-                    }
-                    return;
-                }
+                
 
-                if (win.classList.contains('minimized')) {
-                    // Restore
-                    win.classList.remove('minimized');
-                    document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
-                    win.classList.add('focused');
-                    win.style.opacity = '1';
-                    document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
-                    tab.classList.add('active-tab');
-                    tab.classList.add('running-tab');
-                } else {
-                    // Minimize
-                    win.classList.add('minimized');
-                    win.classList.remove('focused');
-                    win.style.opacity = '0';
-                    tab.classList.remove('active-tab');
-                    tab.classList.remove('running-tab');
-                }
+                const wasMinimized = win.classList.contains('minimized');
+                win.classList.remove('minimized', 'win-entering');
+                document.querySelectorAll('.os-window').forEach(w => {
+                    w.classList.remove('focused');
+                    w.style.zIndex = '10';
+                });
+                win.classList.add('focused');
+                win.style.opacity = '1';
+                win.style.zIndex = '20';
+                if (wasMinimized) playGenieOpen(win, tab);
+                document.querySelectorAll('.taskbar-tab').forEach(t => t.classList.remove('active-tab'));
+                tab.classList.add('active-tab');
+                tab.classList.add('running-tab');
             });
         });
 
@@ -2338,15 +3152,20 @@
         })();
 
         /* ══ Global Window Manager Utility ══ */
-        function openWindow(id, keepOthers = false) {
+        function openWindow(id, keepOthers = false, sourceEl = null) {
             const win = document.getElementById(id);
             if (!win) return;
+            const wasMinimized = win.classList.contains('minimized');
+            const genieSource = sourceEl?.getBoundingClientRect
+                ? sourceEl.getBoundingClientRect()
+                : sourceEl || document.getElementById('tab-' + id);
 
             if (keepOthers) {
-                win.classList.remove('minimized');
+                win.classList.remove('minimized', 'win-entering');
                 document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
                 win.classList.add('focused');
                 win.style.opacity = '1';
+                if (wasMinimized) playGenieOpen(win, genieSource);
                 
                 // Bring to front
                 document.querySelectorAll('.os-window').forEach(w => w.style.zIndex = '10');
@@ -2377,10 +3196,11 @@
             // Pop the target window in after others have collapsed
             const delay = others.length > 0 ? others.length * 60 + 80 : 0;
             setTimeout(() => {
-                win.classList.remove('minimized');
+                win.classList.remove('minimized', 'win-entering');
                 document.querySelectorAll('.os-window').forEach(w => w.classList.remove('focused'));
                 win.classList.add('focused');
                 win.style.opacity = '1';
+                if (wasMinimized) playGenieOpen(win, genieSource);
 
                 // Bring to front
                 document.querySelectorAll('.os-window').forEach(w => w.style.zIndex = '10');
@@ -2397,9 +3217,14 @@
         }
 
 
+        document.getElementById('navbarSimulatorLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            showHomeWindows();
+        });
+
         document.getElementById('navbarCpuLink').addEventListener('click', (e) => {
             e.preventDefault();
-            openWindow('win-cpu');
+            window.location.href = 'pages/cpu.html';
         });
 
         document.getElementById('navbarAboutLink').addEventListener('click', (e) => {
@@ -2407,17 +3232,719 @@
             openWindow('win-about', true);
         });
 
-        document.getElementById('welcomeCpuStartBtn').addEventListener('click', () => {
-            openWindow('win-cpu');
+        document.getElementById('welcomeCpuStartBtn').addEventListener('click', (event) => {
+            openWindow('win-cpu', false, event.currentTarget);
         });
 
-        document.getElementById('cpuCardOpenBtn').addEventListener('click', () => {
-            openWindow('win-cpu');
+        document.getElementById('cpuCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-cpu', false, event.currentTarget);
         });
 
-        document.getElementById('memCardOpenBtn').addEventListener('click', () => {
-            openWindow('win-mem-sim');
+        document.getElementById('memCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-mem-sim', false, event.currentTarget);
         });
+
+        document.getElementById('virtualCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-virtual-app', false, event.currentTarget);
+        });
+
+        document.getElementById('storageCardOpenBtn').addEventListener('click', (event) => {
+            openWindow('win-storage-app', false, event.currentTarget);
+        });
+
+        /* Compact Virtual Memory desktop widget */
+        (function() {
+            const descs = {
+                fifo: 'Pages are replaced in the order they were loaded into memory.',
+                opt: 'Replaces the page whose next use is farthest in the future.',
+                lru: 'Replaces the page that has not been used for the longest time.',
+                arb: 'Aging/ARB approximates LRU by shifting reference history bits over time.',
+                clock: 'Uses a circular pointer and reference bits to give pages a second chance.',
+                enhanced: 'Considers reference and modified bits before choosing a victim page.',
+                lfu: 'Replaces the least frequently used page.',
+                mfu: 'Replaces the most frequently used page.'
+            };
+            let algo = 'fifo';
+            let refPages = [7,0,1,2,0,3,0,4,2,3,0,3,2];
+
+            function setDesc() {
+                const el = document.getElementById('vmwAlgoDesc');
+                if (el) el.textContent = descs[algo];
+            }
+            function renderRefs() {
+                const tray = document.getElementById('vmwRefTray');
+                if (!tray) return;
+                tray.innerHTML = '';
+                if (!refPages.length) {
+                    tray.innerHTML = '<span class="compact-tag">No pages</span>';
+                    return;
+                }
+                refPages.forEach((page, index) => {
+                    const chip = document.createElement('button');
+                    chip.className = 'compact-chip';
+                    chip.textContent = page + ' x';
+                    chip.addEventListener('click', () => {
+                        refPages.splice(index, 1);
+                        renderRefs();
+                    });
+                    tray.appendChild(chip);
+                });
+            }
+            function createFrames(n) {
+                return Array.from({ length: n }, () => ({ page:null, loadedAt:0, lastUsed:0, ref:0, mod:0, count:0, age:0 }));
+            }
+            function loadFrame(frame, page, time) {
+                frame.page = page;
+                frame.loadedAt = time;
+                frame.lastUsed = time;
+                frame.ref = 1;
+                frame.mod = page % 2;
+                frame.count = 1;
+                frame.age = 128;
+            }
+            function hitFrame(frame, time) {
+                frame.lastUsed = time;
+                frame.ref = 1;
+                frame.count++;
+                frame.age = Math.min(255, frame.age + 32);
+            }
+            function chooseVictim(frames, refs, index, state) {
+                if (algo === 'fifo') return frames.reduce((best, f, i) => f.loadedAt < frames[best].loadedAt ? i : best, 0);
+                if (algo === 'opt') {
+                    let best = 0, farthest = -1;
+                    frames.forEach((f, i) => {
+                        const next = refs.slice(index + 1).indexOf(f.page);
+                        const dist = next === -1 ? Infinity : next;
+                        if (dist > farthest) { farthest = dist; best = i; }
+                    });
+                    return best;
+                }
+                if (algo === 'lru') return frames.reduce((best, f, i) => f.lastUsed < frames[best].lastUsed ? i : best, 0);
+                if (algo === 'arb') {
+                    frames.forEach(f => { f.age = (f.age >> 1) | (f.ref ? 128 : 0); f.ref = 0; });
+                    return frames.reduce((best, f, i) => f.age < frames[best].age ? i : best, 0);
+                }
+                if (algo === 'lfu') return frames.reduce((best, f, i) => f.count < frames[best].count ? i : best, 0);
+                if (algo === 'mfu') return frames.reduce((best, f, i) => f.count > frames[best].count ? i : best, 0);
+                if (algo === 'enhanced') {
+                    for (const pair of [[0,0],[0,1],[1,0],[1,1]]) {
+                        const found = frames.findIndex(f => f.ref === pair[0] && f.mod === pair[1]);
+                        if (found !== -1) return found;
+                    }
+                    return 0;
+                }
+                for (let guard = 0; guard < frames.length * 2; guard++) {
+                    const i = state.pointer % frames.length;
+                    if (frames[i].ref === 0) {
+                        state.pointer = (i + 1) % frames.length;
+                        return i;
+                    }
+                    frames[i].ref = 0;
+                    state.pointer = (i + 1) % frames.length;
+                }
+                return state.pointer % frames.length;
+            }
+            function simulateVm() {
+                const count = Math.max(1, parseInt(document.getElementById('vmwFrames').value) || 3);
+                const frames = createFrames(count);
+                const state = { pointer: 0 };
+                const steps = [];
+                let hits = 0, faults = 0;
+                refPages.forEach((page, index) => {
+                    const time = index + 1;
+                    const hit = frames.findIndex(f => f.page === page);
+                    let status = 'FAULT', victim = null;
+                    if (hit !== -1) {
+                        hits++;
+                        status = 'HIT';
+                        hitFrame(frames[hit], time);
+                    } else {
+                        faults++;
+                        let target = frames.findIndex(f => f.page === null);
+                        if (target === -1) {
+                            target = chooseVictim(frames, refPages, index, state);
+                            victim = frames[target].page;
+                        }
+                        loadFrame(frames[target], page, time);
+                    }
+                    steps.push({ page, status, victim, frames: frames.map(f => f.page) });
+                });
+                return { steps, hits, faults };
+            }
+            function renderVm(result) {
+                document.getElementById('vmwOutput').classList.add('visible');
+                const trace = document.getElementById('vmwTrace');
+                trace.innerHTML = '';
+                result.steps.forEach(step => {
+                    const card = document.createElement('div');
+                    card.className = 'vm-step-mini ' + step.status.toLowerCase();
+                    card.innerHTML = `<div>${step.page}</div>${step.frames.map(f => `<div class="vm-frame-mini">${f === null ? '-' : f}</div>`).join('')}<div>${step.status}</div>`;
+                    trace.appendChild(card);
+                });
+                const head = document.getElementById('vmwTableHead');
+                const body = document.getElementById('vmwTableBody');
+                head.innerHTML = '<th>Step</th><th>Page</th><th>Status</th><th>Victim</th>' + result.steps[0].frames.map((_, i) => `<th>F${i + 1}</th>`).join('');
+                body.innerHTML = '';
+                result.steps.forEach((step, i) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td>${i + 1}</td><td>${step.page}</td><td>${step.status}</td><td>${step.victim ?? '-'}</td>${step.frames.map(f => `<td>${f === null ? '-' : f}</td>`).join('')}`;
+                    body.appendChild(row);
+                });
+                const total = result.hits + result.faults;
+                const mat = Math.max(1, parseInt(document.getElementById('vmwMat').value) || 100);
+                const pfst = Math.max(1, parseInt(document.getElementById('vmwPfst').value) || 8000000);
+                const eat = total ? ((result.hits * mat + result.faults * pfst) / total).toFixed(2) : '0.00';
+                document.getElementById('vmwMetrics').innerHTML = [
+                    ['References', total, ''],
+                    ['Hits', result.hits, `${((result.hits / total) * 100 || 0).toFixed(1)}%`],
+                    ['Faults', result.faults, `${((result.faults / total) * 100 || 0).toFixed(1)}%`],
+                    ['EAT', eat, 'ns']
+                ].map(([label, value, unit]) => `<div class="compact-metric-card"><div class="compact-metric-value">${value}<span style="font-size:11px;color:var(--text-secondary);margin-left:3px;">${unit}</span></div><div class="compact-metric-label">${label}</div></div>`).join('');
+            }
+            document.querySelectorAll('#vmwAlgoPills .compact-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#vmwAlgoPills .compact-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    algo = pill.dataset.algo;
+                    setDesc();
+                });
+            });
+            document.querySelectorAll('#vmwNumpad [data-val]').forEach(btn => {
+                btn.addEventListener('click', () => { refPages.push(parseInt(btn.dataset.val)); renderRefs(); });
+            });
+            document.getElementById('vmwDel').addEventListener('click', () => { refPages.pop(); renderRefs(); });
+            document.getElementById('vmwClear').addEventListener('click', () => { refPages = []; renderRefs(); });
+            document.getElementById('vmwLoadExample').addEventListener('click', () => { refPages = [7,0,1,2,0,3,0,4,2,3,0,3,2]; renderRefs(); });
+            document.getElementById('vmwReset').addEventListener('click', () => {
+                refPages = [7,0,1,2,0,3,0,4,2,3,0,3,2];
+                document.getElementById('vmwFrames').value = 3;
+                document.getElementById('vmwMat').value = 100;
+                document.getElementById('vmwPfst').value = 8000000;
+                document.getElementById('vmwOutput').classList.remove('visible');
+                renderRefs();
+            });
+            document.getElementById('vmwRun').addEventListener('click', () => { if (refPages.length) renderVm(simulateVm()); });
+            setDesc();
+            renderRefs();
+        })();
+
+        /* Compact Mass Storage desktop widget */
+        (function() {
+            const descs = {
+                fcfs: 'Services requests in arrival order. Simple, but seek movement can be high.',
+                sstf: 'Chooses the nearest pending request from the current head position.',
+                scan: 'Moves in one direction to the disk end, then reverses.',
+                cscan: 'Moves in one direction, wraps to the start, then continues.',
+                look: 'Moves only as far as the last request before reversing.',
+                clook: 'Circular LOOK wraps between request extremes instead of disk edges.'
+            };
+            let algo = 'fcfs';
+            let direction = 'up';
+            let requests = [98,183,37,122,14,124,65,67];
+
+            const STOR_COLORS = {
+                fcfs:'#6c63ff', sstf:'#00c8e0', scan:'#f0a500',
+                cscan:'#34c77b', look:'#a855f7', clook:'#ec4899'
+            };
+
+            function sortedReqs() { return [...requests].sort((a, b) => a - b); }
+
+            /* Full algorithm implementations that emit isEdge / isWrap metadata */
+            function runFcfs(head) {
+                const order = [head, ...requests];
+                const steps = [];
+                let seek = 0;
+                for (let i = 1; i < order.length; i++) {
+                    const dist = Math.abs(order[i] - order[i-1]);
+                    seek += dist;
+                    steps.push({ from: order[i-1], to: order[i], dist });
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runSstf(head) {
+                const pending = [...requests];
+                const order = [head], steps = [];
+                let seek = 0, cur = head;
+                while (pending.length) {
+                    let best = 0;
+                    pending.forEach((r,i) => { if (Math.abs(r-cur) < Math.abs(pending[best]-cur)) best=i; });
+                    const to = pending.splice(best, 1)[0];
+                    const dist = Math.abs(to - cur);
+                    seek += dist;
+                    steps.push({ from: cur, to, dist });
+                    cur = to; order.push(cur);
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runScan(head, diskSize, dir) {
+                const sorted = sortedReqs();
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to, flags) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist, ...flags });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
+                    let cur = head;
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== diskSize) cur = push(cur, diskSize, { isEdge: true });
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== 0) cur = push(cur, 0, { isEdge: true });
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runCscan(head, diskSize, dir) {
+                const sorted = sortedReqs();
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to, flags) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist, ...flags });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
+                    let cur = head;
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== diskSize) cur = push(cur, diskSize, { isEdge: true });
+                    const lower = sorted.filter(r => r < head);
+                    if (lower.length) {
+                        cur = push(cur, 0, { isWrap: true });
+                        lower.forEach(r => { cur = push(cur, r, {}); });
+                    }
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                    if (cur !== 0) cur = push(cur, 0, { isEdge: true });
+                    const higher = sorted.filter(r => r >= head);
+                    if (higher.length) {
+                        cur = push(cur, diskSize, { isWrap: true });
+                        higher.reverse().forEach(r => { cur = push(cur, r, {}); });
+                    }
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runLook(head, dir) {
+                const sorted = sortedReqs();
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
+                    let cur = head;
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r); });
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r); });
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r); });
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r); });
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runClook(head, dir) {
+                const sorted = sortedReqs();
+                const order = [head], steps = [];
+                let seek = 0;
+                const push = (from, to, flags) => {
+                    const dist = Math.abs(to - from);
+                    seek += dist;
+                    steps.push({ from, to, dist, ...flags });
+                    order.push(to);
+                    return to;
+                };
+                if (dir === 'up') {
+                    let cur = head;
+                    sorted.filter(r => r >= head).forEach(r => { cur = push(cur, r, {}); });
+                    const lower = sorted.filter(r => r < head);
+                    if (lower.length) {
+                        cur = push(cur, lower[0], { isWrap: true });
+                        for (let i = 1; i < lower.length; i++) cur = push(cur, lower[i], {});
+                    }
+                } else {
+                    let cur = head;
+                    sorted.filter(r => r < head).reverse().forEach(r => { cur = push(cur, r, {}); });
+                    const higher = sorted.filter(r => r >= head).reverse();
+                    if (higher.length) {
+                        cur = push(cur, higher[0], { isWrap: true });
+                        for (let i = 1; i < higher.length; i++) cur = push(cur, higher[i], {});
+                    }
+                }
+                return { order, totalSeek: seek, steps };
+            }
+            function runStorage(selectedAlgo, head, diskSize, dir) {
+                switch (selectedAlgo) {
+                    case 'fcfs':  return runFcfs(head);
+                    case 'sstf':  return runSstf(head);
+                    case 'scan':  return runScan(head, diskSize, dir);
+                    case 'cscan': return runCscan(head, diskSize, dir);
+                    case 'look':  return runLook(head, dir);
+                    case 'clook': return runClook(head, dir);
+                }
+            }
+
+            function renderTags() {
+                const wrap = document.getElementById('storReqTags');
+                wrap.innerHTML = '';
+                if (!requests.length) {
+                    wrap.innerHTML = '<span class="compact-tag">No requests</span>';
+                    return;
+                }
+                requests.forEach((request, index) => {
+                    const tag = document.createElement('button');
+                    tag.className = 'compact-chip';
+                    tag.textContent = request + ' x';
+                    tag.addEventListener('click', () => {
+                        requests.splice(index, 1);
+                        renderTags();
+                    });
+                    wrap.appendChild(tag);
+                });
+            }
+            function addRequest() {
+                const input = document.getElementById('storReqInput');
+                const diskSize = Math.max(10, parseInt(document.getElementById('storDiskSize').value) || 199);
+                const val = parseInt(input.value);
+                if (!Number.isFinite(val) || val < 0 || val > diskSize) return;
+                requests.push(val);
+                input.value = '';
+                renderTags();
+            }
+
+            /* ── Animated Seek Path Canvas (ported from storage.html) ── */
+            let storSeekAnimId = null;
+            function drawPath(result, head, diskSize) {
+                const canvas = document.getElementById('storSeekCanvas');
+                const wrap = canvas.parentElement;
+                const DPR = window.devicePixelRatio || 1;
+                const cssW = wrap.clientWidth  || wrap.offsetWidth  || 600;
+                const cssH = wrap.clientHeight || wrap.offsetHeight || 340;
+                canvas.width  = cssW * DPR;
+                canvas.height = cssH * DPR;
+                canvas.style.width  = cssW + 'px';
+                canvas.style.height = cssH + 'px';
+
+                const ctx = canvas.getContext('2d');
+                ctx.scale(DPR, DPR);
+                const W = cssW, H = cssH;
+                const PAD_L = 44, PAD_R = 44, PAD_T = 52, PAD_B = 16;
+                const usableW = W - PAD_L - PAD_R;
+                const color = STOR_COLORS[algo] || '#6c63ff';
+
+                const order    = result.order;
+                const stepMeta = result.steps || [];
+
+                function trackX(t) { return PAD_L + (t / diskSize) * usableW; }
+                const usableH = H - PAD_T - PAD_B;
+                const yStep = usableH / (order.length + 1);
+                function stepY(i) { return PAD_T + yStep * (i + 1); }
+
+                if (storSeekAnimId) cancelAnimationFrame(storSeekAnimId);
+
+                /* ── In-canvas ruler ── */
+                function drawRuler() {
+                    const RULER_Y = 14;        // centre of the ruler bar
+                    const TICK_COUNT = 10;
+
+                    // Ruler background bar
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.roundRect(PAD_L, RULER_Y - 2, usableW, 4, 2);
+                    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                    ctx.restore();
+
+                    // Tick marks + labels
+                    for (let i = 0; i <= TICK_COUNT; i++) {
+                        const val = Math.round((diskSize / TICK_COUNT) * i);
+                        const x = trackX(val);
+
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(x, RULER_Y - 2);
+                        ctx.lineTo(x, RULER_Y + 6);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+
+                        ctx.font = `500 9px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'top';
+                        ctx.fillStyle = 'rgba(180,180,200,0.55)';
+                        ctx.fillText(val, x, RULER_Y + 8);
+                        ctx.restore();
+                    }
+
+                    // Head-position highlight on ruler
+                    const hx = trackX(head);
+                    ctx.save();
+                    // Glowing tick
+                    ctx.beginPath();
+                    ctx.moveTo(hx, RULER_Y - 5);
+                    ctx.lineTo(hx, RULER_Y + 7);
+                    ctx.strokeStyle = '#34c77b';
+                    ctx.lineWidth = 2;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                    // Label pill above bar
+                    const lbl = String(head);
+                    ctx.font = `700 9px 'JetBrains Mono', monospace`;
+                    ctx.textAlign = 'center';
+                    const tw = ctx.measureText(lbl).width;
+                    const pw = tw + 8, ph = 13, pr = 3;
+                    ctx.beginPath();
+                    ctx.roundRect(hx - pw/2, RULER_Y - ph - 6, pw, ph, pr);
+                    ctx.fillStyle = 'rgba(52,199,123,0.22)';
+                    ctx.strokeStyle = '#34c77b55';
+                    ctx.lineWidth = 0.8;
+                    ctx.fill(); ctx.stroke();
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#34c77bdd';
+                    ctx.fillText(lbl, hx, RULER_Y - ph/2 - 6);
+                    ctx.restore();
+                }
+
+                let progress = 0;
+                const TOTAL_STEPS = order.length - 1;
+                const FRAMES_PER_STEP = 55;
+                const TOTAL_FRAMES = TOTAL_STEPS * FRAMES_PER_STEP;
+
+                function drawSeg(x1, y1, x2, y2, strokeColor, lineWidth, dashed) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash(dashed ? [7, 5] : []);
+                    ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+                    ctx.strokeStyle = strokeColor;
+                    ctx.lineWidth = lineWidth;
+                    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                function drawNode(i, partial) {
+                    const x = trackX(order[i]), y = stepY(i);
+                    const isHead = i === 0;
+                    const isEdge = stepMeta[i-1] && stepMeta[i-1].isEdge;
+                    const isWrap = stepMeta[i-1] && stepMeta[i-1].isWrap;
+                    const dotR  = isHead ? 7 : (isEdge ? 6 : 5);
+                    const glowR = dotR + 6;
+                    let dotColor, glowColor;
+                    if (isHead)      { dotColor = '#34c77b'; glowColor = '#34c77b33'; }
+                    else if (isEdge) { dotColor = '#f0a500'; glowColor = 'rgba(240,165,0,0.22)'; }
+                    else             { dotColor = color;     glowColor = color + '28'; }
+
+                    ctx.beginPath(); ctx.arc(x, y, glowR, 0, Math.PI*2);
+                    ctx.fillStyle = glowColor; ctx.fill();
+                    ctx.beginPath(); ctx.arc(x, y, dotR, 0, Math.PI*2);
+                    ctx.fillStyle = dotColor; ctx.fill();
+                    ctx.beginPath(); ctx.arc(x, y, dotR * 0.38, 0, Math.PI*2);
+                    ctx.fillStyle = '#fff'; ctx.fill();
+
+                    if (partial) return;
+
+                    // Track-number label above dot
+                    ctx.save();
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'bottom';
+                    ctx.font = `bold 10px 'JetBrains Mono', monospace`;
+                    ctx.fillStyle = isHead ? '#34c77b' : (isEdge ? '#f0a500' : 'rgba(200,210,230,0.9)');
+                    ctx.fillText(order[i], x, y - dotR - 4);
+                    ctx.restore();
+
+                    // Step-number badge to the right
+                    if (!isHead) {
+                        const label = `#${i}`;
+                        const bx = x + dotR + 3, by = y;
+                        ctx.save();
+                        ctx.font = `600 8px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        const tw = ctx.measureText(label).width;
+                        const ph = 12, pw = tw + 7, pr = 3;
+                        ctx.beginPath();
+                        ctx.roundRect(bx, by - ph/2, pw, ph, pr);
+                        ctx.fillStyle = isEdge ? 'rgba(240,165,0,0.18)' : (isWrap ? color+'22' : 'rgba(108,99,255,0.18)');
+                        ctx.strokeStyle = isEdge ? '#f0a50055' : (isWrap ? color+'55' : '#6c63ff44');
+                        ctx.lineWidth = 0.8;
+                        ctx.fill(); ctx.stroke();
+                        ctx.fillStyle = isEdge ? '#f0a500cc' : (isWrap ? color+'cc' : '#a8a4ffcc');
+                        ctx.fillText(label, bx + 3, by);
+                        ctx.restore();
+                    } else {
+                        const label = 'HEAD';
+                        const bx = x + dotR + 3, by = y;
+                        ctx.save();
+                        ctx.font = `700 8px 'JetBrains Mono', monospace`;
+                        ctx.textAlign = 'left';
+                        ctx.textBaseline = 'middle';
+                        const tw = ctx.measureText(label).width;
+                        const ph = 12, pw = tw + 7, pr = 3;
+                        ctx.beginPath();
+                        ctx.roundRect(bx, by - ph/2, pw, ph, pr);
+                        ctx.fillStyle = 'rgba(52,199,123,0.18)';
+                        ctx.strokeStyle = '#34c77b55';
+                        ctx.lineWidth = 0.8;
+                        ctx.fill(); ctx.stroke();
+                        ctx.fillStyle = '#34c77bcc';
+                        ctx.fillText(label, bx + 3, by);
+                        ctx.restore();
+                    }
+                    if (isEdge) {
+                        ctx.save(); ctx.font = `600 8px monospace`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                        ctx.fillStyle = '#f0a50088';
+                        ctx.fillText('disk edge', x, y + dotR + 4);
+                        ctx.restore();
+                    }
+                    if (isWrap) {
+                        ctx.save(); ctx.font = `600 8px monospace`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+                        ctx.fillStyle = color + '88';
+                        ctx.fillText('jump', x, y + dotR + 4);
+                        ctx.restore();
+                    }
+                }
+
+                function draw() {
+                    ctx.clearRect(0, 0, W, H);
+
+                    // Ruler drawn first (bottom layer)
+                    drawRuler();
+
+                    // Subtle vertical guides at each stop
+                    order.forEach(t => {
+                        ctx.beginPath();
+                        ctx.moveTo(trackX(t), PAD_T);
+                        ctx.lineTo(trackX(t), H - PAD_B);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+                        ctx.lineWidth = 1; ctx.stroke();
+                    });
+
+                    const done = Math.floor(progress / FRAMES_PER_STEP);
+                    const frac = (progress % FRAMES_PER_STEP) / FRAMES_PER_STEP;
+
+                    // Completed segments
+                    for (let i = 0; i < done && i < TOTAL_STEPS; i++) {
+                        const iw = stepMeta[i] && stepMeta[i].isWrap;
+                        drawSeg(trackX(order[i]), stepY(i), trackX(order[i+1]), stepY(i+1),
+                            iw ? color+'55' : color+'bb', iw ? 1.5 : 2.5, iw);
+                    }
+
+                    // Animating segment
+                    if (done < TOTAL_STEPS) {
+                        const i = done;
+                        const x1=trackX(order[i]), y1=stepY(i), x2=trackX(order[i+1]), y2=stepY(i+1);
+                        const iw = stepMeta[i] && stepMeta[i].isWrap;
+                        const ex = x1 + (x2-x1)*frac, ey = y1 + (y2-y1)*frac;
+                        drawSeg(x1, y1, ex, ey, iw ? color+'aa' : color+'ff', iw ? 2 : 3, iw);
+
+                        // Glowing cursor tip
+                        ctx.save();
+                        const gr = ctx.createRadialGradient(ex, ey, 0, ex, ey, 9);
+                        gr.addColorStop(0, color+'cc'); gr.addColorStop(1, color+'00');
+                        ctx.beginPath(); ctx.arc(ex, ey, 9, 0, Math.PI*2);
+                        ctx.fillStyle = gr; ctx.fill();
+                        ctx.restore();
+                    }
+
+                    // Nodes on top
+                    for (let i = 0; i <= Math.min(done, order.length-1); i++) drawNode(i, false);
+                    if (done < TOTAL_STEPS) {
+                        const ni = done + 1;
+                        if (frac > 0.82 && ni < order.length) drawNode(ni, true);
+                    }
+
+                    if (progress < TOTAL_FRAMES) { progress++; storSeekAnimId = requestAnimationFrame(draw); }
+                    else { drawRuler(); for (let i = 0; i < order.length; i++) drawNode(i, false); }
+                }
+                draw();
+            }
+            function renderOutput() {
+                if (!requests.length) return;
+                const head = Math.max(0, parseInt(document.getElementById('storHead').value) || 0);
+                const diskSize = Math.max(10, parseInt(document.getElementById('storDiskSize').value) || 199);
+                const all = ['fcfs','sstf','scan','cscan','look','clook'].map(name => ({
+                    name,
+                    result: runStorage(name, head, diskSize, direction)
+                }));
+                const current = all.find(item => item.name === algo).result;
+
+                document.getElementById('storOutput').classList.add('visible');
+
+                // Defer canvas render — wait for DOM to lay out the now-visible output section
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    drawPath(current, head, diskSize);
+                }));
+
+                document.getElementById('storSeekOrder').innerHTML = current.order.map(track => `<span class="compact-tag">${track}</span>`).join('');
+
+                // Build running total on the fly (step objects have .dist, not .total)
+                let runningTotal = 0;
+                document.getElementById('storCalcBody').innerHTML = current.steps.map((step, i) => {
+                    runningTotal += step.dist;
+                    return `<tr><td>${i + 1}</td><td>${step.from}</td><td>${step.to}</td><td>${step.dist}</td><td>${runningTotal}</td></tr>`;
+                }).join('');
+
+                document.getElementById('storMetrics').innerHTML = [
+                    ['Total Seek', current.totalSeek, 'tracks'],
+                    ['Requests', requests.length, ''],
+                    ['Average Seek', (current.totalSeek / Math.max(1, current.steps.length)).toFixed(2), 'tracks']
+                ].map(([label, value, unit]) => `<div class="compact-metric-card"><div class="compact-metric-value">${value}<span style="font-size:11px;color:var(--text-secondary);margin-left:3px;">${unit}</span></div><div class="compact-metric-label">${label}</div></div>`).join('');
+
+                const maxSeek = Math.max(...all.map(item => item.result.totalSeek), 1);
+                const algoColor = STOR_COLORS[algo] || '#6c63ff';
+                document.getElementById('storCompare').innerHTML = all.map(item => {
+                    const width = Math.max(6, (item.result.totalSeek / maxSeek) * 100);
+                    const isCur = item.name === algo;
+                    const fill = isCur ? (STOR_COLORS[item.name] || '#6c63ff') : 'rgba(255,255,255,0.22)';
+                    return `<div class="compact-compare-card" style="${isCur ? `border-color:${algoColor}44;background:${algoColor}0d;` : ''}"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px;"><strong style="${isCur ? `color:${algoColor}` : ''}">${item.name.toUpperCase()}</strong><span style="${isCur ? `color:${algoColor}` : ''}">${item.result.totalSeek}</span></div><div style="height:5px;background:rgba(255,255,255,0.08);border-radius:99px;overflow:hidden;"><div style="height:100%;width:${width}%;background:${fill};border-radius:99px;transition:width 0.5s;"></div></div></div>`;
+                }).join('');
+            }
+            function syncDesc() {
+                document.getElementById('storAlgoDesc').textContent = descs[algo];
+            }
+
+            document.querySelectorAll('#storAlgoPills .compact-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#storAlgoPills .compact-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    algo = pill.dataset.algo;
+                    syncDesc();
+                });
+            });
+            document.querySelectorAll('#storDirPills .compact-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('#storDirPills .compact-pill').forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    direction = pill.dataset.dir;
+                });
+            });
+            document.getElementById('storAddReq').addEventListener('click', addRequest);
+            document.getElementById('storReqInput').addEventListener('keydown', e => { if (e.key === 'Enter') addRequest(); });
+            document.getElementById('storLoadExample').addEventListener('click', () => { requests = [98,183,37,122,14,124,65,67]; renderTags(); });
+            document.getElementById('storClearReqs').addEventListener('click', () => { requests = []; renderTags(); });
+            document.getElementById('storRun').addEventListener('click', renderOutput);
+            window.addEventListener('resize', () => {
+                if (document.getElementById('storOutput').classList.contains('visible')) renderOutput();
+            });
+            syncDesc();
+            renderTags();
+        })();
 
         /* ══ CPU Scheduling Simulator Controller ══ */
         (function() {
@@ -2911,6 +4438,20 @@
             runClock();
             setInterval(runClock, 1000);
 
+            document.querySelectorAll('.clock-mode-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const mode = tab.dataset.clockMode;
+                    document.querySelectorAll('.clock-mode-tab').forEach(t => {
+                        const isActive = t === tab;
+                        t.classList.toggle('active', isActive);
+                        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    });
+                    document.querySelectorAll('.clock-mode-panel').forEach(panel => {
+                        panel.classList.toggle('active', panel.dataset.clockPanel === mode);
+                    });
+                });
+            });
+
             // Stopwatch logic
             let stopwatchInterval = null;
             let stopwatchTime = 0; // in milliseconds
@@ -3259,16 +4800,27 @@
             if (navMemLink) {
                 navMemLink.addEventListener('click', (e) => {
                     e.preventDefault();
-                    openWindow('win-mem-sim', false);
+                    window.location.href = 'pages/memory.html';
                 });
             }
 
             /* — MVT Algorithm Engine — */
             const MEM_ALGOS = { first:'First Fit', next:'Next Fit', best:'Best Fit', worst:'Worst Fit' };
+            const MEM_ALGO_DESC = {
+                first: 'Scans memory from the beginning and allocates the first hole that is large enough. Fast but can cause fragmentation at the start of memory.',
+                next:  'Starts searching from where the last allocation was made, wrapping around. Distributes allocations more evenly across memory.',
+                best:  'Finds the smallest hole that is large enough. Minimizes wasted space per allocation but can create many tiny unusable holes.',
+                worst: 'Finds the largest available hole. Leaves the largest possible remaining hole, which may be more useful for future allocations.'
+            };
             const JOB_COLORS = ['#00c8e0','#6c63ff','#f0a500','#34c77b','#e05555','#a855f7','#ec4899','#14b8a6','#f97316','#8b5cf6'];
             function getJobColor(i) { return JOB_COLORS[i % JOB_COLORS.length]; }
 
             function createMemBlocks(cfg) {
+                if (!cfg.includeOs) {
+                    return [
+                        { type:'hole', start:0, sizeKb:cfg.userKb, task:null },
+                    ];
+                }
                 return [
                     { type:'os',   start:0,        sizeKb:cfg.osKb,   task:null },
                     { type:'hole', start:cfg.osKb,  sizeKb:cfg.userKb, task:null },
@@ -3322,10 +4874,10 @@
                 }
             }
             function compact(blocks, cfg, clock, log) {
-                const jobs=blocks.filter(b=>b.type==='job'); let ns=cfg.osKb;
+                const jobs=blocks.filter(b=>b.type==='job'); let ns=cfg.includeOs?cfg.osKb:0;
                 jobs.forEach(b=>{ b.start=ns; b.task.startAddr=ns; ns+=b.sizeKb; });
                 blocks.length=0;
-                blocks.push({type:'os',start:0,sizeKb:cfg.osKb,task:null});
+                if (cfg.includeOs) blocks.push({type:'os',start:0,sizeKb:cfg.osKb,task:null});
                 blocks.push(...jobs);
                 const free=cfg.totalKb-ns; if(free>0) blocks.push({type:'hole',start:ns,sizeKb:free,task:null});
                 log.push({t:clock, msg:'Compaction performed — holes merged.', type:'warning'});
@@ -3377,25 +4929,34 @@
             let memWaterAnimId = null, memWaterCanvases = [];
 
             /* — Algorithm Pills — */
+            const memAlgoDescEl = document.getElementById('memAlgoDescText');
             document.querySelectorAll('.mem-algo-pill').forEach(pill => {
                 pill.addEventListener('click', () => {
                     document.querySelectorAll('.mem-algo-pill').forEach(p=>p.classList.remove('active'));
                     pill.classList.add('active');
                     memAlgo = pill.dataset.algo;
+                    if (memAlgoDescEl) memAlgoDescEl.textContent = MEM_ALGO_DESC[memAlgo] || '';
                 });
             });
+            if (memAlgoDescEl) memAlgoDescEl.textContent = MEM_ALGO_DESC[memAlgo] || '';
 
             /* — Memory config user display — */
             const memTotalEl = document.getElementById('memTotal');
             const memOSEl    = document.getElementById('memOS');
             const memUserEl  = document.getElementById('memUserDisplay');
+            const memIncOsEl = document.getElementById('memIncludeOS');
             function updateUserMem() {
-                const t=parseInt(memTotalEl&&memTotalEl.value)||0, o=parseInt(memOSEl&&memOSEl.value)||0;
+                const t=parseInt(memTotalEl&&memTotalEl.value)||0;
+                const includeOs = !memIncOsEl || memIncOsEl.checked;
+                const o=includeOs?(parseInt(memOSEl&&memOSEl.value)||0):0;
                 const u=Math.max(0,t-o);
                 if (memUserEl) { memUserEl.textContent=u+' KB'; memUserEl.style.color=u<=0?'#ea4335':'#34a853'; }
+                if (memOSEl) { memOSEl.disabled=!includeOs; memOSEl.style.opacity=includeOs?'1':'0.5'; }
             }
             if (memTotalEl) memTotalEl.addEventListener('input', updateUserMem);
             if (memOSEl)    memOSEl.addEventListener('input', updateUserMem);
+            if (memIncOsEl) memIncOsEl.addEventListener('change', updateUserMem);
+            updateUserMem();
 
             /* — Job Table — */
             const memBody = document.getElementById('memJobTableBody');
@@ -3451,13 +5012,15 @@
             if (memRunBtn) memRunBtn.addEventListener('click', () => {
                 const jobs = getMemJobs(); if (!jobs.length) return;
                 const totalKb = parseInt(memTotalEl&&memTotalEl.value)||384;
-                const osKb    = parseInt(memOSEl&&memOSEl.value)||64;
-                if (osKb>=totalKb) { alert('OS memory must be smaller than total memory.'); return; }
+                const includeOs = !memIncOsEl || memIncOsEl.checked;
+                const osKb = includeOs ? (parseInt(memOSEl&&memOSEl.value)||64) : 0;
+                if (includeOs && osKb>=totalKb) { alert('OS memory must be smaller than total memory.'); return; }
                 const compactEl = document.getElementById('memCompaction');
                 const cfg = {
                     algo:memAlgo,
                     compact:compactEl?compactEl.checked:true,
-                    totalKb, osKb, userKb:totalKb-osKb,
+                    includeOs,
+                    totalKb, osKb, userKb:includeOs?totalKb-osKb:totalKb,
                     jobs:jobs.sort((a,b)=>a.arrivalOrder-b.arrivalOrder||a.id.localeCompare(b.id))
                 };
                 memResult = runMVT(cfg);
