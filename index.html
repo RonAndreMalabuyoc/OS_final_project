@@ -12,6 +12,9 @@
     <script>
         (function() {
             try {
+                if (localStorage.getItem('theme') === 'light') {
+                    document.documentElement.classList.add('light');
+                }
                 if (sessionStorage.getItem('osSimulatorBootShown') === 'true') {
                     document.documentElement.classList.add('boot-seen');
                 }
@@ -24,6 +27,8 @@
 
         /* ── CSS Variables ── */
         :root {
+            color-scheme: dark;
+
             --bg-base: #0d1117;
             --bg-surface: #161b22;
             --bg-card: #21262d;
@@ -33,7 +38,10 @@
             --accent: #6c63ff;
             --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        html.light,
         body.light {
+            color-scheme: light;
+
             --bg-base: #f0f0f5;
             --bg-surface: #e4e4eb;
             --bg-card: #ffffff;
@@ -1490,6 +1498,28 @@
 </head>
 
 <body>
+    <script>
+        (function () {
+            function setTheme(isLight) {
+                document.documentElement.classList.toggle('light', isLight);
+                document.body.classList.toggle('light', isLight);
+                document.body.style.colorScheme = isLight ? 'light' : 'dark';
+                try {
+                    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                } catch (error) { }
+            }
+
+            setTheme(document.documentElement.classList.contains('light'));
+
+            document.addEventListener('click', function (event) {
+                const toggle = event.target.closest('#themeToggle');
+                if (!toggle) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                setTheme(!document.body.classList.contains('light'));
+            }, true);
+        })();
+    </script>
 
     <!-- ── macOS Boot Screen ── -->
     <div id="mac-boot-screen">
