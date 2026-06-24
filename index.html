@@ -263,6 +263,13 @@
             gap: 8px;
         }
         .win-module-icon { font-size: 36px; line-height: 1; }
+        .win-module-icon-img {
+            width: 48px;
+            height: 48px;
+            display: block;
+            object-fit: contain;
+            filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.28));
+        }
         .win-module-name {
             font-size: 16px; font-weight: 700;
             color: var(--text-primary); letter-spacing: -0.01em;
@@ -915,7 +922,16 @@
             line-height: 1;
             transition: transform 0.2s;
         }
+        .dock-icon-img {
+            width: 38px;
+            height: 38px;
+            display: block;
+            object-fit: contain;
+        }
         .taskbar-tab:hover .dock-icon {
+            transform: scale(1.05);
+        }
+        .taskbar-tab:hover .dock-icon-img {
             transform: scale(1.05);
         }
         .dock-dot {
@@ -1479,7 +1495,7 @@
                 <div class="win-title">CPU Scheduling</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">⚙️</div>
+                <img class="win-module-icon-img" src="assets/cpu_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">CPU Scheduling</div>
                 <div class="win-module-desc">Animated Gantt charts and real-time waiting &amp; turnaround time stats.</div>
                 <div class="win-algo-tags">
@@ -1504,7 +1520,7 @@
                     <div class="tl tl-yellow" data-action="minimize" data-target="win-cpu"></div>
                     <div class="tl tl-green"  data-action="maximize" data-target="win-cpu"></div>
                 </div>
-                <div class="win-title">⚙️ CPU Scheduling Simulator</div>
+                <div class="win-title">CPU Scheduling Simulator</div>
             </div>
             <div class="cpu-sim-wrap" id="cpuSimWrap">
                 <!-- Algorithm Selector -->
@@ -1597,7 +1613,7 @@
                 <div class="win-title">Memory Management</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">🧠</div>
+                <img class="win-module-icon-img" src="assets/ram_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">Memory Management</div>
                 <div class="win-module-desc">MVT variable partitions and visual memory maps with allocation policies.</div>
                 <div class="win-algo-tags">
@@ -1621,7 +1637,7 @@
                     <div class="tl tl-yellow" data-action="minimize" data-target="win-mem-sim"></div>
                     <div class="tl tl-green"  data-action="maximize" data-target="win-mem-sim"></div>
                 </div>
-                <div class="win-title">🧠 Memory Management Simulator</div>
+                <div class="win-title">Memory Management Simulator</div>
             </div>
             <div class="mem-sim-wrap" id="memSimWrap">
 
@@ -1778,7 +1794,7 @@
                 <div class="win-title">Virtual Memory</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">📄</div>
+                <img class="win-module-icon-img" src="assets/cube_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">Virtual Memory</div>
                 <div class="win-module-desc">Page tables, page faults, and replacement policies visualization.</div>
                 <div class="win-algo-tags">
@@ -1805,7 +1821,7 @@
                 <div class="win-title">Mass Storage</div>
             </div>
             <div class="win-body">
-                <div class="win-module-icon">💾</div>
+                <img class="win-module-icon-img" src="assets/hard_drive_icon.png" alt="" aria-hidden="true">
                 <div class="win-module-name">Mass Storage</div>
                 <div class="win-module-desc">Disk scheduling with seek-track visualization across multiple algorithms.</div>
                 <div class="win-algo-tags">
@@ -2272,19 +2288,19 @@
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-cpu" id="tab-win-cpu" data-title="CPU Scheduling">
-            <span class="dock-icon">⚙️</span>
+            <img class="dock-icon dock-icon-img" src="assets/cpu_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-mem-sim" id="tab-win-mem-sim" data-title="Memory Simulator">
-            <span class="dock-icon">🧠</span>
+            <img class="dock-icon dock-icon-img" src="assets/ram_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-virtual-app" id="tab-win-virtual-app" data-title="Virtual Memory">
-            <span class="dock-icon">📄</span>
+            <img class="dock-icon dock-icon-img" src="assets/cube_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="taskbar-tab" data-target="win-storage-app" id="tab-win-storage-app" data-title="Mass Storage">
-            <span class="dock-icon">💾</span>
+            <img class="dock-icon dock-icon-img" src="assets/hard_drive_icon.png" alt="" aria-hidden="true">
             <span class="dock-dot"></span>
         </div>
         <div class="dock-separator" aria-hidden="true"></div>
