@@ -56,6 +56,49 @@
             padding-bottom: 0;
             user-select: none;
         }
+        body.theme-animating,
+        body.theme-animating * {
+            transition-duration: 0.42s !important;
+            transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1) !important;
+        }
+        .theme-transition-wash {
+            position: fixed;
+            left: var(--theme-x, 50vw);
+            top: var(--theme-y, 14px);
+            width: 220vmax;
+            height: 220vmax;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 100001;
+            background: var(--theme-wash, rgba(255, 255, 255, 0.72));
+            transform: translate(-50%, -50%) scale(0);
+            opacity: 0;
+            filter: blur(2px);
+            animation: theme-wash 0.58s cubic-bezier(0.22, 1, 0.36, 1) both;
+            mix-blend-mode: soft-light;
+        }
+        @keyframes theme-wash {
+            0% {
+                opacity: 0.65;
+                transform: translate(-50%, -50%) scale(0);
+            }
+            58% {
+                opacity: 0.22;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            body.theme-animating,
+            body.theme-animating * {
+                transition-duration: 0.01ms !important;
+            }
+            .theme-transition-wash {
+                display: none;
+            }
+        }
 
         /* ══ macOS Top Menu Bar ══ */
         .navbar {
@@ -2458,9 +2501,27 @@
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light') document.body.classList.add('light');
 
-        document.getElementById('themeToggle').addEventListener('click', () => {
+        document.getElementById('themeToggle').addEventListener('click', (event) => {
+            const goingLight = !document.body.classList.contains('light');
+            const rect = event.currentTarget.getBoundingClientRect();
+            const wash = document.createElement('div');
+            wash.className = 'theme-transition-wash';
+            wash.style.setProperty('--theme-x', `${rect.left + rect.width / 2}px`);
+            wash.style.setProperty('--theme-y', `${rect.top + rect.height / 2}px`);
+            wash.style.setProperty(
+                '--theme-wash',
+                goingLight ? 'rgba(255, 255, 255, 0.78)' : 'rgba(8, 10, 14, 0.72)'
+            );
+
+            document.body.classList.add('theme-animating');
+            document.body.appendChild(wash);
             document.body.classList.toggle('light');
-            localStorage.setItem('theme', document.body.classList.contains('light') ? 'light' : 'dark');
+            localStorage.setItem('theme', goingLight ? 'light' : 'dark');
+
+            wash.addEventListener('animationend', () => {
+                wash.remove();
+                document.body.classList.remove('theme-animating');
+            }, { once: true });
         });
 
         /* ══ Window Dragging ══ */
