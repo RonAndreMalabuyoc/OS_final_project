@@ -12,6 +12,9 @@
     <script>
         (function() {
             try {
+                if (localStorage.getItem('theme') === 'light') {
+                    document.documentElement.classList.add('light');
+                }
                 if (sessionStorage.getItem('osSimulatorBootShown') === 'true') {
                     document.documentElement.classList.add('boot-seen');
                 }
@@ -24,6 +27,8 @@
 
         /* ── CSS Variables ── */
         :root {
+            color-scheme: dark;
+
             --bg-base: #0d1117;
             --bg-surface: #161b22;
             --bg-card: #21262d;
@@ -33,7 +38,10 @@
             --accent: #6c63ff;
             --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
+        html.light,
         body.light {
+            color-scheme: light;
+
             --bg-base: #f0f0f5;
             --bg-surface: #e4e4eb;
             --bg-card: #ffffff;
@@ -1490,6 +1498,28 @@
 </head>
 
 <body>
+    <script>
+        (function () {
+            function setTheme(isLight) {
+                document.documentElement.classList.toggle('light', isLight);
+                document.body.classList.toggle('light', isLight);
+                document.body.style.colorScheme = isLight ? 'light' : 'dark';
+                try {
+                    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+                } catch (error) { }
+            }
+
+            setTheme(document.documentElement.classList.contains('light'));
+
+            document.addEventListener('click', function (event) {
+                const toggle = event.target.closest('#themeToggle');
+                if (!toggle) return;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                setTheme(!document.body.classList.contains('light'));
+            }, true);
+        })();
+    </script>
 
     <!-- ── macOS Boot Screen ── -->
     <div id="mac-boot-screen">
@@ -4873,14 +4903,17 @@
                     }
                 }
             }
-            function compact(blocks, cfg, clock, log) {
+            function compact(blocks, cfg, clock, log, alloc) {
                 const jobs=blocks.filter(b=>b.type==='job'); let ns=cfg.includeOs?cfg.osKb:0;
                 jobs.forEach(b=>{ b.start=ns; b.task.startAddr=ns; ns+=b.sizeKb; });
                 blocks.length=0;
                 if (cfg.includeOs) blocks.push({type:'os',start:0,sizeKb:cfg.osKb,task:null});
                 blocks.push(...jobs);
-                const free=cfg.totalKb-ns; if(free>0) blocks.push({type:'hole',start:ns,sizeKb:free,task:null});
-                log.push({t:clock, msg:'Compaction performed — holes merged.', type:'warning'});
+                const free=cfg.totalKb-ns;
+                if(free>0) blocks.push({type:'hole',start:ns,sizeKb:free,task:null});
+                // Reset Next Fit pointer — block layout has completely changed after compaction
+                if (alloc) alloc.next = 0;
+                log.push({t:clock, msg:`Compaction performed: ${jobs.length} job(s) packed to low addresses, ${free} KB contiguous free at ${ns} KB.`, type:'warning'});
             }
             function totalFree(blocks) { return blocks.reduce((s,b)=>b.type==='hole'?s+b.sizeKb:s,0); }
             function largestHole(blocks) { return blocks.reduce((m,b)=>b.type==='hole'?Math.max(m,b.sizeKb):m,0); }
@@ -4891,7 +4924,7 @@
                 for (const task of waiting) {
                     if (task.sizeKb>cfg.userKb) { task.status='Rejected'; rejected.push(task); log.push({t:clock,msg:`${task.id} rejected — larger than user memory.`,type:'error'}); continue; }
                     if (allocTask(blocks,task,clock,alloc,log)) continue;
-                    if (cfg.compact&&totalFree(blocks)>=task.sizeKb&&largestHole(blocks)<task.sizeKb) { compact(blocks,cfg,clock,log); if(allocTask(blocks,task,clock,alloc,log)) continue; }
+                    if (cfg.compact&&totalFree(blocks)>=task.sizeKb&&largestHole(blocks)<task.sizeKb) { compact(blocks,cfg,clock,log,alloc); if(allocTask(blocks,task,clock,alloc,log)) continue; }
                     still.push(task);
                 } return still;
             }
