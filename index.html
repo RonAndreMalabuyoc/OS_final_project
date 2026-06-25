@@ -29,30 +29,38 @@
             if (!overlay) {
                 overlay = document.createElement('div');
                 overlay.id = 'genie-flash-overlay';
-                overlay.style.cssText =
-                    'position:fixed;inset:0;z-index:2147483647;pointer-events:none;opacity:0;';
                 document.body.appendChild(overlay);
             }
 
-            // Reset any prior animation
-            overlay.style.opacity = '0';
-            overlay.style.background =
-                'radial-gradient(ellipse at 50% 10%, #d0eaff 0%, #ffffff 50%, #f0f8ff 100%)';
+            // Always ensure the overlay has correct base styles
+            overlay.style.cssText =
+                'position:fixed;inset:0;z-index:2147483647;pointer-events:none;opacity:0;';
 
-            // Animate with Web Animations API
+            // Theme-aware gradient
+            var isDark = !document.body.classList.contains('light') &&
+                         !document.documentElement.classList.contains('light');
+
+            overlay.style.background = isDark
+                // Dark mode — vivid accent purple ripple (contrasts clearly without being harsh)
+                ? 'radial-gradient(ellipse at 50% 50%, rgba(108,99,255,1) 0%, rgba(30,20,80,1) 45%, #0d0e1a 100%)'
+                // Light mode — gentle white bloom
+                : 'radial-gradient(ellipse at 50% 50%, #eef2ff 0%, #f0f4ff 50%, #ffffff 100%)';
+
+            // Cancel any running animation and play fresh
             if (overlay.getAnimations) {
                 overlay.getAnimations().forEach(function (a) { a.cancel(); });
             }
             overlay.animate(
                 [
-                    { opacity: 0, transform: 'scale(0.92)' },
-                    { opacity: 1, transform: 'scale(1.0)', offset: 0.6 },
+                    { opacity: 0, transform: 'scale(0.88)' },
+                    { opacity: 1, transform: 'scale(1.0)', offset: 0.5 },
                     { opacity: 1, transform: 'scale(1.0)' }
                 ],
-                { duration: 380, easing: 'ease-out', fill: 'forwards' }
+                { duration: 420, easing: 'ease-out', fill: 'forwards' }
             );
 
-            setTimeout(function () { window.location.href = href; }, 420);
+            // Navigate after the overlay fully covers the screen
+            setTimeout(function () { window.location.href = href; }, 480);
         };
     </script>
     <style>
@@ -4025,22 +4033,33 @@
             // 1. Apply the genie-maximize CSS animation class
             win.classList.add('win-maximizing');
 
-            // 2. After ~55% of the animation, flash the overlay in
+            // 2. After ~55% of the animation, fade the overlay in
             const flashDelay = 240; // ms
             const totalDuration = 520; // ms
 
             setTimeout(() => {
                 const overlay = document.getElementById('genie-flash-overlay');
                 if (!overlay) return;
-                // Set gradient centred on the window
+
+                // Theme-aware colour — dark mode: dark fade, light mode: soft white
+                const isDark = !document.body.classList.contains('light');
                 const r = win.getBoundingClientRect();
                 const cx = r.left + r.width / 2;
                 const cy = r.top + r.height / 2;
-                overlay.style.background =
-                    `radial-gradient(ellipse at ${cx}px ${cy}px, #e8f4ff 0%, #ffffff 100%)`;
-                // Force reflow so the animation always starts from opacity:0
-                void overlay.offsetHeight;
-                overlay.classList.add('visible');
+                overlay.style.background = isDark
+                    ? `radial-gradient(ellipse at ${cx}px ${cy}px, rgba(108,99,255,0.15) 0%, #0d1117 55%, #0d1117 100%)`
+                    : `radial-gradient(ellipse at ${cx}px ${cy}px, #eef2ff 0%, #f8f8ff 55%, #ffffff 100%)`;
+
+                // Cancel prior, play fresh via Web Animations API
+                overlay.getAnimations().forEach(a => a.cancel());
+                overlay.animate(
+                    [
+                        { opacity: 0, transform: 'scale(0.96)' },
+                        { opacity: 1, transform: 'scale(1.0)', offset: 0.55 },
+                        { opacity: 1, transform: 'scale(1.0)' }
+                    ],
+                    { duration: 300, easing: 'ease-out', fill: 'forwards' }
+                );
             }, flashDelay);
 
             // 3. Navigate once fully covered
