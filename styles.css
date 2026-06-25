@@ -8,8 +8,80 @@
     padding: 0;
 }
 
+/* ══ Custom Cursor ══ */
+*, *::before, *::after { cursor: none !important; }
+
+#cursor-dot {
+    position: fixed;
+    top: 0; left: 0;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ffffff;
+    pointer-events: none;
+    z-index: 2147483646;
+    transform: translate(-50%, -50%);
+    transition: width 0.15s ease, height 0.15s ease, background 0.15s ease, opacity 0.2s ease;
+    mix-blend-mode: difference;
+    will-change: transform;
+}
+
+#cursor-ring {
+    position: fixed;
+    top: 0; left: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    pointer-events: none;
+    z-index: 2147483645;
+    transform: translate(-50%, -50%);
+    transition:
+        width 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        height 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        border-color 0.25s ease,
+        opacity 0.25s ease;
+    will-change: transform;
+}
+
+/* Hover state — ring expands and brightens */
+body.cursor-hover #cursor-ring {
+    width: 52px;
+    height: 52px;
+    border-color: rgba(108, 99, 255, 0.7);
+    background: rgba(108, 99, 255, 0.06);
+}
+
+body.cursor-hover #cursor-dot {
+    width: 5px;
+    height: 5px;
+    background: #6c63ff;
+}
+
+/* Click state — ring collapses */
+body.cursor-click #cursor-ring {
+    width: 22px;
+    height: 22px;
+    border-color: rgba(108, 99, 255, 0.9);
+}
+
+body.cursor-click #cursor-dot {
+    width: 10px;
+    height: 10px;
+}
+
+/* Hide when cursor leaves window */
+body.cursor-out #cursor-dot,
+body.cursor-out #cursor-ring {
+    opacity: 0;
+}
+
+
+
 /* ── Dark mode (default) ────────────────────────── */
 :root {
+    color-scheme: dark;
+
     --bg-base: #0d0d0f;
     --bg-surface: #141416;
     --bg-card: #1a1a1e;
@@ -50,7 +122,10 @@
 }
 
 /* ── Light mode ─────────────────────────────────── */
+html.light,
 body.light {
+    color-scheme: light;
+
     --bg-base: #F7F3EC;
     --bg-surface: #EFE9DC;
     --bg-card: #FDF9F3;
@@ -985,15 +1060,18 @@ body.light .stat-item:last-child .stat-num {
     overflow: hidden;
     isolation: isolate;
     border-bottom: 1px solid var(--border);
+    height: 260px;        /* uniform height across all pages */
+    display: flex;
+    align-items: center;  /* vertically center the header text */
 }
 
 .cpu-hero-wrapper #auroraCanvas {
     position: absolute;
     left: 0;
     right: 0;
-    top: -30%;
+    top: 0;
     width: 100%;
-    height: 160%;
+    height: 100%;
     pointer-events: none;
     z-index: 0;
     will-change: transform;
@@ -1002,13 +1080,15 @@ body.light .stat-item:last-child .stat-num {
 .cpu-page-header {
     position: relative;
     z-index: 1;
+    width: 100%;
 }
 
 .cpu-page-header-inner {
     max-width: 1080px;
     margin: 0 auto;
-    padding: 3.5rem 2rem 2.5rem;
+    padding: 1.5rem 2rem;
 }
+
 
 .cpu-breadcrumb {
     display: flex;
@@ -1622,7 +1702,14 @@ body.light .stat-item:last-child .stat-num {
     }
 
     .cpu-page-header-inner {
-        padding: 1.5rem 1rem;
+        padding: 0 1rem;
+    }
+
+    /* Keep the decorative canvas full-width on small screens with low opacity as background */
+    .cpu-hero-wrapper #auroraCanvas {
+        left: 0;
+        width: 100%;
+        opacity: 0.5;
     }
 
     .cpu-main {
