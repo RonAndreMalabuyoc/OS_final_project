@@ -7,15 +7,6 @@
     <title>Memory Management Simulator — OS Simulator</title>
     <meta name="description"
         content="Interactive MVT memory management simulator with visual memory maps. Supports First Fit, Next Fit, Best Fit, and Worst Fit allocation algorithms." />
-    <script>
-        (function () {
-            try {
-                if (localStorage.getItem('theme') === 'light') {
-                    document.documentElement.classList.add('light');
-                }
-            } catch (error) { }
-        })();
-    </script>
     <link rel="stylesheet" href="../styles.css" />
     <style>
         /* ── macOS Top Menu Bar (subpage) ── */
@@ -72,28 +63,6 @@
 </head>
 
 <body>
-    <script>
-        (function () {
-            function setTheme(isLight) {
-                document.documentElement.classList.toggle('light', isLight);
-                document.body.classList.toggle('light', isLight);
-                document.body.style.colorScheme = isLight ? 'light' : 'dark';
-                try {
-                    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-                } catch (error) { }
-            }
-
-            setTheme(document.documentElement.classList.contains('light'));
-
-            document.addEventListener('click', function (event) {
-                const toggle = event.target.closest('#themeToggle');
-                if (!toggle) return;
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                setTheme(!document.body.classList.contains('light'));
-            }, true);
-        })();
-    </script>
 
     <!-- Scroll progress bar -->
     <div id="scrollProgress"></div>
@@ -544,7 +513,7 @@
             }
         }
 
-        function compactMemory(blocks, config, clock, log, allocator) {
+        function compactMemory(blocks, config, clock, log) {
             const jobBlocks = blocks.filter(block => block.type === 'job');
             let nextStart = config.includeOsMemory ? config.osMemoryKb : 0;
 
@@ -565,10 +534,7 @@
                 blocks.push({ type: 'hole', start: nextStart, sizeKb: freeKb, task: null });
             }
 
-            // Reset Next Fit pointer — block layout has completely changed after compaction
-            if (allocator) allocator.nextPointer = 0;
-
-            log.push({ t: clock, msg: `Compaction performed: ${jobBlocks.length} job(s) packed to low addresses, ${freeKb} KB contiguous free at ${nextStart} KB.`, type: 'warning' });
+            log.push({ t: clock, msg: `Compaction performed — all holes merged into one free block.`, type: 'warning' });
         }
 
         function getTotalFreeMemory(blocks) {
@@ -601,7 +567,7 @@
                 if (allocateTask(blocks, task, clock, allocator, log)) continue;
 
                 if (config.compactionEnabled && getTotalFreeMemory(blocks) >= task.sizeKb && getLargestHole(blocks) < task.sizeKb) {
-                    compactMemory(blocks, config, clock, log, allocator);
+                    compactMemory(blocks, config, clock, log);
                     if (allocateTask(blocks, task, clock, allocator, log)) continue;
                 }
 

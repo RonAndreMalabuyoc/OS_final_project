@@ -10,8 +10,6 @@
 
 /* ── Dark mode (default) ────────────────────────── */
 :root {
-    color-scheme: dark;
-
     --bg-base: #0d0d0f;
     --bg-surface: #141416;
     --bg-card: #1a1a1e;
@@ -52,10 +50,7 @@
 }
 
 /* ── Light mode ─────────────────────────────────── */
-html.light,
 body.light {
-    color-scheme: light;
-
     --bg-base: #F7F3EC;
     --bg-surface: #EFE9DC;
     --bg-card: #FDF9F3;
