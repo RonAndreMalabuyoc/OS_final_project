@@ -682,6 +682,22 @@
             border-color: rgba(0, 0, 0, 0.12);
         }
 
+        body.light .compact-btn.primary {
+            background: linear-gradient(135deg, #6c63ff, #4285f4);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        body.light .compact-btn.primary:hover {
+            filter: brightness(1.1);
+        }
+
+        body.light .compact-pill.active {
+            color: #fff;
+            background: rgba(108, 99, 255, 0.75);
+            border-color: rgba(108, 99, 255, 0.9);
+        }
+
         .compact-desc {
             margin-top: 8px;
             padding: 10px 12px;
@@ -1995,6 +2011,12 @@
             color: #ea4335;
         }
 
+        body.light .mem-algo-pill.active {
+            background: rgba(234, 67, 53, 0.12);
+            border-color: rgba(234, 67, 53, 0.4);
+            color: #ea4335;
+        }
+
         .mem-algo-desc {
             display: flex;
             align-items: flex-start;
@@ -2200,6 +2222,26 @@
         body.light .mem-sim-btn {
             border-color: rgba(0, 0, 0, 0.08);
             background: rgba(0, 0, 0, 0.03);
+        }
+
+        body.light .mem-sim-btn.mem-sim-btn-primary {
+            background: rgba(234, 67, 53, 0.08);
+            border-color: rgba(234, 67, 53, 0.25);
+            color: #ea4335;
+        }
+
+        body.light .mem-sim-btn.mem-sim-btn-primary:hover {
+            background: rgba(234, 67, 53, 0.15);
+        }
+
+        body.light .mem-sim-btn.mem-sim-btn-run {
+            background: linear-gradient(135deg, #ea4335, #e05555);
+            border-color: transparent;
+            color: #fff;
+        }
+
+        body.light .mem-sim-btn.mem-sim-btn-run:hover {
+            background: linear-gradient(135deg, #f05040, #e86060);
         }
 
         .mem-sim-btn:hover {
@@ -2633,6 +2675,359 @@
             font-size: 9px;
             color: var(--text-secondary);
         }
+
+        /* ── Onboarding / Tips System ── */
+        .quick-tips-btn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 20px;
+            background: rgba(30, 30, 45, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font: 600 11px var(--font-ui);
+            cursor: pointer;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body.light .quick-tips-btn {
+            background: rgba(255, 255, 255, 0.75);
+            border-color: rgba(0, 0, 0, 0.12);
+            color: #333;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .quick-tips-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-1px);
+        }
+
+        body.light .quick-tips-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .quick-tips-btn.active {
+            background: var(--accent);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(108, 99, 255, 0.4);
+        }
+
+        .tip-pointer-container {
+            position: fixed;
+            z-index: 99998;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .tip-pointer-container.visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+        }
+
+        .tip-pulse {
+            width: 14px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            position: absolute;
+            top: -7px;
+            left: -7px;
+            box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.7);
+            animation: tip-pulse-anim 1.8s infinite;
+        }
+        
+        body.light .tip-pulse {
+            background: #7C5C38;
+            box-shadow: 0 0 0 0 rgba(124, 92, 56, 0.7);
+            animation: tip-pulse-light-anim 1.8s infinite;
+        }
+
+        .tip-card {
+            position: absolute;
+            background: rgba(30, 30, 45, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 10px 14px;
+            width: 200px;
+            color: #fff;
+            font-size: 11px;
+            line-height: 1.45;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            pointer-events: none;
+            transform-origin: center;
+        }
+
+        body.light .tip-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #333;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+        }
+
+        .tip-card b {
+            display: block;
+            margin-bottom: 4px;
+            color: #a89cff;
+            font-size: 12px;
+        }
+        
+        body.light .tip-card b {
+            color: #7C5C38;
+        }
+
+        /* Tip Cards Arrows */
+        .tip-card::after {
+            content: '';
+            position: absolute;
+            border: 6px solid transparent;
+        }
+
+        /* Orientations and alignments */
+        .tip-card.dir-bottom {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .tip-card.dir-bottom::after {
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-bottom-color: rgba(30, 30, 45, 0.88);
+        }
+        body.light .tip-card.dir-bottom::after {
+            border-bottom-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .tip-card.dir-top {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .tip-card.dir-top::after {
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border-top-color: rgba(30, 30, 45, 0.88);
+        }
+        body.light .tip-card.dir-top::after {
+            border-top-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .tip-card.dir-left {
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .tip-card.dir-left::after {
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border-left-color: rgba(30, 30, 45, 0.88);
+        }
+        body.light .tip-card.dir-left::after {
+            border-left-color: rgba(255, 255, 255, 0.95);
+        }
+
+        .tip-card.dir-right {
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .tip-card.dir-right::after {
+            right: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border-right-color: rgba(30, 30, 45, 0.88);
+        }
+        body.light .tip-card.dir-right::after {
+            border-right-color: rgba(255, 255, 255, 0.95);
+        }
+
+        @keyframes tip-pulse-anim {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(108, 99, 255, 0.6);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 12px rgba(108, 99, 255, 0);
+            }
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(108, 99, 255, 0);
+            }
+        }
+        
+        @keyframes tip-pulse-light-anim {
+            0% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(124, 92, 56, 0.6);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 12px rgba(124, 92, 56, 0);
+            }
+            100% {
+                transform: scale(0.9);
+                box-shadow: 0 0 0 0 rgba(124, 92, 56, 0);
+        }
+
+        /* ── Welcome Easter Egg ── */
+        .ee-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 200000;
+            background: radial-gradient(circle at center, #070714 0%, #020205 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .ee-overlay.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .ee-matrix-canvas-wrap {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.22;
+            z-index: 1;
+        }
+
+        .ee-terminal {
+            position: relative;
+            z-index: 2;
+            width: 680px;
+            max-width: 90%;
+            height: 400px;
+            background: rgba(8, 8, 12, 0.9);
+            border: 1px solid rgba(52, 168, 83, 0.4);
+            border-radius: 14px;
+            box-shadow: 0 24px 60px rgba(52, 168, 83, 0.15), 0 0 35px rgba(52, 168, 83, 0.08);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.92);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .ee-overlay.visible .ee-terminal {
+            transform: scale(1);
+        }
+
+        .ee-terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .ee-terminal-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .ee-terminal-dot.red { background: #ea4335; }
+        .ee-terminal-dot.yellow { background: #fbbc05; }
+        .ee-terminal-dot.green { background: #34a853; }
+
+        .ee-terminal-title {
+            margin-left: 10px;
+            font: 600 11px var(--font-ui);
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 0.05em;
+        }
+
+        .ee-terminal-body {
+            flex: 1;
+            padding: 20px 24px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #34a853;
+            text-shadow: 0 0 4px rgba(52, 168, 83, 0.4);
+            overflow-y: auto;
+        }
+
+        .ee-terminal-line {
+            margin-bottom: 10px;
+            white-space: pre-wrap;
+            opacity: 0;
+            transform: translateY(4px);
+            animation: ee-line-in 0.2s forwards ease-out;
+        }
+
+        @keyframes ee-line-in {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .ee-close-btn {
+            position: relative;
+            z-index: 2;
+            margin-top: 24px;
+            padding: 8px 20px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            font: 600 12px var(--font-ui);
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .ee-close-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 20px rgba(52, 168, 83, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .ee-duck-float {
+            position: absolute;
+            font-size: 90px;
+            z-index: 1;
+            bottom: 30px;
+            right: 30px;
+            pointer-events: none;
+            opacity: 0.18;
+            animation: ee-duck-float-anim 10s ease-in-out infinite;
+        }
+
+        @keyframes ee-duck-float-anim {
+            0% { transform: translateY(0) rotate(0deg) scale(1); }
+            50% { transform: translateY(-25px) rotate(180deg) scale(1.15); }
+            100% { transform: translateY(0) rotate(360deg) scale(1); }
+        }
     </style>
 </head>
 
@@ -2746,7 +3141,7 @@
                 <div class="traffic-lights">
                     <div class="tl tl-red" data-action="close" data-target="win-welcome" title="Close"></div>
                     <div class="tl tl-yellow" data-action="minimize" data-target="win-welcome" title="Minimize"></div>
-                    <div class="tl tl-green" data-action="maximize" data-target="win-welcome" title="Maximize"></div>
+                    <div class="tl tl-green" data-action="maximize" data-target="win-welcome" title="System Diagnostics"></div>
                 </div>
                 <div class="win-title">OS Simulator</div>
             </div>
@@ -3649,6 +4044,31 @@
             </div>
         </div>
 
+        <!-- Onboarding tips button -->
+        <button id="quickTipsBtn" class="quick-tips-btn" onclick="toggleTips()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            Tips &amp; Guide
+        </button>
+    </div>
+
+    <!-- ── Welcome Easter Egg Overlay ── -->
+    <div id="easter-egg-overlay" class="ee-overlay">
+        <div class="ee-matrix-canvas-wrap">
+            <canvas id="eeMatrixCanvas"></canvas>
+        </div>
+        <div class="ee-duck-float">🦆</div>
+        <div class="ee-terminal">
+            <div class="ee-terminal-header">
+                <div class="ee-terminal-dot red"></div>
+                <div class="ee-terminal-dot yellow"></div>
+                <div class="ee-terminal-dot green"></div>
+                <div class="ee-terminal-title">🦆 Core Diagnostics — QuackOS 1.0.0</div>
+            </div>
+            <div class="ee-terminal-body" id="eeTerminalBody"></div>
+        </div>
+        <button class="ee-close-btn" onclick="closeWelcomeEasterEgg()">
+            Return to Desktop
+        </button>
     </div>
 
     <!-- ══ macOS Taskbar (Dock) ══ -->
@@ -4164,6 +4584,10 @@
                     saveWindowInputs(target, win);
                     hideWindow(target, win, tab, true, true);
                 } else if (action === 'maximize') {
+                    if (target === 'win-welcome') {
+                        playWelcomeEasterEgg();
+                        return;
+                    }
                     if (fullPageRoutes[target]) {
                         // macOS Genie expand animation before navigation
                         playGenieMaximize(win, fullPageRoutes[target]);
@@ -6652,6 +7076,256 @@
             }
         })();
 
+    </script>
+    <!-- ── Onboarding / Tips Script ── -->
+    <script>
+        (function() {
+            const tipTargets = [
+                {
+                    id: 'tip-dark-mode',
+                    selector: '#themeToggle',
+                    dir: 'bottom',
+                    title: '🌙 Dark Mode Toggle',
+                    desc: 'Switch between dark and light themes instantly.'
+                },
+                {
+                    id: 'tip-standalone',
+                    selector: '#navbarCpuLink',
+                    dir: 'bottom',
+                    title: '🔗 Dedicated Pages',
+                    desc: 'Click these navigation links to open the standalone, full-screen pages for each concept.'
+                },
+                {
+                    id: 'tip-widgets',
+                    selector: '#tab-win-clock',
+                    dir: 'top',
+                    title: '📅 Desktop Widgets',
+                    desc: 'Open utilities like the Clock, Calendar, or Activity Monitor from the Dock.'
+                },
+                {
+                    id: 'tip-devs',
+                    selector: '#navbarAboutLink',
+                    dir: 'bottom',
+                    title: '👥 Know the Devs',
+                    desc: 'Learn more about the team behind this OS simulator.'
+                },
+                {
+                    id: 'tip-fullscreen',
+                    selector: '#win-welcome .tl-green',
+                    dir: 'right',
+                    title: '🟢 Go Full Screen',
+                    desc: 'Click this green circle to maximize any simulator window.'
+                },
+                {
+                    id: 'tip-simulate-now',
+                    selector: '#tab-win-mem-sim',
+                    dir: 'top',
+                    title: '💻 Simulate Now',
+                    desc: 'Launch the CPU, Memory, Virtual Memory, or Storage simulators from the Dock.'
+                }
+            ];
+
+            let tipsActive = false;
+            let tipsRaf = null;
+
+            function createTipElements() {
+                tipTargets.forEach(target => {
+                    if (document.getElementById(target.id)) return;
+                    
+                    const container = document.createElement('div');
+                    container.id = target.id;
+                    container.className = 'tip-pointer-container';
+                    
+                    const card = document.createElement('div');
+                    card.className = `tip-card dir-${target.dir}`;
+                    card.innerHTML = `<b>${target.title}</b>${target.desc}`;
+                    
+                    container.appendChild(card);
+                    document.body.appendChild(container);
+                });
+                updateTipsPositions();
+            }
+
+            function updateTipsPositions() {
+                tipTargets.forEach(target => {
+                    const el = document.querySelector(target.selector);
+                    const tipEl = document.getElementById(target.id);
+                    if (!tipEl) return;
+
+                    if (!el || el.offsetParent === null || window.getComputedStyle(el).display === 'none') {
+                        tipEl.style.display = 'none';
+                        return;
+                    }
+
+                    const rect = el.getBoundingClientRect();
+                    const cx = rect.left + rect.width / 2;
+                    const cy = rect.top + rect.height / 2;
+
+                    tipEl.style.display = '';
+                    tipEl.style.left = `${cx}px`;
+                    tipEl.style.top = `${cy}px`;
+                });
+            }
+
+            window.toggleTips = function() {
+                const btn = document.getElementById('quickTipsBtn');
+                tipsActive = !tipsActive;
+                btn.classList.toggle('active', tipsActive);
+                
+                if (tipsActive) {
+                    createTipElements();
+                    setTimeout(() => {
+                        document.querySelectorAll('.tip-pointer-container').forEach(el => el.classList.add('visible'));
+                    }, 20);
+                    
+                    const track = () => {
+                        updateTipsPositions();
+                        if (tipsActive) {
+                            tipsRaf = requestAnimationFrame(track);
+                        }
+                    };
+                    tipsRaf = requestAnimationFrame(track);
+                } else {
+                    document.querySelectorAll('.tip-pointer-container').forEach(el => el.classList.remove('visible'));
+                    setTimeout(() => {
+                        if (!tipsActive) {
+                            document.querySelectorAll('.tip-pointer-container').forEach(el => el.remove());
+                        }
+                    }, 300);
+                    if (tipsRaf) {
+                        cancelAnimationFrame(tipsRaf);
+                        tipsRaf = null;
+                    }
+                }
+            };
+        })();
+    </script>
+    <!-- ── Welcome Window Easter Egg Script ── -->
+    <script>
+        (function() {
+            let matrixActive = false;
+            let matrixRaf = null;
+            let typingTimeoutIds = [];
+            let columns = 0;
+            let yPositions = [];
+            const chars = "🦆01💻RAM💿💾PONDQUACKSYSCORE";
+
+            function resizeMatrix(canvas) {
+                if (!canvas) return;
+                const mW = canvas.width = canvas.parentElement.offsetWidth;
+                const mH = canvas.height = canvas.parentElement.offsetHeight;
+                columns = Math.floor(mW / 20);
+                yPositions = Array(columns).fill(0).map(() => Math.random() * -100);
+            }
+
+            function drawMatrix(canvas, ctx) {
+                if (!canvas || !ctx || !matrixActive) return;
+                const mW = canvas.width;
+                const mH = canvas.height;
+                
+                ctx.fillStyle = 'rgba(7, 7, 20, 0.06)';
+                ctx.fillRect(0, 0, mW, mH);
+                
+                ctx.fillStyle = '#34a853';
+                ctx.font = '14px Courier';
+                
+                yPositions.forEach((y, index) => {
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    const x = index * 20;
+                    ctx.fillText(char, x, y);
+                    
+                    if (y > mH || y > 100 + Math.random() * 15000) {
+                        yPositions[index] = 0;
+                    } else {
+                        yPositions[index] = y + 14;
+                    }
+                });
+                
+                if (matrixActive) {
+                    matrixRaf = requestAnimationFrame(() => drawMatrix(canvas, ctx));
+                }
+            }
+
+            const eeLines = [
+                "[BOOT] Initializing QuackOS Core v1.0.0...",
+                "[BOOT] Loading kernel modules: cpu_scheduler.ko, memory_manager.ko, swap_daemon.ko...",
+                "[SYSTEM] CPU: Detected 64 Cores. Duck priority scheduling active (Ducks go first 🦆).",
+                "[PROCESS] Scheduling algorithms loaded successfully: FCFS, SJF, SRTF, RR, Priority.",
+                "[MEMORY] Base Address: 0x00000000 | Total Partition Size: 512 GB.",
+                "[MEMORY] Allocating 128 GB breadcrumb swap buffer... OK.",
+                "[VIRTUAL] Virtual Memory Daemon active. Swap file configured in physical pond.",
+                "[STORAGE] Mass Storage disk spin speed: 7200 Quacks Per Minute.",
+                "[STORAGE] Disk heads aligned to track 0. SEEK optimization set to LOOK.",
+                "[STATUS] Visualizer engine initialization: 100% complete.",
+                "[SUCCESS] OPERATING SYSTEM IS FULLY VISUALIZED. READY TO RUN! 🦆🏆"
+            ];
+
+            window.playWelcomeEasterEgg = function() {
+                const eeOverlay = document.getElementById('easter-egg-overlay');
+                const eeTerminal = document.getElementById('eeTerminalBody');
+                const matrixCanvas = document.getElementById('eeMatrixCanvas');
+                if (!eeOverlay || !eeTerminal || !matrixCanvas) {
+                    console.error("Easter Egg elements not found in DOM");
+                    return;
+                }
+                const mctx = matrixCanvas.getContext('2d');
+                if (!mctx) return;
+
+                eeOverlay.classList.add('visible');
+                eeTerminal.innerHTML = '';
+                matrixActive = true;
+                typingTimeoutIds = [];
+                
+                resizeMatrix(matrixCanvas);
+                
+                const onResize = () => resizeMatrix(matrixCanvas);
+                window.addEventListener('resize', onResize);
+                
+                drawMatrix(matrixCanvas, mctx);
+
+                // Sequential typing animation
+                eeLines.forEach((line, index) => {
+                    const id = setTimeout(() => {
+                        const div = document.createElement('div');
+                        div.className = 'ee-terminal-line';
+                        eeTerminal.appendChild(div);
+                        
+                        let charIndex = 0;
+                        function typeChar() {
+                            if (charIndex < line.length) {
+                                div.textContent += line[charIndex];
+                                charIndex++;
+                                setTimeout(typeChar, 10);
+                            }
+                        }
+                        typeChar();
+                        
+                        eeTerminal.scrollTop = eeTerminal.scrollHeight;
+                    }, index * 900);
+                    typingTimeoutIds.push(id);
+                });
+
+                window._eeCleanup = () => {
+                    window.removeEventListener('resize', onResize);
+                };
+            };
+
+            window.closeWelcomeEasterEgg = function() {
+                const eeOverlay = document.getElementById('easter-egg-overlay');
+                if (eeOverlay) eeOverlay.classList.remove('visible');
+                matrixActive = false;
+                if (matrixRaf) {
+                    cancelAnimationFrame(matrixRaf);
+                    matrixRaf = null;
+                }
+                typingTimeoutIds.forEach(id => clearTimeout(id));
+                typingTimeoutIds = [];
+                if (typeof window._eeCleanup === 'function') {
+                    window._eeCleanup();
+                    window._eeCleanup = null;
+                }
+            };
+        })();
     </script>
     <script src="js/cursor.js"></script>
 </body>
