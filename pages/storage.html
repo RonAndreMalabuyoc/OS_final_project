@@ -7,15 +7,6 @@
     <title>Mass Storage Simulator — OS Simulator</title>
     <meta name="description"
         content="Interactive disk scheduling simulator with seek time visualization. Supports FCFS, SSTF, SCAN, C-SCAN, LOOK, and C-LOOK algorithms." />
-    <script>
-        (function () {
-            try {
-                if (localStorage.getItem('theme') === 'light') {
-                    document.documentElement.classList.add('light');
-                }
-            } catch (error) { }
-        })();
-    </script>
     <link rel="stylesheet" href="../styles.css" />
     <style>
         /* ── Storage-specific styles ─────────────────────── */
@@ -521,28 +512,6 @@
 </head>
 
 <body>
-    <script>
-        (function () {
-            function setTheme(isLight) {
-                document.documentElement.classList.toggle('light', isLight);
-                document.body.classList.toggle('light', isLight);
-                document.body.style.colorScheme = isLight ? 'light' : 'dark';
-                try {
-                    localStorage.setItem('theme', isLight ? 'light' : 'dark');
-                } catch (error) { }
-            }
-
-            setTheme(document.documentElement.classList.contains('light'));
-
-            document.addEventListener('click', function (event) {
-                const toggle = event.target.closest('#themeToggle');
-                if (!toggle) return;
-                event.preventDefault();
-                event.stopImmediatePropagation();
-                setTheme(!document.body.classList.contains('light'));
-            }, true);
-        })();
-    </script>
 
     <div id="scrollProgress"></div>
 
@@ -1579,7 +1548,6 @@
             });
         })();
     </script>
-    <script src="../js/cursor.js"></script>
 </body>
 
 </html>
